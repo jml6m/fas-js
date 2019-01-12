@@ -1,0 +1,28 @@
+{
+  "name": "fas-js",
+  "description": "Finate State Automata JS Solutions",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jml6m/fas-js"
+  },
+  "scripts": {
+    "build": "babel src/ -d lib/",
+    "prepublish": "npm run build",
+    "flow": "flow",
+    "test": "npm run build && mocha --compilers js:babel-core/register ./test/**/*.spec.js"
+  },
+  "author": "Joseph Lewkovich",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.90.0",
+    "mocha": "^5.2.0"
+  },
+  "dependencies": {}
+}
