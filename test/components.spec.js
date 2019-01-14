@@ -1,4 +1,4 @@
-import { FSA, State, Alphabet, TFunc } from "../lib/modules.js";
+import { State, Alphabet, TFunc, Transition, ErrorCode } from "../lib/modules.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 
@@ -11,9 +11,9 @@ describe("State Creation", function() {
     });
 
     it("Should fail because invalid name", function() {
-      expect(() => new State("")).to.throw(Error);
-      expect(() => new State(null)).to.throw(Error);
-      expect(() => new State(undefined)).to.throw(Error);
+      expect(() => new State("")).to.throw(Error, ErrorCode.INVALID_STATE_NAME);
+      expect(() => new State(null)).to.throw(Error, ErrorCode.INVALID_STATE_NAME);
+      expect(() => new State(undefined)).to.throw(Error, ErrorCode.INVALID_STATE_NAME);
     });
   });
 });
@@ -35,47 +35,28 @@ describe("Alphabet Creation", function() {
     });
 
     it("Should fail because duplicate values in sigma", function() {
-      expect(() => new Alphabet("abb")).to.throw(Error);
-      expect(() => new Alphabet("bbb")).to.throw(Error);
+      expect(() => new Alphabet("abb")).to.throw(Error, ErrorCode.DUPLICATE_ALPHABET_VALS);
+      expect(() => new Alphabet("bbb")).to.throw(Error, ErrorCode.DUPLICATE_ALPHABET_VALS);
     });
 
     it("Should fail because invalid input type", function() {
-      expect(() => new Alphabet()).to.throw(Error);
-      expect(() => new Alphabet(null)).to.throw(Error);
+      expect(() => new Alphabet(null)).to.throw(TypeError);
+      expect(() => new Alphabet(undefined)).to.throw(TypeError);
     });
   });
 });
 
-describe("FSA Creation", function() {
-  describe("FSA#constructor()", function() {
-    let q1;
-    let q2;
-    let q3;
-
-    let states;
-    let alphabet;
-    let tfunc;
-    let accepts;
-
-    before(function() {
-      q1 = new State("q1");
-      q2 = new State("q2");
-      q3 = new State("q3");
-
-      states = [q1, q2, q3];
-      alphabet = "abc";
-      tfunc = new TFunc("test");
-      accepts = new Set([q2, q3]);
-    });
-
+describe("Transition Creation", function() {
+  describe("Transition#constructor()", function() {
     it("Should return valid class attributes", function() {
-      let fas = new FSA(states, alphabet, tfunc, q1, accepts);
+      const origin = new State("q1");
+      const dest = new State("q2");
+      const input = "a";
+      let transition = new Transition(origin, dest, input);
 
-      assert(fas.states === states);
-      assert(fas.alphabet === alphabet);
-      assert(fas.tfunc === tfunc);
-      assert(fas.start === q1);
-      assert(fas.accepts === accepts);
+      assert(transition.origin === origin);
+      assert(transition.dest === dest);
+      assert(transition.input === input);
     });
   });
 });

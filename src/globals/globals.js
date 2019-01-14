@@ -1,3 +1,45 @@
-export const count = names => names.reduce((a, b) => Object.assign(a, { [b]: (a[b] || 0) + 1 }), {});
+// @flow
+import { State } from "../modules.js";
 
-export const duplicates = dict => Object.keys(dict).filter(a => dict[a] > 1);
+// Count number of instances for each string in an array - returns key/val pairs
+export const count = (names: Array<string>): Object =>
+  names.reduce((a, b) => Object.assign(a, { [b]: (a[b] || 0) + 1 }), {});
+
+// Returns keys with value > 1
+export const duplicates = (dict: Object): Array<string> => Object.keys(dict).filter(a => dict[a] > 1);
+
+// Check for duplicate keys in a Set<State> input
+export const checkStateDuplicates = (states: Set<State>) => {
+  let check: Set<string> = new Set();
+  for (const item of states) {
+    if (check.has(item.name)) return true;
+    check.add(item.name);
+  }
+  return false;
+};
+
+// Check whether inputSet is a subset of otherSet
+export const isSubSet = (inputSet: Set<any>, otherSet: Set<any>): boolean => {
+  if (inputSet.size > otherSet.size) return false;
+  else {
+    for (var elem of inputSet) {
+      if (!otherSet.has(elem)) return false;
+    }
+    return true;
+  }
+};
+
+// returns (setA - setB)
+export const setDifference = (setA: Set<any>, setB: Set<any>): Set<any> => {
+    var _difference = new Set(setA);
+    for (var elem of setB) {
+        _difference.delete(elem);
+    }
+    return _difference;
+}
+
+// Flow hack - gets around problems with Map#get having possible void type
+export const getOrDefault = (map: Map<any, any>, key: any, defaultValue: any) => {
+  const val = map.get(key)
+  return val == null ? defaultValue : val
+}
