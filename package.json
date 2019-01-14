@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "babel src/ -d lib/",
-    "prepublish": "npm run build",
+    "prepublish": "npm run build && npm run flow check",
     "flow": "flow",
     "test": "npm run build && mocha --compilers js:babel-core/register ./test/**/*.spec.js"
   },
@@ -26,6 +26,7 @@
     "mocha": "^5.2.0"
   },
   "dependencies": {
-    "chai": "^4.2.0"
+    "chai": "^4.2.0",
+    "chalk": "^2.4.2"
   }
 }

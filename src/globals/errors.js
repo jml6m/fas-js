@@ -8,5 +8,7 @@ export const ErrorCode: { [string]: string } = Object.freeze({
     ACCEPTS_NOT_SUBSET: "E-005",
     ORIGIN_STATE_NOT_FOUND: "E-006",
     DEST_STATE_NOT_FOUND: "E-007",
-    MISSING_REQUIRED_TRANSITION: "E-008"
+    MISSING_REQUIRED_TRANSITION: "E-008",
+    INVALID_INPUT_CHAR: "E-009",
+    INPUT_STATE_NOT_FOUND: "E-010"
 });

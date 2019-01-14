@@ -21,7 +21,7 @@ describe("State Creation", function() {
 describe("Alphabet Creation", function() {
   describe("Alphabet#constructor()", function() {
     it("Should return valid class attributes", function() {
-      const sigma = "abcd";
+      const sigma = ["a", "b", "c", "d"];
       let alphabet = new Alphabet(sigma);
       assert(
         alphabet.sigma.length === sigma.length,
@@ -42,6 +42,8 @@ describe("Alphabet Creation", function() {
     it("Should fail because invalid input type", function() {
       expect(() => new Alphabet(null)).to.throw(TypeError);
       expect(() => new Alphabet(undefined)).to.throw(TypeError);
+      expect(() => new Alphabet(0)).to.throw(TypeError);
+      expect(() => new Alphabet(() => {})).to.throw(TypeError);
     });
   });
 });

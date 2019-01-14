@@ -1,4 +1,5 @@
 // @flow
+const chalk = require("chalk");
 import {
   State,
   Alphabet,
@@ -65,12 +66,11 @@ export class FSA {
     }
 
     if (this.paths.size > 0) {
-      console.error("Not all FSA paths have a transition: %O", this.paths);
+      console.error(chalk.redBright("Not all FSA paths have a transition: %O"), this.paths);
       throw new Error(ErrorCode.MISSING_REQUIRED_TRANSITION);
     }
 
     this.tfunc = newTFunc;
-    //console.info("Final TFunc %O", this.tfunc);
   }
 
   createPaths() {
@@ -82,5 +82,17 @@ export class FSA {
         else this.paths.set(state, new Set([char]));
       }
     }
+  }
+
+  receiveInput(input: string, state: State): State {
+    if (this.alphabet.sigma.indexOf(input) === -1) throw new Error(ErrorCode.INVALID_INPUT_CHAR);
+    if (!this.states.has(state)) throw new Error(ErrorCode.INPUT_STATE_NOT_FOUND);
+
+    const path = Array.from(this.tfunc).find(obj => {
+      return obj.origin === state && obj.input === input;
+    });
+
+    if(path) return path.dest;
+    else throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
   }
 }

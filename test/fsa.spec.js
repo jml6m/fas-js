@@ -4,18 +4,9 @@ var expect = require("chai").expect;
 
 describe("FSA Creation", function() {
   describe("FSA#constructor()", function() {
-    let q1;
-    let q2;
-
-    let states;
-    let alphabet;
-    let accepts;
-
-    let t1;
-    let t2;
-    let t3;
-    let t4;
-    let transitions;
+    let q1, q2;
+    let t1, t2, t3, t4;
+    let states, alphabet, accepts, transitions;
 
     before(function() {
       q1 = new State("q1");
@@ -69,13 +60,8 @@ describe("FSA Creation", function() {
   });
 
   describe("FSA#validateTFunc()", function() {
-    let q1;
-    let q2;
-    let q3;
-
-    let states;
-    let alphabet;
-    let accepts;
+    let q1, q2, q3;
+    let states, alphabet, accepts;
 
     before(function() {
       q1 = new State("q1");
