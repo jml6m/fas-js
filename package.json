@@ -13,6 +13,7 @@
     "flow": "flow",
     "test": "npm run build && mocha --compilers js:babel-core/register ./test/**/*.spec.js"
   },
+  "precommit": "test",
   "author": "Joseph Lewkovich",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
@@ -23,7 +24,8 @@
     "babel-preset-env": "^1.7.0",
     "babel-preset-flow": "^6.23.0",
     "flow-bin": "^0.90.0",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "pre-commit": "^1.2.2"
   },
   "dependencies": {
     "chai": "^4.2.0",
