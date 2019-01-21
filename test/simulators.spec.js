@@ -1,4 +1,8 @@
-import { FSA, State, Alphabet, Transition, simulateFSA } from "../lib/modules.js";
+import { simulateFSA } from "../src/modules.js";
+import { FSA } from "../src/classes/FSA.js";
+import { State } from "../src/classes/State.js";
+import { Alphabet } from "../src/classes/Alphabet.js";
+import { Transition } from "../src/classes/Transition.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 

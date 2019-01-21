@@ -1,15 +1,10 @@
 // @flow
 const chalk = require("chalk");
-import {
-  State,
-  Alphabet,
-  Transition,
-  checkStateDuplicates,
-  ErrorCode,
-  isSubSet,
-  setDifference,
-  getOrDefault
-} from "../modules.js";
+import { State } from "./State.js";
+import { Alphabet } from "./Alphabet.js";
+import { Transition } from "./Transition.js";
+import { ErrorCode } from "../globals/errors.js";
+import { checkStateDuplicates, isSubSet, setDifference, getOrDefault } from "../globals/globals.js";
 
 export class FSA {
   // FSA 5-tuple
@@ -92,7 +87,7 @@ export class FSA {
       return obj.origin === state && obj.input === input;
     });
 
-    if(path) return path.dest;
+    if (path) return path.dest;
     else throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
   }
 }

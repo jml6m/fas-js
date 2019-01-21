@@ -1,4 +1,9 @@
-import { FSA, State, Alphabet, Transition, ErrorCode, isSubSet } from "../lib/modules.js";
+import { State } from "../src/classes/State.js";
+import { FSA } from "../src/classes/FSA.js";
+import { Alphabet } from "../src/classes/Alphabet.js";
+import { Transition } from "../src/classes/Transition.js";
+import { ErrorCode } from "../src/globals/errors.js";
+import { isSubSet } from "../src/globals/globals.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 

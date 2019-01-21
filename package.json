@@ -1,7 +1,7 @@
 {
-  "name": "@jml6m/fas",
+  "name": "fas-js",
   "description": "Finate State Automata JS Solutions",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "main": "lib/modules.js",
   "repository": {
     "type": "git",
@@ -26,7 +26,6 @@
     "babel-preset-flow": "^6.23.0",
     "babel-preset-minify": "^0.5.0",
     "chai": "^4.2.0",
-    "chalk": "^2.4.2",
     "flow-bin": "^0.90.0",
     "mocha": "^5.2.0",
     "pre-commit": "^1.2.2",
@@ -50,5 +49,8 @@
     "dfa",
     "ndfa",
     "turing"
-  ]
+  ],
+  "dependencies": {
+    "chalk": "^2.4.2"
+  }
 }

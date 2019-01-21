@@ -1,4 +1,7 @@
-import { State, Alphabet, TFunc, Transition, ErrorCode } from "../lib/modules.js";
+import { State } from "../src/classes/State.js";
+import { Alphabet } from "../src/classes/Alphabet.js";
+import { Transition } from "../src/classes/Transition.js";
+import { ErrorCode } from "../src/globals/errors.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 

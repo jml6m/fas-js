@@ -1,6 +1,7 @@
 // @flow
 const chalk = require("chalk");
-import { FSA, ErrorCode } from "../modules.js";
+import { FSA } from "../classes/FSA.js";
+import { ErrorCode } from "../globals/errors.js";
 
 export const simulateFSA = (w: string[], fsa: FSA, logging: boolean = false): boolean => {
   if (logging) console.log(chalk.cyan("Beginning FSA Simulation"));
