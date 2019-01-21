@@ -1,4 +1,4 @@
 {
-  "presets": ["flow", "babel-preset-env"],
+  "presets": ["flow", "babel-preset-env", "minify"],
   "plugins": ["transform-class-properties"]
 }

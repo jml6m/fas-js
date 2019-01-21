@@ -1,14 +1,16 @@
 {
-  "name": "fas-js",
+  "name": "@jml6m/fas",
   "description": "Finate State Automata JS Solutions",
   "version": "1.0.0",
-  "main": "lib/index.js",
+  "main": "lib/modules.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jml6m/fas-js"
+    "url": "git+https://github.com/jml6m/fas-js.git"
   },
   "scripts": {
     "build": "babel src/ -d lib/",
+    "prebuild": "npm run clean",
+    "clean": "rimraf lib/*",
     "prepublish": "npm run build && npm run flow check",
     "flow": "flow",
     "test": "npm run build && mocha --compilers js:babel-core/register ./test/**/*.spec.js"
@@ -19,16 +21,34 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
-    "babel-eslint": "^10.0.1",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.7.0",
     "babel-preset-flow": "^6.23.0",
+    "babel-preset-minify": "^0.5.0",
+    "chai": "^4.2.0",
+    "chalk": "^2.4.2",
     "flow-bin": "^0.90.0",
     "mocha": "^5.2.0",
-    "pre-commit": "^1.2.2"
+    "pre-commit": "^1.2.2",
+    "rimraf": "^2.6.3"
   },
-  "dependencies": {
-    "chai": "^4.2.0",
-    "chalk": "^2.4.2"
-  }
+  "bugs": {
+    "url": "https://github.com/jml6m/fas-js/issues"
+  },
+  "homepage": "https://github.com/jml6m/fas-js#readme",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "keywords": [
+    "state-machine",
+    "fsa",
+    "finite",
+    "state",
+    "automata",
+    "automaton",
+    "dfa",
+    "ndfa",
+    "turing"
+  ]
 }
