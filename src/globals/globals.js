@@ -1,5 +1,5 @@
 // @flow
-import { State } from "../modules.js";
+import { State } from "../classes/State.js";
 
 // Count number of instances for each string in an array - returns key/val pairs
 export const count = (names: Array<string>): Object =>
@@ -28,15 +28,6 @@ export const isSubSet = (inputSet: Set<any>, otherSet: Set<any>): boolean => {
     return true;
   }
 };
-
-// returns (setA - setB)
-export const setDifference = (setA: Set<any>, setB: Set<any>): Set<any> => {
-    var _difference = new Set(setA);
-    for (var elem of setB) {
-        _difference.delete(elem);
-    }
-    return _difference;
-}
 
 // Flow hack - gets around problems with Map#get having possible void type
 export const getOrDefault = (map: Map<any, any>, key: any, defaultValue: any) => {

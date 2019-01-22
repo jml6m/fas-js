@@ -1,5 +1,6 @@
 // @flow
-import { count, duplicates, ErrorCode } from "../modules.js";
+import { ErrorCode } from "../globals/errors.js";
+import { count, duplicates } from "../globals/globals.js";
 
 export class Alphabet {
   sigma: string[];

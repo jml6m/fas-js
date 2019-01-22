@@ -1,5 +1,5 @@
 // @flow
-import { State } from "../modules.js";
+import { State } from "./State.js";
 
 export class Transition {
   origin: State;
