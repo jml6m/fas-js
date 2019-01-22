@@ -62,7 +62,10 @@ export class FSA {
     }
 
     if (this.paths.size > 0) {
-      console.error(chalk.redBright("Not all FSA paths have a transition: %O"), this.paths);
+      console.error(chalk.redBright("Not all FSA paths have a transition specified:"));
+      for (const [key, val] of this.paths) {
+        console.error(chalk.redBright("State %s on input(s): %s"), key.name, [...val].join(' '));
+      }
       throw new Error(ErrorCode.MISSING_REQUIRED_TRANSITION);
     }
 
@@ -120,7 +123,9 @@ export const createFSA = (
   if (Array.isArray(transitions)) {
     for (const tr of transitions) {
       if (!tr["from"] || !tr["to"] || !tr["input"]) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
-      _tfunc.add(new Transition(_states.get(tr["from"]), _states.get(tr["to"]), tr["input"]));
+      const fromVal: State = getOrDefault(_states, tr["from"], null);
+      const toVal: State = getOrDefault(_states, tr["to"], null);
+      _tfunc.add(new Transition(fromVal, toVal, tr["input"]));
     }
   } else {
     throw new TypeError(transitions);
@@ -129,14 +134,14 @@ export const createFSA = (
   // Convert remaining inputs
   let _alphabet = new Alphabet(alphabet);
   if (typeof start !== "string") throw new TypeError(start);
-  let _start = _states.get(start);
+  let _start = getOrDefault(_states, start, null);
 
-  let _accepts: Array<string> = new Array();
+  let _accepts: Set<State> = new Set();
   if (typeof accepts === "string") {
-    if(_states.has(accepts)) _accepts.push(_states.get(accepts));
+    if (_states.has(accepts)) _accepts.add(getOrDefault(_states, accepts, null));
   } else if (Array.isArray(accepts)) {
     for (const state of accepts) {
-      _accepts.push(_states.get(state));
+      _accepts.add(getOrDefault(_states, state, null));
     }
   } else {
     throw new TypeError(accepts);
