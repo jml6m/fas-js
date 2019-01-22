@@ -4,7 +4,7 @@ import { State } from "./State.js";
 import { Alphabet } from "./Alphabet.js";
 import { Transition } from "./Transition.js";
 import { ErrorCode } from "../globals/errors.js";
-import { checkStateDuplicates, isSubSet, setDifference, getOrDefault } from "../globals/globals.js";
+import { checkStateDuplicates, isSubSet, getOrDefault } from "../globals/globals.js";
 
 export class FSA {
   // FSA 5-tuple
@@ -30,6 +30,7 @@ export class FSA {
     // Start/Accept validations
     if (!states.has(start)) throw new Error(ErrorCode.START_STATE_NOT_FOUND);
     this.start = start;
+    if (Object.keys(accepts).length === 0 && accepts.constructor === Object) accepts = new Set([]); // Allow for {}
     if (!isSubSet(accepts, states)) throw new Error(ErrorCode.ACCEPTS_NOT_SUBSET);
     this.accepts = accepts;
 
@@ -91,3 +92,55 @@ export class FSA {
     else throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
   }
 }
+
+// Global export method for creating FSA
+export const createFSA = (
+  states: Array<string>,
+  alphabet: Array<string>,
+  transitions: Array<Object>,
+  start: string,
+  accepts: Array<string>
+): FSA => {
+  // Type check and conversion for states
+  let _states: Map<string, State> = new Map();
+  if (typeof states === "string") {
+    _states.set(states, new State(states));
+  } else if (Array.isArray(states)) {
+    for (const state of states) {
+      if (!_states.has(state)) _states.set(state, new State(state));
+    }
+  } else {
+    throw new TypeError(states);
+  }
+
+  // Convert transition array to Set<Transition>
+  let _tfunc: Set<Transition> = new Set();
+  if (!Array.isArray(transitions) && typeof transitions === "object") transitions = [transitions];
+
+  if (Array.isArray(transitions)) {
+    for (const tr of transitions) {
+      if (!tr["from"] || !tr["to"] || !tr["input"]) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+      _tfunc.add(new Transition(_states.get(tr["from"]), _states.get(tr["to"]), tr["input"]));
+    }
+  } else {
+    throw new TypeError(transitions);
+  }
+
+  // Convert remaining inputs
+  let _alphabet = new Alphabet(alphabet);
+  if (typeof start !== "string") throw new TypeError(start);
+  let _start = _states.get(start);
+
+  let _accepts: Array<string> = new Array();
+  if (typeof accepts === "string") {
+    if(_states.has(accepts)) _accepts.push(_states.get(accepts));
+  } else if (Array.isArray(accepts)) {
+    for (const state of accepts) {
+      _accepts.push(_states.get(state));
+    }
+  } else {
+    throw new TypeError(accepts);
+  }
+
+  return new FSA(new Set(_states.values()), _alphabet, _tfunc, _start, _accepts);
+};

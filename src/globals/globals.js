@@ -29,15 +29,6 @@ export const isSubSet = (inputSet: Set<any>, otherSet: Set<any>): boolean => {
   }
 };
 
-// returns (setA - setB)
-export const setDifference = (setA: Set<any>, setB: Set<any>): Set<any> => {
-    var _difference = new Set(setA);
-    for (var elem of setB) {
-        _difference.delete(elem);
-    }
-    return _difference;
-}
-
 // Flow hack - gets around problems with Map#get having possible void type
 export const getOrDefault = (map: Map<any, any>, key: any, defaultValue: any) => {
   const val = map.get(key)

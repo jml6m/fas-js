@@ -10,7 +10,7 @@ export const simulateFSA = (w: string[], fsa: FSA, logging: boolean = false): bo
   if (!Array.isArray(w)) {
     if (typeof w === "string") w = [...w];
     else {
-      if (logging) console.error("Input w was invalid type: %O", w);
+      if (logging) console.error(chalk.redBright("Input w was invalid type: %O"), w);
       throw new TypeError();
     }
   }

@@ -4,6 +4,7 @@ import { Alphabet } from "../src/classes/Alphabet.js";
 import { Transition } from "../src/classes/Transition.js";
 import { ErrorCode } from "../src/globals/errors.js";
 import { isSubSet } from "../src/globals/globals.js";
+import { createFSA } from "../src/modules.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 
@@ -42,7 +43,9 @@ describe("FSA Creation", function() {
     it("Should allow accepts to be empty set", function() {
       const emptySet = new Set([]);
       const fas = new FSA(states, alphabet, transitions, q1, emptySet);
+      const fas2 = new FSA(states, alphabet, transitions, q1, {});
       assert(fas.accepts === emptySet);
+      assert(fas2.accepts.size === 0);
     });
 
     it("Should fail because states contains duplicates", function() {
@@ -59,6 +62,9 @@ describe("FSA Creation", function() {
 
     it("Should fail because accept states are not subset of states", function() {
       expect(() => new FSA(states, alphabet, transitions, q1, new Set([new State("q1")]))).to.throw(
+        ErrorCode.ACCEPTS_NOT_SUBSET
+      );
+      expect(() => new FSA(new Set([q1]), alphabet, transitions, q1, new Set([q1, q2]))).to.throw(
         ErrorCode.ACCEPTS_NOT_SUBSET
       );
     });
@@ -116,6 +122,54 @@ describe("FSA Creation", function() {
       assert(isSubSet(fas.tfunc, transitions));
       assert(fas.tfunc.has(t4) && !fas.tfunc.has(t5) && !fas.tfunc.has(t1));
       assert(fas.paths.size === 0);
+    });
+  });
+
+  describe("FSA#createFSA()", function() {
+    let states, states2, aph, aph2, tr, tr2;
+
+    before(function() {
+      states = ["q1", "q2"];
+      states2 = "q1";
+      aph = "01";
+      aph2 = ["start", "end"];
+      tr = [
+        { from: "q1", to: "q2", input: "0" },
+        { from: "q2", to: "q1", input: "0" },
+        { from: "q2", to: "q2", input: "1" },
+        { from: "q1", to: "q1", input: "1" }
+      ];
+      tr2 = { from: "q1", to: "q1", input: "0" };
+    });
+
+    it("Should not accept invalid input types", function() {
+      // Invalid states type
+      expect(() => createFSA(null, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(undefined, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(0, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(() => {}, aph, tr, "q1", states)).to.throw(TypeError);
+
+      // Invalid transitions type
+      expect(() => createFSA(states, aph, null, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, undefined, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, 0, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, () => {}, "q1", states)).to.throw(TypeError);
+
+      // Invalid accepts type
+      expect(() => createFSA(states, aph, tr, "q1", null)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", undefined)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", 0)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", () => {})).to.throw(TypeError);
+
+      // Invalid start type
+      expect(() => createFSA(states, aph, tr, null, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, undefined, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, 0, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, () => {}, states)).to.throw(TypeError);
+    });
+
+    it("Should successfully create the FSA", function() {
+      expect(() => createFSA(states, aph, tr, "q1", states)).to.not.throw();
     });
   });
 });

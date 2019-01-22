@@ -7,7 +7,7 @@ var assert = require("chai").assert;
 var expect = require("chai").expect;
 
 describe("FSA Simulations", function() {
-  describe("w ends in a 1", function() {
+  describe("w ends in a 1", function() { // Logging enabled on some tests for code coverage
     let q1, q2;
     let t1, t2, t3, t4;
     let states, alphabet, accepts, transitions, fsa;
@@ -28,26 +28,27 @@ describe("FSA Simulations", function() {
       fsa = new FSA(states, alphabet, transitions, q1, accepts);
     });
 
-    it("Should not accept invalid w type", function() { // Type check clause tested here
-      expect(() => simulateFSA(null, fsa)).to.throw(TypeError);
+    it("Should not accept invalid w type", function() {
+      // Type check clause tested here
+      expect(() => simulateFSA(null, fsa, true)).to.throw(TypeError);
       expect(() => simulateFSA(undefined, fsa)).to.throw(TypeError);
       expect(() => simulateFSA(0, fsa)).to.throw(TypeError);
       expect(() => simulateFSA(() => {}, fsa)).to.throw(TypeError);
     });
 
     it("Should accept for 101/1/111/10101", function() {
-      assert.isOk(simulateFSA("101", fsa));
+      assert.isOk(simulateFSA("101", fsa, true));
       assert.isOk(simulateFSA("1", fsa));
       assert.isOk(simulateFSA("111", fsa));
       assert.isOk(simulateFSA("10101", fsa));
     });
 
     it("Should reject for empty/0/10/0110/xyz", function() {
-      assert.isNotOk(simulateFSA("", fsa));
+      assert.isNotOk(simulateFSA("", fsa, true));
       assert.isNotOk(simulateFSA("0", fsa));
       assert.isNotOk(simulateFSA("10", fsa));
       assert.isNotOk(simulateFSA("0110", fsa));
-      assert.isNotOk(simulateFSA("xyz", fsa));
+      assert.isNotOk(simulateFSA("xyz", fsa, true));
     });
   });
 
