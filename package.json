@@ -13,7 +13,7 @@
     "clean": "rimraf lib/*",
     "prepublish": "npm run build && npm run flow check",
     "flow": "flow",
-    "test": "npm run build && nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
+    "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
   },
   "precommit": "test",
   "author": "Joseph Lewkovich",
@@ -30,6 +30,7 @@
     "babel-plugin-istanbul": "^5.1.1",
     "babel-preset-minify": "^0.5.0",
     "chai": "^4.2.0",
+    "cross-env": "^5.2.0",
     "flow-bin": "^0.91.0",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
