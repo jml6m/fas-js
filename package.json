@@ -13,7 +13,7 @@
     "clean": "rimraf lib/*",
     "prepublish": "npm run build && npm run flow check",
     "flow": "flow",
-    "test": "npm run build && nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
+    "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
   },
   "precommit": "test",
   "author": "Joseph Lewkovich",
