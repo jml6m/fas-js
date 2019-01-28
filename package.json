@@ -11,7 +11,7 @@
     "build": "babel src/ -d lib/",
     "prebuild": "npm run clean",
     "clean": "rimraf lib/*",
-    "prepublish": "cross-env NODE_ENV=prod npm run build && npm run flow check",
+    "prepare": "cross-env NODE_ENV=prod npm run build && npm run flow check",
     "flow": "flow",
     "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
   },
