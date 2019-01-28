@@ -171,10 +171,10 @@ describe("FSA Creation", function() {
       states = ["q1", "q2"];
       aph = "01";
       tr = [
-        { from: "q1", to: "q2", input: "0" },
+        { from: "q1", to: "q2", input: "1" },
         { from: "q2", to: "q1", input: "0" },
         { from: "q2", to: "q2", input: "1" },
-        { from: "q1", to: "q1", input: "1" }
+        { from: "q1", to: "q1", input: "0" }
       ];
       tr2 = { from: "q1", to: "q1", input: "0" };
     });
@@ -206,6 +206,8 @@ describe("FSA Creation", function() {
     });
 
     it("Should successfully create the FSA", function() {
+      const test = createFSA(states, aph, tr, "q1", ["q2"]);
+      
       expect(() => createFSA(states, aph, tr, "q1", states)).to.not.throw();
       expect(() => createFSA(states, aph, tr, "q1", "q1")).to.not.throw();
       expect(() => createFSA("q1", "0", tr2, "q1", "q1")).to.not.throw();

@@ -168,11 +168,11 @@ export class FSA {
     return `digraph fsa {
         ${(Object.values(this.determineStateOrder()): any)
           .map(function(str: string) {
-            return str;
+            if (acceptArr.indexOf(str) !== -1) return str + " [shape = doublecircle];";
+            else return str;
           })
           .join("\n\t")}
         rankdir=LR;
-        node [shape = doublecircle]; ${acceptArr.join(" ")};
         node [shape = point ]; qi;
         node [shape = circle];
         qi -> ${this.start.name};

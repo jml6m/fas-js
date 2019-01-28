@@ -4,7 +4,7 @@ import { FSA } from "../classes/FSA.js";
 import { State } from "../classes/State.js";
 import { ErrorCode } from "../globals/errors.js";
 
-export const simulateFSA = (w: string[], fsa: FSA, logging: boolean = false): boolean => {
+export const simulateFSA = (w: string[], fsa: FSA, logging: boolean = false): string => {
   if (logging) console.log(chalk.cyan("Beginning FSA Simulation"));
 
   //Accept either string or string[] for w
@@ -29,7 +29,7 @@ export const simulateFSA = (w: string[], fsa: FSA, logging: boolean = false): bo
       } else {
         if (logging) console.error(chalk.redBright(e));
       }
-      return false;
+      return prevState.name;
     }
     if (logging) console.log("%s x %s -> %s", prevState.name, char, currentState.name);
   }
@@ -37,10 +37,10 @@ export const simulateFSA = (w: string[], fsa: FSA, logging: boolean = false): bo
 
   if (fsa.accepts.has(currentState)) {
     if (logging) console.log(chalk.green("Input Accepted!"));
-    return true;
+    return currentState.name;
   } else {
     if (logging) console.log(chalk.red("Input Rejected!"));
-    return false;
+    return currentState.name;
   }
 };
 
