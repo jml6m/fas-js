@@ -9,13 +9,15 @@ import { checkStateDuplicates, isSubSet, getOrDefault } from "../globals/globals
 export class FSA {
   // FSA 5-tuple
   states: Set<State>; // Q
-  alphabet: Alphabet; // sigma
-  tfunc: Set<Transition>; // delta
+  alphabet: Alphabet; // Σ
+  tfunc: Set<Transition>; // δ
   start: State; // q0
   accepts: Set<State>; // F
 
-  // Helper attributes
-  paths: Map<State, Set<string>>; // Will be empty after constructor returns
+  // Other attributes
+  paths: Map<State, Set<string>>; // States mapped to each member of Σ, will be empty after constructor returns
+  links: Map<string, Set<string>>; // State names mapped to their dest state names
+  digraph: string; // Will contain template literal for GraphViz
 
   constructor(states: Set<State>, alphabet: Alphabet, tfunc: Set<Transition>, start: State, accepts: Set<State>) {
     // states validations
@@ -37,8 +39,15 @@ export class FSA {
     // TFunc validations
     this.tfunc = tfunc;
     this.validateTFunc();
+
+    // Digraph
+    this.digraph = this.generateDigraph();
   }
 
+  /*
+   * Transition function should only contain states in Q, and one transition should exist
+   * for each combination of Q x Σ
+   */
   validateTFunc() {
     let newTFunc: Set<Transition> = new Set(); // Will contain only necessary transitions
 
@@ -64,7 +73,7 @@ export class FSA {
     if (this.paths.size > 0) {
       console.error(chalk.redBright("Not all FSA paths have a transition specified:"));
       for (const [key, val] of this.paths) {
-        console.error(chalk.redBright("State %s on input(s): %s"), key.name, [...val].join(' '));
+        console.error(chalk.redBright("State %s on input(s): %s"), key.name, [...val].join(" "));
       }
       throw new Error(ErrorCode.MISSING_REQUIRED_TRANSITION);
     }
@@ -92,7 +101,88 @@ export class FSA {
     });
 
     if (path) return path.dest;
-    else throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
+    else throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+  }
+
+  // Determine digraph order based on start state, then following the chain
+  determineStateOrder(): Array<string> {
+    let statesOrder: Array<string> = []; // Ordered state names for digraph
+
+    // Map origin state names to dest state names
+    this.links = new Map();
+    for (const tr of this.tfunc) {
+      const linkStateVals: Set<string> = getOrDefault(this.links, tr.origin.name, new Set());
+      if (this.links.has(tr.origin.name)) linkStateVals.add(tr.dest.name);
+      else this.links.set(tr.origin.name, new Set([tr.dest.name]));
+    }
+
+    // Populate state order
+    this.parseLinks(statesOrder, this.start.name);
+
+    // Check for dead states and reduce FSA if necessary
+    let stateArr: Array<string> = [];
+    (Object.values([...this.states]): any).map((state: State) => stateArr.push(state.name));
+    const deadStates = stateArr.filter(x => !statesOrder.includes(x));
+    if (deadStates.length > 0) {
+      console.warn(
+        chalk.yellowBright("Dead states detected, removing them and associated transitions: %O"),
+        deadStates
+      );
+      this.removeDeadStates(deadStates);
+    }
+
+    return statesOrder;
+  }
+
+  // Reduce FSA by removing dead states and associated transitions
+  removeDeadStates(deadStates: Array<string>) {
+    // Q
+    for (const state of this.states) {
+      if (deadStates.indexOf(state.name) !== -1) this.states.delete(state);
+    }
+    // F
+    for (const state of this.accepts) {
+      if (deadStates.indexOf(state.name) !== -1) this.accepts.delete(state);
+    }
+    // δ
+    for (const tr of this.tfunc) {
+      if (deadStates.indexOf(tr.origin.name) !== -1 || deadStates.indexOf(tr.dest.name) !== -1) this.tfunc.delete(tr);
+    }
+  }
+
+  // Recursively parse graph while adding to an array in order, beginning with q0
+  parseLinks(arr: Array<string>, name: string) {
+    arr.push(name);
+    const nameVal: string = getOrDefault(this.links, name, "");
+    for (const st of nameVal) {
+      if (arr.indexOf(st) === -1) this.parseLinks(arr, st);
+    }
+  }
+
+  generateDigraph(): string {
+    // Prep outputs
+    let acceptArr: Array<string> = [];
+    for (const state of this.accepts) acceptArr.push(state.name);
+
+    // return template literal
+    return `digraph fsa {
+        ${(Object.values(this.determineStateOrder()): any)
+          .map(function(str: string) {
+            return str;
+          })
+          .join("\n\t")}
+        rankdir=LR;
+        node [shape = doublecircle]; ${acceptArr.join(" ")};
+        node [shape = point ]; qi;
+        node [shape = circle];
+        qi -> ${this.start.name};
+        ${(Object.values([...this.tfunc]): any)
+          .map(function(t: Transition) {
+            return t.origin.name + " -> " + t.dest.name + ' [ label = "' + t.input + '" ];';
+          })
+          .join("\n\t")}
+    }
+    `;
   }
 }
 

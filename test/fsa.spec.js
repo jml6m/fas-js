@@ -70,6 +70,45 @@ describe("FSA Creation", function() {
     });
   });
 
+  describe("FSA#constructor() with dead states", function() {
+    let q1, q2, q3;
+    let t1, t2, t3, t4, t5, t6;
+    let states, alphabet, accepts, transitions;
+
+    before(function() {
+      q1 = new State("q1");
+      q2 = new State("q2");
+      q3 = new State("q3");
+
+      states = new Set([q1, q2, q3]);
+      alphabet = new Alphabet("ab");
+      accepts = new Set([q2, q3]);
+
+      t1 = new Transition(q1, q1, "a");
+      t2 = new Transition(q1, q2, "b");
+      t3 = new Transition(q2, q1, "a");
+      t4 = new Transition(q2, q2, "b");
+      t5 = new Transition(q3, q3, "a");
+      t6 = new Transition(q3, q3, "b");
+      transitions = new Set([t1, t2, t3, t4, t5, t6]);
+    });
+
+    it("Should return valid class attributes", function() {
+      const fas = new FSA(states, alphabet, transitions, q1, accepts);
+      states.delete(q3);
+      accepts.delete(q3);
+      transitions.delete(t5);
+      transitions.delete(t6);
+
+      assert(fas.states === states);
+      assert(fas.alphabet === alphabet);
+      assert(isSubSet(fas.tfunc, transitions)); // tfunc can be reduced
+      assert(fas.start === q1);
+      assert(fas.accepts === accepts);
+      assert(fas.paths.size === 0);
+    });
+  });
+
   describe("FSA#validateTFunc()", function() {
     let q1, q2, q3;
     let states, alphabet, accepts;
@@ -126,13 +165,11 @@ describe("FSA Creation", function() {
   });
 
   describe("FSA#createFSA()", function() {
-    let states, states2, aph, aph2, tr, tr2;
+    let states, aph, tr, tr2;
 
     before(function() {
       states = ["q1", "q2"];
-      states2 = "q1";
       aph = "01";
-      aph2 = ["start", "end"];
       tr = [
         { from: "q1", to: "q2", input: "0" },
         { from: "q2", to: "q1", input: "0" },
@@ -170,6 +207,40 @@ describe("FSA Creation", function() {
 
     it("Should successfully create the FSA", function() {
       expect(() => createFSA(states, aph, tr, "q1", states)).to.not.throw();
+      expect(() => createFSA(states, aph, tr, "q1", "q1")).to.not.throw();
+      expect(() => createFSA("q1", "0", tr2, "q1", "q1")).to.not.throw();
+    });
+  });
+
+  describe("FSA#receiveInput()", function() {
+    let q1, q2, q3;
+    let t1, t2, t3, t4;
+    let states, alphabet, accepts, transitions, fas;
+
+    before(function() {
+      q1 = new State("q1");
+      q2 = new State("q2");
+      q3 = new State("q3");
+
+      states = new Set([q1, q2]);
+      alphabet = new Alphabet("ab");
+      accepts = new Set([q2]);
+
+      t1 = new Transition(q1, q1, "a");
+      t2 = new Transition(q1, q2, "b");
+      t3 = new Transition(q2, q1, "a");
+      t4 = new Transition(q2, q2, "b");
+      transitions = new Set([t1, t2, t3, t4]);
+      fas = new FSA(states, alphabet, transitions, q1, accepts);
+    });
+
+    it("Should return the destination state", function() {
+      assert(fas.receiveInput("a", q1), q1);
+      assert(fas.receiveInput("b", q1), q2);
+    });
+
+    it("Should throw error on invalid input state", function() {
+      expect(() => fas.receiveInput("a", q3)).to.throw(ErrorCode.INPUT_STATE_NOT_FOUND);
     });
   });
 });
