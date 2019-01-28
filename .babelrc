@@ -4,6 +4,17 @@
   "env": {
     "test": {
       "plugins": ["istanbul"]
+    },
+    "prod": {
+      "presets": [
+        [
+          "minify",
+          {
+            "evaluate": false,
+            "mangle": true
+          }
+        ]
+      ]
     }
   }
 }
