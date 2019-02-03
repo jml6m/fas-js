@@ -1,7 +1,7 @@
 {
   "name": "fas-js",
   "description": "Finate State Automata JS Solutions",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "main": "lib/modules.js",
   "repository": {
     "type": "git",
@@ -26,7 +26,6 @@
     "@babel/preset-env": "^7.3.0",
     "@babel/preset-flow": "^7.0.0",
     "@babel/register": "^7.0.0",
-    "@babel/runtime": "7.0.0-beta.55",
     "babel-plugin-istanbul": "^5.1.1",
     "babel-preset-minify": "^0.5.0",
     "chai": "^4.2.0",
@@ -69,6 +68,7 @@
     "turing"
   ],
   "dependencies": {
+    "@babel/runtime": "7.0.0-beta.55",
     "chalk": "^2.4.2"
   }
 }
