@@ -206,8 +206,6 @@ describe("FSA Creation", function() {
     });
 
     it("Should successfully create the FSA", function() {
-      const test = createFSA(states, aph, tr, "q1", ["q2"]);
-      
       expect(() => createFSA(states, aph, tr, "q1", states)).to.not.throw();
       expect(() => createFSA(states, aph, tr, "q1", "q1")).to.not.throw();
       expect(() => createFSA("q1", "0", tr2, "q1", "q1")).to.not.throw();

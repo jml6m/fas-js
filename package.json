@@ -1,7 +1,7 @@
 {
   "name": "fas-js",
   "description": "Finate State Automata JS Solutions",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "main": "lib/modules.js",
   "repository": {
     "type": "git",
