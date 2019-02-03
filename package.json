@@ -13,7 +13,7 @@
     "clean": "rimraf lib/*",
     "prepare": "cross-env NODE_ENV=prod npm run build && npm run flow check",
     "flow": "flow",
-    "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
+    "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js && codecov --disable=gcov -t :13878658-5d4d-49e3-b8b4-717a749aad2e"
   },
   "precommit": "test",
   "author": "Joseph Lewkovich",
