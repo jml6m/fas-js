@@ -6,9 +6,9 @@ import globals from "rollup-plugin-node-globals";
 export default {
   input: "lib/modules.js",
   output: {
-    file: "lib/index.mjs",
-    format: "es",
-    browser: true
+    file: "lib/index.bundle.js",
+    format: "iife",
+    name: "fasJs"
   },
   plugins: [
     globals(),
