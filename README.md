@@ -16,14 +16,9 @@ Add the latest version of `fas-js` to your package.json:
 npm install fas-js --save-dev
 ```
 
-Import into NodeJS:
+Import into NodeJS or Browser:
 ```
 var fas_js = require('fas-js');
-```
-
-Import into browser environment using UMD bundles:
-```
-var fas_js = require('https://bundle.run/fas-js')
 ```
 
 ## Background

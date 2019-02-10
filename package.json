@@ -1,17 +1,20 @@
 {
   "name": "fas-js",
   "description": "Finate State Automata JS Solutions",
-  "version": "1.1.0",
+  "version": "1.1.8",
+  "source": "src/modules.js",
   "main": "lib/modules.js",
+  "umd:main": "lib/modules.umd.js",
+  "module": "lib/modules.mjs",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jml6m/fas-js.git"
   },
   "scripts": {
-    "build": "babel src/ -d lib/",
+    "build": "babel src/ -d lib/ && microbundle build --strict --sourcemap false -f es,umd",
     "prebuild": "npm run clean",
     "clean": "rimraf lib/*",
-    "prepare": "cross-env NODE_ENV=prod npm run build && npm run flow check",
+    "prepublishOnly": "cross-env NODE_ENV=prod npm run build && npm run flow check",
     "flow": "flow",
     "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
   },
@@ -31,6 +34,7 @@
     "chai": "^4.2.0",
     "cross-env": "^5.2.0",
     "flow-bin": "^0.91.0",
+    "microbundle": "^0.9.0",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
     "pre-commit": "^1.2.2",
@@ -70,5 +74,8 @@
   "dependencies": {
     "@babel/runtime": "7.0.0-beta.55",
     "chalk": "^2.4.2"
-  }
+  },
+  "files": [
+    "lib/"
+  ]
 }
