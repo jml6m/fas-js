@@ -1,5 +1,5 @@
 // @flow
-const chalk = require("chalk");
+import chalk from "chalk";
 import { State } from "./State.js";
 import { Alphabet } from "./Alphabet.js";
 import { Transition } from "./Transition.js";

@@ -6,7 +6,7 @@ import globals from "rollup-plugin-node-globals";
 export default {
   input: "lib/modules.js",
   output: {
-    file: "lib/index.bundle.js",
+    file: "lib/modules.bundle.js",
     format: "iife",
     name: "fasJs"
   },
