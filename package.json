@@ -4,14 +4,12 @@
   "version": "1.1.9",
   "source": "src/modules.js",
   "main": "lib/modules.js",
-  "umd:main": "lib/modules.umd.js",
-  "module": "lib/modules.mjs",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jml6m/fas-js.git"
   },
   "scripts": {
-    "build": "babel src/ -d lib/ && microbundle build --strict --sourcemap false -f es,umd",
+    "build": "babel src/ -d lib/ && browserify -t [ babelify --presets [ @babel/preset-env @babel/preset-flow ] ] src/modules.js --standalone fasJs > lib/bundle.js",
     "prebuild": "npm run clean",
     "clean": "rimraf lib/*",
     "prepublishOnly": "cross-env NODE_ENV=prod npm run build && npm run flow check",
@@ -31,10 +29,11 @@
     "@babel/register": "^7.0.0",
     "babel-plugin-istanbul": "^5.1.1",
     "babel-preset-minify": "^0.5.0",
+    "babelify": "^10.0.0",
+    "browserify": "^16.2.3",
     "chai": "^4.2.0",
     "cross-env": "^5.2.0",
     "flow-bin": "^0.91.0",
-    "microbundle": "^0.9.0",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
     "pre-commit": "^1.2.2",
