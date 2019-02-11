@@ -1,20 +1,9 @@
 {
   "presets": ["@babel/preset-flow", "@babel/preset-env"],
-  "plugins": ["@babel/plugin-proposal-class-properties", "@babel/plugin-transform-runtime"],
+  "plugins": ["@babel/plugin-proposal-class-properties"],
   "env": {
     "test": {
       "plugins": ["istanbul"]
-    },
-    "prod": {
-      "presets": [
-        [
-          "minify",
-          {
-            "evaluate": false,
-            "mangle": true
-          }
-        ]
-      ]
     }
   }
 }

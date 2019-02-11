@@ -1,18 +1,18 @@
 {
   "name": "fas-js",
   "description": "Finate State Automata JS Solutions",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "source": "src/modules.js",
-  "main": "lib/modules.js",
+  "main": "lib/bundle.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jml6m/fas-js.git"
   },
   "scripts": {
-    "build": "babel src/ -d lib/ && browserify -t [ babelify --presets [ @babel/preset-env @babel/preset-flow ] ] src/modules.js --standalone fasJs > lib/bundle.js",
+    "build": "browserify -t [ babelify --presets [ @babel/preset-env @babel/preset-flow ] ] src/modules.js --standalone fasJs -p tinyify > lib/bundle.js",
     "prebuild": "npm run clean",
     "clean": "rimraf lib/*",
-    "prepublishOnly": "cross-env NODE_ENV=prod npm run build && npm run flow check",
+    "prepublishOnly": "npm run build && npm run flow check",
     "flow": "flow",
     "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
   },
@@ -20,15 +20,12 @@
   "author": "Joseph Lewkovich",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
     "@babel/core": "^7.2.2",
     "@babel/plugin-proposal-class-properties": "^7.3.0",
-    "@babel/plugin-transform-runtime": "^7.2.0",
     "@babel/preset-env": "^7.3.0",
     "@babel/preset-flow": "^7.0.0",
     "@babel/register": "^7.0.0",
     "babel-plugin-istanbul": "^5.1.1",
-    "babel-preset-minify": "^0.5.0",
     "babelify": "^10.0.0",
     "browserify": "^16.2.3",
     "chai": "^4.2.0",
@@ -37,7 +34,8 @@
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
     "pre-commit": "^1.2.2",
-    "rimraf": "^2.6.3"
+    "rimraf": "^2.6.3",
+    "tinyify": "^2.5.0"
   },
   "nyc": {
     "sourceMap": false,
@@ -75,6 +73,6 @@
     "chalk": "^2.4.2"
   },
   "files": [
-    "lib/"
+    "lib/bundle.js"
   ]
 }

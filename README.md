@@ -4,6 +4,7 @@
 [![devDependencies Status](https://david-dm.org/jml6m/fas-js/dev-status.svg)](https://david-dm.org/jml6m/fas-js?type=dev)
 [![Known Vulnerabilities](https://snyk.io/test/github/jml6m/fas-js/badge.svg)](https://snyk.io/test/github/jml6m/fas-js)
 [![codecov](https://codecov.io/gh/jml6m/fas-js/branch/master/graph/badge.svg)](https://codecov.io/gh/jml6m/fas-js)
+[![jsDelivr](https://data.jsdelivr.com/v1/package/npm/fas-js/badge)](https://www.jsdelivr.com/package/npm/fas-js)
 
 Easily create and simulate any Finite State Automaton (FSA) using this JS library. Import into your own server side or browser based JS application.
 
@@ -16,9 +17,14 @@ Add the latest version of `fas-js` to your package.json:
 npm install fas-js --save-dev
 ```
 
-Import into NodeJS or Browser:
+Import the ES6 module:
 ```
 var fas_js = require('fas-js');
+```
+
+Import into HTML file
+```
+<script src="https://cdn.jsdelivr.net/npm/fas-js/lib/bundle.js"></script>
 ```
 
 ## Background
