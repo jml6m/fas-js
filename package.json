@@ -13,7 +13,7 @@
   "scripts": {
     "xxbuild": "babel src/ -d lib/ && microbundle build --strict --sourcemap false -f es,umd --external chalk",
     "yybuild": "babel src/ -d lib/ && rollup -c",
-    "build": "babel src/ -d lib/ && browserify lib/modules.js -o lib/modules.bundle.js",
+    "build": "babel src/ -d lib/ && browserify -t [ babelify --presets [ @babel/preset-env @babel/preset-flow ] ] src/modules.js -o lib/modules.bundle.js",
     "prebuild": "npm run clean",
     "clean": "rimraf lib/*",
     "prepublishOnly": "cross-env NODE_ENV=prod npm run build && npm run flow check",
@@ -33,6 +33,7 @@
     "@babel/register": "^7.0.0",
     "babel-plugin-istanbul": "^5.1.1",
     "babel-preset-minify": "^0.5.0",
+    "babelify": "^10.0.0",
     "browserify": "^16.2.3",
     "chai": "^4.2.0",
     "cross-env": "^5.2.0",

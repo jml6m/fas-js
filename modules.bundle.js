@@ -1,935 +1,22 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-"use strict";
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Alphabet = void 0;
-
-var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
-
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
-var _errors = require("../globals/errors.js");
-
-var _globals = require("../globals/globals.js");
-
-var Alphabet = function Alphabet(sigma) {
-  (0, _classCallCheck2.default)(this, Alphabet);
-  (0, _defineProperty2.default)(this, "sigma", void 0);
-
-  if (!Array.isArray(sigma)) {
-    if (typeof sigma === "string") sigma = (0, _toConsumableArray2.default)(sigma);else throw new TypeError();
-  }
-
-  this.sigma = sigma;
-  if ((0, _globals.duplicates)((0, _globals.count)(this.sigma)).length > 0) throw new Error(_errors.ErrorCode.DUPLICATE_ALPHABET_VALS);
-};
-
-exports.Alphabet = Alphabet;
-},{"../globals/errors.js":6,"../globals/globals.js":7,"@babel/runtime/helpers/classCallCheck":17,"@babel/runtime/helpers/defineProperty":19,"@babel/runtime/helpers/interopRequireDefault":20,"@babel/runtime/helpers/toConsumableArray":26}],2:[function(require,module,exports){
-"use strict";
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.createFSA = exports.FSA = void 0;
-
-var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
-
-var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
-
-var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
-
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
-
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
-var _chalk = _interopRequireDefault(require("chalk"));
-
-var _State = require("./State.js");
-
-var _Alphabet = require("./Alphabet.js");
-
-var _Transition = require("./Transition.js");
-
-var _errors = require("../globals/errors.js");
-
-var _globals = require("../globals/globals.js");
-
-var FSA =
-/*#__PURE__*/
-function () {
-  // FSA 5-tuple
-  // Q
-  // Σ
-  // δ
-  // q0
-  // F
-  // Other attributes
-  // States mapped to each member of Σ, will be empty after constructor returns
-  // State names mapped to their dest state names
-  // Will contain template literal for GraphViz
-  function FSA(states, alphabet, tfunc, start, accepts) {
-    (0, _classCallCheck2.default)(this, FSA);
-    (0, _defineProperty2.default)(this, "states", void 0);
-    (0, _defineProperty2.default)(this, "alphabet", void 0);
-    (0, _defineProperty2.default)(this, "tfunc", void 0);
-    (0, _defineProperty2.default)(this, "start", void 0);
-    (0, _defineProperty2.default)(this, "accepts", void 0);
-    (0, _defineProperty2.default)(this, "paths", void 0);
-    (0, _defineProperty2.default)(this, "links", void 0);
-    (0, _defineProperty2.default)(this, "digraph", void 0);
-    // states validations
-    if ((0, _globals.checkStateDuplicates)(states)) throw new Error(_errors.ErrorCode.DUPLICATE_STATE_NAMES);
-    this.states = states;
-    this.alphabet = alphabet; // Create paths map
-
-    this.createPaths(); // Start/Accept validations
-
-    if (!states.has(start)) throw new Error(_errors.ErrorCode.START_STATE_NOT_FOUND);
-    this.start = start;
-    if (Object.keys(accepts).length === 0 && accepts.constructor === Object) accepts = new Set([]); // Allow for {}
-
-    if (!(0, _globals.isSubSet)(accepts, states)) throw new Error(_errors.ErrorCode.ACCEPTS_NOT_SUBSET);
-    this.accepts = accepts; // TFunc validations
-
-    this.tfunc = tfunc;
-    this.validateTFunc(); // Digraph
-
-    this.digraph = this.generateDigraph();
-  }
-  /*
-   * Transition function should only contain states in Q, and one transition should exist
-   * for each combination of Q x Σ
-   */
-
-
-  (0, _createClass2.default)(FSA, [{
-    key: "validateTFunc",
-    value: function validateTFunc() {
-      var newTFunc = new Set(); // Will contain only necessary transitions
-
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = this.tfunc[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var _t = _step.value;
-          // Check for valid states
-          if (!this.states.has(_t.origin)) throw new Error(_errors.ErrorCode.ORIGIN_STATE_NOT_FOUND);
-          if (!this.states.has(_t.dest)) throw new Error(_errors.ErrorCode.DEST_STATE_NOT_FOUND);
-          var pathStateVals = (0, _globals.getOrDefault)(this.paths, _t.origin, new Set()); // Map transition to a path and remove on match
-
-          if (this.paths.has(_t.origin) && pathStateVals.has(_t.input)) {
-            if (this.alphabet.sigma.indexOf !== -1) {
-              newTFunc.add(_t);
-              pathStateVals.delete(_t.input);
-
-              if (pathStateVals.size === 0) {
-                this.paths.delete(_t.origin);
-              }
-            }
-          }
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return != null) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-
-      if (this.paths.size > 0) {
-        console.error(_chalk.default.redBright("Not all FSA paths have a transition specified:"));
-        var _iteratorNormalCompletion2 = true;
-        var _didIteratorError2 = false;
-        var _iteratorError2 = undefined;
-
-        try {
-          for (var _iterator2 = this.paths[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-            var _step2$value = (0, _slicedToArray2.default)(_step2.value, 2),
-                key = _step2$value[0],
-                val = _step2$value[1];
-
-            console.error(_chalk.default.redBright("State %s on input(s): %s"), key.name, (0, _toConsumableArray2.default)(val).join(" "));
-          }
-        } catch (err) {
-          _didIteratorError2 = true;
-          _iteratorError2 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-              _iterator2.return();
-            }
-          } finally {
-            if (_didIteratorError2) {
-              throw _iteratorError2;
-            }
-          }
-        }
-
-        throw new Error(_errors.ErrorCode.MISSING_REQUIRED_TRANSITION);
-      }
-
-      this.tfunc = newTFunc;
-    }
-  }, {
-    key: "createPaths",
-    value: function createPaths() {
-      this.paths = new Map();
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = this.states[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var state = _step3.value;
-          var _iteratorNormalCompletion4 = true;
-          var _didIteratorError4 = false;
-          var _iteratorError4 = undefined;
-
-          try {
-            for (var _iterator4 = this.alphabet.sigma[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-              var char = _step4.value;
-              var pathStateVals = (0, _globals.getOrDefault)(this.paths, state, new Set());
-              if (this.paths.has(state)) pathStateVals.add(char);else this.paths.set(state, new Set([char]));
-            }
-          } catch (err) {
-            _didIteratorError4 = true;
-            _iteratorError4 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion4 && _iterator4.return != null) {
-                _iterator4.return();
-              }
-            } finally {
-              if (_didIteratorError4) {
-                throw _iteratorError4;
-              }
-            }
-          }
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return != null) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
-      }
-    }
-  }, {
-    key: "receiveInput",
-    value: function receiveInput(input, state) {
-      if (this.alphabet.sigma.indexOf(input) === -1) throw new Error(_errors.ErrorCode.INVALID_INPUT_CHAR);
-      if (!this.states.has(state)) throw new Error(_errors.ErrorCode.INPUT_STATE_NOT_FOUND);
-      var path = Array.from(this.tfunc).find(function (obj) {
-        return obj.origin === state && obj.input === input;
-      });
-      if (path) return path.dest;else throw new Error(_errors.ErrorCode.INVALID_TRANSITION_OBJECT);
-    } // Determine digraph order based on start state, then following the chain
-
-  }, {
-    key: "determineStateOrder",
-    value: function determineStateOrder() {
-      var statesOrder = []; // Ordered state names for digraph
-      // Map origin state names to dest state names
-
-      this.links = new Map();
-      var _iteratorNormalCompletion5 = true;
-      var _didIteratorError5 = false;
-      var _iteratorError5 = undefined;
-
-      try {
-        for (var _iterator5 = this.tfunc[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-          var tr = _step5.value;
-          var linkStateVals = (0, _globals.getOrDefault)(this.links, tr.origin.name, new Set());
-          if (this.links.has(tr.origin.name)) linkStateVals.add(tr.dest.name);else this.links.set(tr.origin.name, new Set([tr.dest.name]));
-        } // Populate state order
-
-      } catch (err) {
-        _didIteratorError5 = true;
-        _iteratorError5 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion5 && _iterator5.return != null) {
-            _iterator5.return();
-          }
-        } finally {
-          if (_didIteratorError5) {
-            throw _iteratorError5;
-          }
-        }
-      }
-
-      this.parseLinks(statesOrder, this.start.name); // Check for dead states and reduce FSA if necessary
-
-      var stateArr = [];
-      Object.values((0, _toConsumableArray2.default)(this.states)).map(function (state) {
-        return stateArr.push(state.name);
-      });
-      var deadStates = stateArr.filter(function (x) {
-        return !statesOrder.includes(x);
-      });
-
-      if (deadStates.length > 0) {
-        console.warn(_chalk.default.yellowBright("Dead states detected, removing them and associated transitions: %O"), deadStates);
-        this.removeDeadStates(deadStates);
-      }
-
-      return statesOrder;
-    } // Reduce FSA by removing dead states and associated transitions
-
-  }, {
-    key: "removeDeadStates",
-    value: function removeDeadStates(deadStates) {
-      // Q
-      var _iteratorNormalCompletion6 = true;
-      var _didIteratorError6 = false;
-      var _iteratorError6 = undefined;
-
-      try {
-        for (var _iterator6 = this.states[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-          var state = _step6.value;
-          if (deadStates.indexOf(state.name) !== -1) this.states.delete(state);
-        } // F
-
-      } catch (err) {
-        _didIteratorError6 = true;
-        _iteratorError6 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion6 && _iterator6.return != null) {
-            _iterator6.return();
-          }
-        } finally {
-          if (_didIteratorError6) {
-            throw _iteratorError6;
-          }
-        }
-      }
-
-      var _iteratorNormalCompletion7 = true;
-      var _didIteratorError7 = false;
-      var _iteratorError7 = undefined;
-
-      try {
-        for (var _iterator7 = this.accepts[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-          var _state = _step7.value;
-          if (deadStates.indexOf(_state.name) !== -1) this.accepts.delete(_state);
-        } // δ
-
-      } catch (err) {
-        _didIteratorError7 = true;
-        _iteratorError7 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion7 && _iterator7.return != null) {
-            _iterator7.return();
-          }
-        } finally {
-          if (_didIteratorError7) {
-            throw _iteratorError7;
-          }
-        }
-      }
-
-      var _iteratorNormalCompletion8 = true;
-      var _didIteratorError8 = false;
-      var _iteratorError8 = undefined;
-
-      try {
-        for (var _iterator8 = this.tfunc[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-          var tr = _step8.value;
-          if (deadStates.indexOf(tr.origin.name) !== -1 || deadStates.indexOf(tr.dest.name) !== -1) this.tfunc.delete(tr);
-        }
-      } catch (err) {
-        _didIteratorError8 = true;
-        _iteratorError8 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion8 && _iterator8.return != null) {
-            _iterator8.return();
-          }
-        } finally {
-          if (_didIteratorError8) {
-            throw _iteratorError8;
-          }
-        }
-      }
-    } // Recursively parse graph while adding to an array in order, beginning with q0
-
-  }, {
-    key: "parseLinks",
-    value: function parseLinks(arr, name) {
-      arr.push(name);
-      var nameVal = (0, _globals.getOrDefault)(this.links, name, "");
-      var _iteratorNormalCompletion9 = true;
-      var _didIteratorError9 = false;
-      var _iteratorError9 = undefined;
-
-      try {
-        for (var _iterator9 = nameVal[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-          var st = _step9.value;
-          if (arr.indexOf(st) === -1) this.parseLinks(arr, st);
-        }
-      } catch (err) {
-        _didIteratorError9 = true;
-        _iteratorError9 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion9 && _iterator9.return != null) {
-            _iterator9.return();
-          }
-        } finally {
-          if (_didIteratorError9) {
-            throw _iteratorError9;
-          }
-        }
-      }
-    }
-  }, {
-    key: "generateDigraph",
-    value: function generateDigraph() {
-      // Prep outputs
-      var acceptArr = [];
-      var _iteratorNormalCompletion10 = true;
-      var _didIteratorError10 = false;
-      var _iteratorError10 = undefined;
-
-      try {
-        for (var _iterator10 = this.accepts[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-          var state = _step10.value;
-          acceptArr.push(state.name);
-        } // return template literal
-
-      } catch (err) {
-        _didIteratorError10 = true;
-        _iteratorError10 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion10 && _iterator10.return != null) {
-            _iterator10.return();
-          }
-        } finally {
-          if (_didIteratorError10) {
-            throw _iteratorError10;
-          }
-        }
-      }
-
-      return "digraph fsa {\n        ".concat(Object.values(this.determineStateOrder()).map(function (str) {
-        if (acceptArr.indexOf(str) !== -1) return str + " [shape = doublecircle];";else return str;
-      }).join("\n\t"), "\n        rankdir=LR;\n        node [shape = point ]; qi;\n        node [shape = circle];\n        qi -> ").concat(this.start.name, ";\n        ").concat(Object.values((0, _toConsumableArray2.default)(this.tfunc)).map(function (t) {
-        return t.origin.name + " -> " + t.dest.name + ' [ label = "' + t.input + '" ];';
-      }).join("\n\t"), "\n    }\n    ");
-    }
-  }]);
-  return FSA;
-}(); // Global export method for creating FSA
-
-
-exports.FSA = FSA;
-
-var createFSA = function createFSA(states, alphabet, transitions, start, accepts) {
-  // Type check and conversion for states
-  var _states = new Map();
-
-  if (typeof states === "string") {
-    _states.set(states, new _State.State(states));
-  } else if (Array.isArray(states)) {
-    var _iteratorNormalCompletion11 = true;
-    var _didIteratorError11 = false;
-    var _iteratorError11 = undefined;
-
-    try {
-      for (var _iterator11 = states[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
-        var state = _step11.value;
-        if (!_states.has(state)) _states.set(state, new _State.State(state));
-      }
-    } catch (err) {
-      _didIteratorError11 = true;
-      _iteratorError11 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion11 && _iterator11.return != null) {
-          _iterator11.return();
-        }
-      } finally {
-        if (_didIteratorError11) {
-          throw _iteratorError11;
-        }
-      }
-    }
-  } else {
-    throw new TypeError(states);
-  } // Convert transition array to Set<Transition>
-
-
-  var _tfunc = new Set();
-
-  if (!Array.isArray(transitions) && (0, _typeof2.default)(transitions) === "object") transitions = [transitions];
-
-  if (Array.isArray(transitions)) {
-    var _iteratorNormalCompletion12 = true;
-    var _didIteratorError12 = false;
-    var _iteratorError12 = undefined;
-
-    try {
-      for (var _iterator12 = transitions[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
-        var tr = _step12.value;
-        if (!tr["from"] || !tr["to"] || !tr["input"]) throw new Error(_errors.ErrorCode.INVALID_TRANSITION_OBJECT);
-        var fromVal = (0, _globals.getOrDefault)(_states, tr["from"], null);
-        var toVal = (0, _globals.getOrDefault)(_states, tr["to"], null);
-
-        _tfunc.add(new _Transition.Transition(fromVal, toVal, tr["input"]));
-      }
-    } catch (err) {
-      _didIteratorError12 = true;
-      _iteratorError12 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion12 && _iterator12.return != null) {
-          _iterator12.return();
-        }
-      } finally {
-        if (_didIteratorError12) {
-          throw _iteratorError12;
-        }
-      }
-    }
-  } else {
-    throw new TypeError(transitions);
-  } // Convert remaining inputs
-
-
-  var _alphabet = new _Alphabet.Alphabet(alphabet);
-
-  if (typeof start !== "string") throw new TypeError(start);
-
-  var _start = (0, _globals.getOrDefault)(_states, start, null);
-
-  var _accepts = new Set();
-
-  if (typeof accepts === "string") {
-    if (_states.has(accepts)) _accepts.add((0, _globals.getOrDefault)(_states, accepts, null));
-  } else if (Array.isArray(accepts)) {
-    var _iteratorNormalCompletion13 = true;
-    var _didIteratorError13 = false;
-    var _iteratorError13 = undefined;
-
-    try {
-      for (var _iterator13 = accepts[Symbol.iterator](), _step13; !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
-        var _state2 = _step13.value;
-
-        _accepts.add((0, _globals.getOrDefault)(_states, _state2, null));
-      }
-    } catch (err) {
-      _didIteratorError13 = true;
-      _iteratorError13 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion13 && _iterator13.return != null) {
-          _iterator13.return();
-        }
-      } finally {
-        if (_didIteratorError13) {
-          throw _iteratorError13;
-        }
-      }
-    }
-  } else {
-    throw new TypeError(accepts);
-  }
-
-  return new FSA(new Set(_states.values()), _alphabet, _tfunc, _start, _accepts);
-};
-
-exports.createFSA = createFSA;
-},{"../globals/errors.js":6,"../globals/globals.js":7,"./Alphabet.js":1,"./State.js":3,"./Transition.js":4,"@babel/runtime/helpers/classCallCheck":17,"@babel/runtime/helpers/createClass":18,"@babel/runtime/helpers/defineProperty":19,"@babel/runtime/helpers/interopRequireDefault":20,"@babel/runtime/helpers/slicedToArray":25,"@babel/runtime/helpers/toConsumableArray":26,"@babel/runtime/helpers/typeof":27,"chalk":29}],3:[function(require,module,exports){
-"use strict";
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.State = void 0;
-
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
-var _errors = require("../globals/errors.js");
-
-var State = function State(name) {
-  (0, _classCallCheck2.default)(this, State);
-  (0, _defineProperty2.default)(this, "name", void 0);
-  this.name = name;
-  if (!this.name) throw new Error(_errors.ErrorCode.INVALID_STATE_NAME);
-};
-
-exports.State = State;
-},{"../globals/errors.js":6,"@babel/runtime/helpers/classCallCheck":17,"@babel/runtime/helpers/defineProperty":19,"@babel/runtime/helpers/interopRequireDefault":20}],4:[function(require,module,exports){
-"use strict";
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Transition = void 0;
-
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
-var _State = require("./State.js");
-
-var Transition = function Transition(origin, dest, input) {
-  (0, _classCallCheck2.default)(this, Transition);
-  (0, _defineProperty2.default)(this, "origin", void 0);
-  (0, _defineProperty2.default)(this, "dest", void 0);
-  (0, _defineProperty2.default)(this, "input", void 0);
-  this.origin = origin;
-  this.dest = dest;
-  this.input = input;
-};
-
-exports.Transition = Transition;
-},{"./State.js":3,"@babel/runtime/helpers/classCallCheck":17,"@babel/runtime/helpers/defineProperty":19,"@babel/runtime/helpers/interopRequireDefault":20}],5:[function(require,module,exports){
-"use strict";
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.stepOnceFSA = exports.simulateFSA = void 0;
-
-var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
-
-var _chalk = _interopRequireDefault(require("chalk"));
-
-var _FSA = require("../classes/FSA.js");
-
-var _State = require("../classes/State.js");
-
-var _errors = require("../globals/errors.js");
-
-var simulateFSA = function simulateFSA(w, fsa) {
-  var logging = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-  if (logging) console.log(_chalk.default.cyan("Beginning FSA Simulation")); //Accept either string or string[] for w
-
-  if (!Array.isArray(w)) {
-    if (typeof w === "string") w = (0, _toConsumableArray2.default)(w);else {
-      if (logging) console.error(_chalk.default.redBright("Input w was invalid type: %O"), w);
-      throw new TypeError();
-    }
-  } // Step through input
-
-
-  if (logging) console.log(_chalk.default.inverse("Input Processing Started"));
-  var currentState = fsa.start;
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
-
-  try {
-    for (var _iterator = w[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var char = _step.value;
-      var prevState = currentState;
-
-      try {
-        currentState = fsa.receiveInput(char, prevState);
-      } catch (e) {
-        if (e.message === _errors.ErrorCode.INVALID_INPUT_CHAR) {
-          if (logging) console.error(_chalk.default.redBright("Invalid input symbol: '%s'"), char);
-        } else {
-          if (logging) console.error(_chalk.default.redBright(e));
-        }
-
-        return prevState.name;
-      }
-
-      if (logging) console.log("%s x %s -> %s", prevState.name, char, currentState.name);
-    }
-  } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator.return != null) {
-        _iterator.return();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
-  }
-
-  if (logging) console.log(_chalk.default.inverse("Input Processing Ended"));
-
-  if (fsa.accepts.has(currentState)) {
-    if (logging) console.log(_chalk.default.green("Input Accepted!"));
-    return currentState.name;
-  } else {
-    if (logging) console.log(_chalk.default.red("Input Rejected!"));
-    return currentState.name;
-  }
-};
-
-exports.simulateFSA = simulateFSA;
-
-var stepOnceFSA = function stepOnceFSA(w, qin, fsa) {
-  var logging = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
-
-  // Type checks
-  if (typeof w !== "string") {
-    if (logging) console.error(_chalk.default.redBright("Input w was invalid type: %O"), w);
-    throw new TypeError();
-  }
-
-  if (typeof qin !== "string") {
-    if (logging) console.error(_chalk.default.redBright("Input state was invalid type: %O"), qin);
-    throw new TypeError();
-  } // Step once
-
-
-  if (logging) console.log(_chalk.default.inverse("Input Processing Started"));
-  var prevState;
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
-
-  try {
-    for (var _iterator2 = fsa.states.values()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var state = _step2.value;
-      if (qin === state.name) prevState = state;
-    }
-  } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-        _iterator2.return();
-      }
-    } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
-      }
-    }
-  }
-
-  if (!prevState) {
-    throw new Error(_errors.ErrorCode.INVALID_STATE_NAME);
-  }
-
-  var newState = fsa.receiveInput(w, prevState);
-  if (logging) console.log("%s x %s -> %s", prevState.name, w, newState.name);
-  if (logging) console.log(_chalk.default.inverse("Input Processing Ended"));
-  return newState.name;
-};
-
-exports.stepOnceFSA = stepOnceFSA;
-},{"../classes/FSA.js":2,"../classes/State.js":3,"../globals/errors.js":6,"@babel/runtime/helpers/interopRequireDefault":20,"@babel/runtime/helpers/toConsumableArray":26,"chalk":29}],6:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.ErrorCode = void 0;
-var ErrorCode = Object.freeze({
-  DUPLICATE_ALPHABET_VALS: "E-001",
-  DUPLICATE_STATE_NAMES: "E-002",
-  INVALID_STATE_NAME: "E-003",
-  START_STATE_NOT_FOUND: "E-004",
-  ACCEPTS_NOT_SUBSET: "E-005",
-  ORIGIN_STATE_NOT_FOUND: "E-006",
-  DEST_STATE_NOT_FOUND: "E-007",
-  MISSING_REQUIRED_TRANSITION: "E-008",
-  INVALID_INPUT_CHAR: "E-009",
-  INPUT_STATE_NOT_FOUND: "E-010",
-  INVALID_TRANSITION_OBJECT: "E-011"
-});
-exports.ErrorCode = ErrorCode;
-},{}],7:[function(require,module,exports){
-"use strict";
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.getOrDefault = exports.isSubSet = exports.checkStateDuplicates = exports.duplicates = exports.count = void 0;
-
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
-var _State = require("../classes/State.js");
-
-// Count number of instances for each string in an array - returns key/val pairs
-var count = function count(names) {
-  return names.reduce(function (a, b) {
-    return Object.assign(a, (0, _defineProperty2.default)({}, b, (a[b] || 0) + 1));
-  }, {});
-}; // Returns keys with value > 1
-
-
-exports.count = count;
-
-var duplicates = function duplicates(dict) {
-  return Object.keys(dict).filter(function (a) {
-    return dict[a] > 1;
-  });
-}; // Check for duplicate keys in a Set<State> input
-
-
-exports.duplicates = duplicates;
-
-var checkStateDuplicates = function checkStateDuplicates(states) {
-  var check = new Set();
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
-
-  try {
-    for (var _iterator = states[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var item = _step.value;
-      if (check.has(item.name)) return true;
-      check.add(item.name);
-    }
-  } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator.return != null) {
-        _iterator.return();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
-  }
-
-  return false;
-}; // Check whether inputSet is a subset of otherSet
-
-
-exports.checkStateDuplicates = checkStateDuplicates;
-
-var isSubSet = function isSubSet(inputSet, otherSet) {
-  if (inputSet.size > otherSet.size) return false;else {
-    var _iteratorNormalCompletion2 = true;
-    var _didIteratorError2 = false;
-    var _iteratorError2 = undefined;
-
-    try {
-      for (var _iterator2 = inputSet[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-        var elem = _step2.value;
-        if (!otherSet.has(elem)) return false;
-      }
-    } catch (err) {
-      _didIteratorError2 = true;
-      _iteratorError2 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-          _iterator2.return();
-        }
-      } finally {
-        if (_didIteratorError2) {
-          throw _iteratorError2;
-        }
-      }
-    }
-
-    return true;
-  }
-}; // Flow hack - gets around problems with Map#get having possible void type
-
-
-exports.isSubSet = isSubSet;
-
-var getOrDefault = function getOrDefault(map, key, defaultValue) {
-  var val = map.get(key);
-  return val == null ? defaultValue : val;
-};
-
-exports.getOrDefault = getOrDefault;
-},{"../classes/State.js":3,"@babel/runtime/helpers/defineProperty":19,"@babel/runtime/helpers/interopRequireDefault":20}],8:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-Object.defineProperty(exports, "simulateFSA", {
-  enumerable: true,
-  get: function get() {
-    return _Simulators.simulateFSA;
-  }
-});
-Object.defineProperty(exports, "stepOnceFSA", {
-  enumerable: true,
-  get: function get() {
-    return _Simulators.stepOnceFSA;
-  }
-});
-Object.defineProperty(exports, "createFSA", {
-  enumerable: true,
-  get: function get() {
-    return _FSA.createFSA;
-  }
-});
-
-var _Simulators = require("./engine/Simulators.js");
-
-var _FSA = require("./classes/FSA.js");
-},{"./classes/FSA.js":2,"./engine/Simulators.js":5}],9:[function(require,module,exports){
 module.exports = require("core-js/library/fn/array/from");
-},{"core-js/library/fn/array/from":35}],10:[function(require,module,exports){
+},{"core-js/library/fn/array/from":27}],2:[function(require,module,exports){
 module.exports = require("core-js/library/fn/get-iterator");
-},{"core-js/library/fn/get-iterator":36}],11:[function(require,module,exports){
+},{"core-js/library/fn/get-iterator":28}],3:[function(require,module,exports){
 module.exports = require("core-js/library/fn/is-iterable");
-},{"core-js/library/fn/is-iterable":37}],12:[function(require,module,exports){
+},{"core-js/library/fn/is-iterable":29}],4:[function(require,module,exports){
 module.exports = require("core-js/library/fn/object/define-property");
-},{"core-js/library/fn/object/define-property":38}],13:[function(require,module,exports){
+},{"core-js/library/fn/object/define-property":30}],5:[function(require,module,exports){
 module.exports = require("core-js/library/fn/symbol");
-},{"core-js/library/fn/symbol":39}],14:[function(require,module,exports){
+},{"core-js/library/fn/symbol":31}],6:[function(require,module,exports){
 module.exports = require("core-js/library/fn/symbol/iterator");
-},{"core-js/library/fn/symbol/iterator":40}],15:[function(require,module,exports){
+},{"core-js/library/fn/symbol/iterator":32}],7:[function(require,module,exports){
 function _arrayWithHoles(arr) {
   if (Array.isArray(arr)) return arr;
 }
 
 module.exports = _arrayWithHoles;
-},{}],16:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 function _arrayWithoutHoles(arr) {
   if (Array.isArray(arr)) {
     for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) {
@@ -941,7 +28,7 @@ function _arrayWithoutHoles(arr) {
 }
 
 module.exports = _arrayWithoutHoles;
-},{}],17:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
@@ -949,7 +36,7 @@ function _classCallCheck(instance, Constructor) {
 }
 
 module.exports = _classCallCheck;
-},{}],18:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var _Object$defineProperty = require("../core-js/object/define-property");
 
 function _defineProperties(target, props) {
@@ -970,7 +57,7 @@ function _createClass(Constructor, protoProps, staticProps) {
 }
 
 module.exports = _createClass;
-},{"../core-js/object/define-property":12}],19:[function(require,module,exports){
+},{"../core-js/object/define-property":4}],11:[function(require,module,exports){
 var _Object$defineProperty = require("../core-js/object/define-property");
 
 function _defineProperty(obj, key, value) {
@@ -989,7 +76,7 @@ function _defineProperty(obj, key, value) {
 }
 
 module.exports = _defineProperty;
-},{"../core-js/object/define-property":12}],20:[function(require,module,exports){
+},{"../core-js/object/define-property":4}],12:[function(require,module,exports){
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
     default: obj
@@ -997,7 +84,7 @@ function _interopRequireDefault(obj) {
 }
 
 module.exports = _interopRequireDefault;
-},{}],21:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var _Array$from = require("../core-js/array/from");
 
 var _isIterable = require("../core-js/is-iterable");
@@ -1007,7 +94,7 @@ function _iterableToArray(iter) {
 }
 
 module.exports = _iterableToArray;
-},{"../core-js/array/from":9,"../core-js/is-iterable":11}],22:[function(require,module,exports){
+},{"../core-js/array/from":1,"../core-js/is-iterable":3}],14:[function(require,module,exports){
 var _getIterator = require("../core-js/get-iterator");
 
 function _iterableToArrayLimit(arr, i) {
@@ -1037,19 +124,19 @@ function _iterableToArrayLimit(arr, i) {
 }
 
 module.exports = _iterableToArrayLimit;
-},{"../core-js/get-iterator":10}],23:[function(require,module,exports){
+},{"../core-js/get-iterator":2}],15:[function(require,module,exports){
 function _nonIterableRest() {
   throw new TypeError("Invalid attempt to destructure non-iterable instance");
 }
 
 module.exports = _nonIterableRest;
-},{}],24:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 function _nonIterableSpread() {
   throw new TypeError("Invalid attempt to spread non-iterable instance");
 }
 
 module.exports = _nonIterableSpread;
-},{}],25:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var arrayWithHoles = require("./arrayWithHoles");
 
 var iterableToArrayLimit = require("./iterableToArrayLimit");
@@ -1061,7 +148,7 @@ function _slicedToArray(arr, i) {
 }
 
 module.exports = _slicedToArray;
-},{"./arrayWithHoles":15,"./iterableToArrayLimit":22,"./nonIterableRest":23}],26:[function(require,module,exports){
+},{"./arrayWithHoles":7,"./iterableToArrayLimit":14,"./nonIterableRest":15}],18:[function(require,module,exports){
 var arrayWithoutHoles = require("./arrayWithoutHoles");
 
 var iterableToArray = require("./iterableToArray");
@@ -1073,7 +160,7 @@ function _toConsumableArray(arr) {
 }
 
 module.exports = _toConsumableArray;
-},{"./arrayWithoutHoles":16,"./iterableToArray":21,"./nonIterableSpread":24}],27:[function(require,module,exports){
+},{"./arrayWithoutHoles":8,"./iterableToArray":13,"./nonIterableSpread":16}],19:[function(require,module,exports){
 var _Symbol$iterator = require("../core-js/symbol/iterator");
 
 var _Symbol = require("../core-js/symbol");
@@ -1095,7 +182,7 @@ function _typeof(obj) {
 }
 
 module.exports = _typeof;
-},{"../core-js/symbol":13,"../core-js/symbol/iterator":14}],28:[function(require,module,exports){
+},{"../core-js/symbol":5,"../core-js/symbol/iterator":6}],20:[function(require,module,exports){
 'use strict';
 const colorConvert = require('color-convert');
 
@@ -1262,7 +349,7 @@ Object.defineProperty(module, 'exports', {
 	get: assembleStyles
 });
 
-},{"color-convert":32}],29:[function(require,module,exports){
+},{"color-convert":24}],21:[function(require,module,exports){
 (function (process){
 'use strict';
 const escapeStringRegexp = require('escape-string-regexp');
@@ -1494,7 +581,7 @@ module.exports.supportsColor = stdoutColor;
 module.exports.default = module.exports; // For TypeScript
 
 }).call(this,require('_process'))
-},{"./templates.js":30,"_process":114,"ansi-styles":28,"escape-string-regexp":113,"supports-color":115}],30:[function(require,module,exports){
+},{"./templates.js":22,"_process":106,"ansi-styles":20,"escape-string-regexp":105,"supports-color":107}],22:[function(require,module,exports){
 'use strict';
 const TEMPLATE_REGEX = /(?:\\(u[a-f\d]{4}|x[a-f\d]{2}|.))|(?:\{(~)?(\w+(?:\([^)]*\))?(?:\.\w+(?:\([^)]*\))?)*)(?:[ \t]|(?=\r?\n)))|(\})|((?:.|[\r\n\f])+?)/gi;
 const STYLE_REGEX = /(?:^|\.)(\w+)(?:\(([^)]*)\))?/g;
@@ -1624,7 +711,7 @@ module.exports = (chalk, tmp) => {
 	return chunks.join('');
 };
 
-},{}],31:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /* MIT license */
 var cssKeywords = require('color-name');
 
@@ -2494,7 +1581,7 @@ convert.rgb.gray = function (rgb) {
 	return [val / 255 * 100];
 };
 
-},{"color-name":34}],32:[function(require,module,exports){
+},{"color-name":26}],24:[function(require,module,exports){
 var conversions = require('./conversions');
 var route = require('./route');
 
@@ -2574,7 +1661,7 @@ models.forEach(function (fromModel) {
 
 module.exports = convert;
 
-},{"./conversions":31,"./route":33}],33:[function(require,module,exports){
+},{"./conversions":23,"./route":25}],25:[function(require,module,exports){
 var conversions = require('./conversions');
 
 /*
@@ -2673,7 +1760,7 @@ module.exports = function (fromModel) {
 };
 
 
-},{"./conversions":31}],34:[function(require,module,exports){
+},{"./conversions":23}],26:[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -2827,57 +1914,57 @@ module.exports = {
 	"yellowgreen": [154, 205, 50]
 };
 
-},{}],35:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 require('../../modules/es6.string.iterator');
 require('../../modules/es6.array.from');
 module.exports = require('../../modules/_core').Array.from;
 
-},{"../../modules/_core":47,"../../modules/es6.array.from":104,"../../modules/es6.string.iterator":108}],36:[function(require,module,exports){
+},{"../../modules/_core":39,"../../modules/es6.array.from":96,"../../modules/es6.string.iterator":100}],28:[function(require,module,exports){
 require('../modules/web.dom.iterable');
 require('../modules/es6.string.iterator');
 module.exports = require('../modules/core.get-iterator');
 
-},{"../modules/core.get-iterator":102,"../modules/es6.string.iterator":108,"../modules/web.dom.iterable":112}],37:[function(require,module,exports){
+},{"../modules/core.get-iterator":94,"../modules/es6.string.iterator":100,"../modules/web.dom.iterable":104}],29:[function(require,module,exports){
 require('../modules/web.dom.iterable');
 require('../modules/es6.string.iterator');
 module.exports = require('../modules/core.is-iterable');
 
-},{"../modules/core.is-iterable":103,"../modules/es6.string.iterator":108,"../modules/web.dom.iterable":112}],38:[function(require,module,exports){
+},{"../modules/core.is-iterable":95,"../modules/es6.string.iterator":100,"../modules/web.dom.iterable":104}],30:[function(require,module,exports){
 require('../../modules/es6.object.define-property');
 var $Object = require('../../modules/_core').Object;
 module.exports = function defineProperty(it, key, desc) {
   return $Object.defineProperty(it, key, desc);
 };
 
-},{"../../modules/_core":47,"../../modules/es6.object.define-property":106}],39:[function(require,module,exports){
+},{"../../modules/_core":39,"../../modules/es6.object.define-property":98}],31:[function(require,module,exports){
 require('../../modules/es6.symbol');
 require('../../modules/es6.object.to-string');
 require('../../modules/es7.symbol.async-iterator');
 require('../../modules/es7.symbol.observable');
 module.exports = require('../../modules/_core').Symbol;
 
-},{"../../modules/_core":47,"../../modules/es6.object.to-string":107,"../../modules/es6.symbol":109,"../../modules/es7.symbol.async-iterator":110,"../../modules/es7.symbol.observable":111}],40:[function(require,module,exports){
+},{"../../modules/_core":39,"../../modules/es6.object.to-string":99,"../../modules/es6.symbol":101,"../../modules/es7.symbol.async-iterator":102,"../../modules/es7.symbol.observable":103}],32:[function(require,module,exports){
 require('../../modules/es6.string.iterator');
 require('../../modules/web.dom.iterable');
 module.exports = require('../../modules/_wks-ext').f('iterator');
 
-},{"../../modules/_wks-ext":99,"../../modules/es6.string.iterator":108,"../../modules/web.dom.iterable":112}],41:[function(require,module,exports){
+},{"../../modules/_wks-ext":91,"../../modules/es6.string.iterator":100,"../../modules/web.dom.iterable":104}],33:[function(require,module,exports){
 module.exports = function (it) {
   if (typeof it != 'function') throw TypeError(it + ' is not a function!');
   return it;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = function () { /* empty */ };
 
-},{}],43:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var isObject = require('./_is-object');
 module.exports = function (it) {
   if (!isObject(it)) throw TypeError(it + ' is not an object!');
   return it;
 };
 
-},{"./_is-object":65}],44:[function(require,module,exports){
+},{"./_is-object":57}],36:[function(require,module,exports){
 // false -> Array#indexOf
 // true  -> Array#includes
 var toIObject = require('./_to-iobject');
@@ -2902,7 +1989,7 @@ module.exports = function (IS_INCLUDES) {
   };
 };
 
-},{"./_to-absolute-index":91,"./_to-iobject":93,"./_to-length":94}],45:[function(require,module,exports){
+},{"./_to-absolute-index":83,"./_to-iobject":85,"./_to-length":86}],37:[function(require,module,exports){
 // getting tag from 19.1.3.6 Object.prototype.toString()
 var cof = require('./_cof');
 var TAG = require('./_wks')('toStringTag');
@@ -2927,18 +2014,18 @@ module.exports = function (it) {
     : (B = cof(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : B;
 };
 
-},{"./_cof":46,"./_wks":100}],46:[function(require,module,exports){
+},{"./_cof":38,"./_wks":92}],38:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = function (it) {
   return toString.call(it).slice(8, -1);
 };
 
-},{}],47:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var core = module.exports = { version: '2.6.2' };
 if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
-},{}],48:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 var $defineProperty = require('./_object-dp');
 var createDesc = require('./_property-desc');
@@ -2948,7 +2035,7 @@ module.exports = function (object, index, value) {
   else object[index] = value;
 };
 
-},{"./_object-dp":75,"./_property-desc":85}],49:[function(require,module,exports){
+},{"./_object-dp":67,"./_property-desc":77}],41:[function(require,module,exports){
 // optional / simple context binding
 var aFunction = require('./_a-function');
 module.exports = function (fn, that, length) {
@@ -2970,20 +2057,20 @@ module.exports = function (fn, that, length) {
   };
 };
 
-},{"./_a-function":41}],50:[function(require,module,exports){
+},{"./_a-function":33}],42:[function(require,module,exports){
 // 7.2.1 RequireObjectCoercible(argument)
 module.exports = function (it) {
   if (it == undefined) throw TypeError("Can't call method on  " + it);
   return it;
 };
 
-},{}],51:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 // Thank's IE8 for his funny defineProperty
 module.exports = !require('./_fails')(function () {
   return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
 });
 
-},{"./_fails":56}],52:[function(require,module,exports){
+},{"./_fails":48}],44:[function(require,module,exports){
 var isObject = require('./_is-object');
 var document = require('./_global').document;
 // typeof document.createElement is 'object' in old IE
@@ -2992,13 +2079,13 @@ module.exports = function (it) {
   return is ? document.createElement(it) : {};
 };
 
-},{"./_global":57,"./_is-object":65}],53:[function(require,module,exports){
+},{"./_global":49,"./_is-object":57}],45:[function(require,module,exports){
 // IE 8- don't enum bug keys
 module.exports = (
   'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
 ).split(',');
 
-},{}],54:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 // all enumerable object keys, includes symbols
 var getKeys = require('./_object-keys');
 var gOPS = require('./_object-gops');
@@ -3015,7 +2102,7 @@ module.exports = function (it) {
   } return result;
 };
 
-},{"./_object-gops":80,"./_object-keys":83,"./_object-pie":84}],55:[function(require,module,exports){
+},{"./_object-gops":72,"./_object-keys":75,"./_object-pie":76}],47:[function(require,module,exports){
 var global = require('./_global');
 var core = require('./_core');
 var ctx = require('./_ctx');
@@ -3079,7 +2166,7 @@ $export.U = 64;  // safe
 $export.R = 128; // real proto method for `library`
 module.exports = $export;
 
-},{"./_core":47,"./_ctx":49,"./_global":57,"./_has":58,"./_hide":59}],56:[function(require,module,exports){
+},{"./_core":39,"./_ctx":41,"./_global":49,"./_has":50,"./_hide":51}],48:[function(require,module,exports){
 module.exports = function (exec) {
   try {
     return !!exec();
@@ -3088,7 +2175,7 @@ module.exports = function (exec) {
   }
 };
 
-},{}],57:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
 var global = module.exports = typeof window != 'undefined' && window.Math == Math
   ? window : typeof self != 'undefined' && self.Math == Math ? self
@@ -3096,13 +2183,13 @@ var global = module.exports = typeof window != 'undefined' && window.Math == Mat
   : Function('return this')();
 if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 
-},{}],58:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 var hasOwnProperty = {}.hasOwnProperty;
 module.exports = function (it, key) {
   return hasOwnProperty.call(it, key);
 };
 
-},{}],59:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 var dP = require('./_object-dp');
 var createDesc = require('./_property-desc');
 module.exports = require('./_descriptors') ? function (object, key, value) {
@@ -3112,16 +2199,16 @@ module.exports = require('./_descriptors') ? function (object, key, value) {
   return object;
 };
 
-},{"./_descriptors":51,"./_object-dp":75,"./_property-desc":85}],60:[function(require,module,exports){
+},{"./_descriptors":43,"./_object-dp":67,"./_property-desc":77}],52:[function(require,module,exports){
 var document = require('./_global').document;
 module.exports = document && document.documentElement;
 
-},{"./_global":57}],61:[function(require,module,exports){
+},{"./_global":49}],53:[function(require,module,exports){
 module.exports = !require('./_descriptors') && !require('./_fails')(function () {
   return Object.defineProperty(require('./_dom-create')('div'), 'a', { get: function () { return 7; } }).a != 7;
 });
 
-},{"./_descriptors":51,"./_dom-create":52,"./_fails":56}],62:[function(require,module,exports){
+},{"./_descriptors":43,"./_dom-create":44,"./_fails":48}],54:[function(require,module,exports){
 // fallback for non-array-like ES3 and non-enumerable old V8 strings
 var cof = require('./_cof');
 // eslint-disable-next-line no-prototype-builtins
@@ -3129,7 +2216,7 @@ module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
   return cof(it) == 'String' ? it.split('') : Object(it);
 };
 
-},{"./_cof":46}],63:[function(require,module,exports){
+},{"./_cof":38}],55:[function(require,module,exports){
 // check on default Array iterator
 var Iterators = require('./_iterators');
 var ITERATOR = require('./_wks')('iterator');
@@ -3139,19 +2226,19 @@ module.exports = function (it) {
   return it !== undefined && (Iterators.Array === it || ArrayProto[ITERATOR] === it);
 };
 
-},{"./_iterators":71,"./_wks":100}],64:[function(require,module,exports){
+},{"./_iterators":63,"./_wks":92}],56:[function(require,module,exports){
 // 7.2.2 IsArray(argument)
 var cof = require('./_cof');
 module.exports = Array.isArray || function isArray(arg) {
   return cof(arg) == 'Array';
 };
 
-},{"./_cof":46}],65:[function(require,module,exports){
+},{"./_cof":38}],57:[function(require,module,exports){
 module.exports = function (it) {
   return typeof it === 'object' ? it !== null : typeof it === 'function';
 };
 
-},{}],66:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 // call something on iterator step with safe closing on error
 var anObject = require('./_an-object');
 module.exports = function (iterator, fn, value, entries) {
@@ -3165,7 +2252,7 @@ module.exports = function (iterator, fn, value, entries) {
   }
 };
 
-},{"./_an-object":43}],67:[function(require,module,exports){
+},{"./_an-object":35}],59:[function(require,module,exports){
 'use strict';
 var create = require('./_object-create');
 var descriptor = require('./_property-desc');
@@ -3180,7 +2267,7 @@ module.exports = function (Constructor, NAME, next) {
   setToStringTag(Constructor, NAME + ' Iterator');
 };
 
-},{"./_hide":59,"./_object-create":74,"./_property-desc":85,"./_set-to-string-tag":87,"./_wks":100}],68:[function(require,module,exports){
+},{"./_hide":51,"./_object-create":66,"./_property-desc":77,"./_set-to-string-tag":79,"./_wks":92}],60:[function(require,module,exports){
 'use strict';
 var LIBRARY = require('./_library');
 var $export = require('./_export');
@@ -3251,7 +2338,7 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
   return methods;
 };
 
-},{"./_export":55,"./_hide":59,"./_iter-create":67,"./_iterators":71,"./_library":72,"./_object-gpo":81,"./_redefine":86,"./_set-to-string-tag":87,"./_wks":100}],69:[function(require,module,exports){
+},{"./_export":47,"./_hide":51,"./_iter-create":59,"./_iterators":63,"./_library":64,"./_object-gpo":73,"./_redefine":78,"./_set-to-string-tag":79,"./_wks":92}],61:[function(require,module,exports){
 var ITERATOR = require('./_wks')('iterator');
 var SAFE_CLOSING = false;
 
@@ -3275,18 +2362,18 @@ module.exports = function (exec, skipClosing) {
   return safe;
 };
 
-},{"./_wks":100}],70:[function(require,module,exports){
+},{"./_wks":92}],62:[function(require,module,exports){
 module.exports = function (done, value) {
   return { value: value, done: !!done };
 };
 
-},{}],71:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 module.exports = {};
 
-},{}],72:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 module.exports = true;
 
-},{}],73:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 var META = require('./_uid')('meta');
 var isObject = require('./_is-object');
 var has = require('./_has');
@@ -3341,7 +2428,7 @@ var meta = module.exports = {
   onFreeze: onFreeze
 };
 
-},{"./_fails":56,"./_has":58,"./_is-object":65,"./_object-dp":75,"./_uid":97}],74:[function(require,module,exports){
+},{"./_fails":48,"./_has":50,"./_is-object":57,"./_object-dp":67,"./_uid":89}],66:[function(require,module,exports){
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
 var anObject = require('./_an-object');
 var dPs = require('./_object-dps');
@@ -3384,7 +2471,7 @@ module.exports = Object.create || function create(O, Properties) {
   return Properties === undefined ? result : dPs(result, Properties);
 };
 
-},{"./_an-object":43,"./_dom-create":52,"./_enum-bug-keys":53,"./_html":60,"./_object-dps":76,"./_shared-key":88}],75:[function(require,module,exports){
+},{"./_an-object":35,"./_dom-create":44,"./_enum-bug-keys":45,"./_html":52,"./_object-dps":68,"./_shared-key":80}],67:[function(require,module,exports){
 var anObject = require('./_an-object');
 var IE8_DOM_DEFINE = require('./_ie8-dom-define');
 var toPrimitive = require('./_to-primitive');
@@ -3402,7 +2489,7 @@ exports.f = require('./_descriptors') ? Object.defineProperty : function defineP
   return O;
 };
 
-},{"./_an-object":43,"./_descriptors":51,"./_ie8-dom-define":61,"./_to-primitive":96}],76:[function(require,module,exports){
+},{"./_an-object":35,"./_descriptors":43,"./_ie8-dom-define":53,"./_to-primitive":88}],68:[function(require,module,exports){
 var dP = require('./_object-dp');
 var anObject = require('./_an-object');
 var getKeys = require('./_object-keys');
@@ -3417,7 +2504,7 @@ module.exports = require('./_descriptors') ? Object.defineProperties : function 
   return O;
 };
 
-},{"./_an-object":43,"./_descriptors":51,"./_object-dp":75,"./_object-keys":83}],77:[function(require,module,exports){
+},{"./_an-object":35,"./_descriptors":43,"./_object-dp":67,"./_object-keys":75}],69:[function(require,module,exports){
 var pIE = require('./_object-pie');
 var createDesc = require('./_property-desc');
 var toIObject = require('./_to-iobject');
@@ -3435,7 +2522,7 @@ exports.f = require('./_descriptors') ? gOPD : function getOwnPropertyDescriptor
   if (has(O, P)) return createDesc(!pIE.f.call(O, P), O[P]);
 };
 
-},{"./_descriptors":51,"./_has":58,"./_ie8-dom-define":61,"./_object-pie":84,"./_property-desc":85,"./_to-iobject":93,"./_to-primitive":96}],78:[function(require,module,exports){
+},{"./_descriptors":43,"./_has":50,"./_ie8-dom-define":53,"./_object-pie":76,"./_property-desc":77,"./_to-iobject":85,"./_to-primitive":88}],70:[function(require,module,exports){
 // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
 var toIObject = require('./_to-iobject');
 var gOPN = require('./_object-gopn').f;
@@ -3456,7 +2543,7 @@ module.exports.f = function getOwnPropertyNames(it) {
   return windowNames && toString.call(it) == '[object Window]' ? getWindowNames(it) : gOPN(toIObject(it));
 };
 
-},{"./_object-gopn":79,"./_to-iobject":93}],79:[function(require,module,exports){
+},{"./_object-gopn":71,"./_to-iobject":85}],71:[function(require,module,exports){
 // 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
 var $keys = require('./_object-keys-internal');
 var hiddenKeys = require('./_enum-bug-keys').concat('length', 'prototype');
@@ -3465,10 +2552,10 @@ exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
   return $keys(O, hiddenKeys);
 };
 
-},{"./_enum-bug-keys":53,"./_object-keys-internal":82}],80:[function(require,module,exports){
+},{"./_enum-bug-keys":45,"./_object-keys-internal":74}],72:[function(require,module,exports){
 exports.f = Object.getOwnPropertySymbols;
 
-},{}],81:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
 var has = require('./_has');
 var toObject = require('./_to-object');
@@ -3483,7 +2570,7 @@ module.exports = Object.getPrototypeOf || function (O) {
   } return O instanceof Object ? ObjectProto : null;
 };
 
-},{"./_has":58,"./_shared-key":88,"./_to-object":95}],82:[function(require,module,exports){
+},{"./_has":50,"./_shared-key":80,"./_to-object":87}],74:[function(require,module,exports){
 var has = require('./_has');
 var toIObject = require('./_to-iobject');
 var arrayIndexOf = require('./_array-includes')(false);
@@ -3502,7 +2589,7 @@ module.exports = function (object, names) {
   return result;
 };
 
-},{"./_array-includes":44,"./_has":58,"./_shared-key":88,"./_to-iobject":93}],83:[function(require,module,exports){
+},{"./_array-includes":36,"./_has":50,"./_shared-key":80,"./_to-iobject":85}],75:[function(require,module,exports){
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
 var $keys = require('./_object-keys-internal');
 var enumBugKeys = require('./_enum-bug-keys');
@@ -3511,10 +2598,10 @@ module.exports = Object.keys || function keys(O) {
   return $keys(O, enumBugKeys);
 };
 
-},{"./_enum-bug-keys":53,"./_object-keys-internal":82}],84:[function(require,module,exports){
+},{"./_enum-bug-keys":45,"./_object-keys-internal":74}],76:[function(require,module,exports){
 exports.f = {}.propertyIsEnumerable;
 
-},{}],85:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 module.exports = function (bitmap, value) {
   return {
     enumerable: !(bitmap & 1),
@@ -3524,10 +2611,10 @@ module.exports = function (bitmap, value) {
   };
 };
 
-},{}],86:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = require('./_hide');
 
-},{"./_hide":59}],87:[function(require,module,exports){
+},{"./_hide":51}],79:[function(require,module,exports){
 var def = require('./_object-dp').f;
 var has = require('./_has');
 var TAG = require('./_wks')('toStringTag');
@@ -3536,14 +2623,14 @@ module.exports = function (it, tag, stat) {
   if (it && !has(it = stat ? it : it.prototype, TAG)) def(it, TAG, { configurable: true, value: tag });
 };
 
-},{"./_has":58,"./_object-dp":75,"./_wks":100}],88:[function(require,module,exports){
+},{"./_has":50,"./_object-dp":67,"./_wks":92}],80:[function(require,module,exports){
 var shared = require('./_shared')('keys');
 var uid = require('./_uid');
 module.exports = function (key) {
   return shared[key] || (shared[key] = uid(key));
 };
 
-},{"./_shared":89,"./_uid":97}],89:[function(require,module,exports){
+},{"./_shared":81,"./_uid":89}],81:[function(require,module,exports){
 var core = require('./_core');
 var global = require('./_global');
 var SHARED = '__core-js_shared__';
@@ -3557,7 +2644,7 @@ var store = global[SHARED] || (global[SHARED] = {});
   copyright: '© 2019 Denis Pushkarev (zloirock.ru)'
 });
 
-},{"./_core":47,"./_global":57,"./_library":72}],90:[function(require,module,exports){
+},{"./_core":39,"./_global":49,"./_library":64}],82:[function(require,module,exports){
 var toInteger = require('./_to-integer');
 var defined = require('./_defined');
 // true  -> String#at
@@ -3576,7 +2663,7 @@ module.exports = function (TO_STRING) {
   };
 };
 
-},{"./_defined":50,"./_to-integer":92}],91:[function(require,module,exports){
+},{"./_defined":42,"./_to-integer":84}],83:[function(require,module,exports){
 var toInteger = require('./_to-integer');
 var max = Math.max;
 var min = Math.min;
@@ -3585,7 +2672,7 @@ module.exports = function (index, length) {
   return index < 0 ? max(index + length, 0) : min(index, length);
 };
 
-},{"./_to-integer":92}],92:[function(require,module,exports){
+},{"./_to-integer":84}],84:[function(require,module,exports){
 // 7.1.4 ToInteger
 var ceil = Math.ceil;
 var floor = Math.floor;
@@ -3593,7 +2680,7 @@ module.exports = function (it) {
   return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
 };
 
-},{}],93:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 // to indexed object, toObject with fallback for non-array-like ES3 strings
 var IObject = require('./_iobject');
 var defined = require('./_defined');
@@ -3601,7 +2688,7 @@ module.exports = function (it) {
   return IObject(defined(it));
 };
 
-},{"./_defined":50,"./_iobject":62}],94:[function(require,module,exports){
+},{"./_defined":42,"./_iobject":54}],86:[function(require,module,exports){
 // 7.1.15 ToLength
 var toInteger = require('./_to-integer');
 var min = Math.min;
@@ -3609,14 +2696,14 @@ module.exports = function (it) {
   return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
 };
 
-},{"./_to-integer":92}],95:[function(require,module,exports){
+},{"./_to-integer":84}],87:[function(require,module,exports){
 // 7.1.13 ToObject(argument)
 var defined = require('./_defined');
 module.exports = function (it) {
   return Object(defined(it));
 };
 
-},{"./_defined":50}],96:[function(require,module,exports){
+},{"./_defined":42}],88:[function(require,module,exports){
 // 7.1.1 ToPrimitive(input [, PreferredType])
 var isObject = require('./_is-object');
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
@@ -3630,14 +2717,14 @@ module.exports = function (it, S) {
   throw TypeError("Can't convert object to primitive value");
 };
 
-},{"./_is-object":65}],97:[function(require,module,exports){
+},{"./_is-object":57}],89:[function(require,module,exports){
 var id = 0;
 var px = Math.random();
 module.exports = function (key) {
   return 'Symbol('.concat(key === undefined ? '' : key, ')_', (++id + px).toString(36));
 };
 
-},{}],98:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var global = require('./_global');
 var core = require('./_core');
 var LIBRARY = require('./_library');
@@ -3648,10 +2735,10 @@ module.exports = function (name) {
   if (name.charAt(0) != '_' && !(name in $Symbol)) defineProperty($Symbol, name, { value: wksExt.f(name) });
 };
 
-},{"./_core":47,"./_global":57,"./_library":72,"./_object-dp":75,"./_wks-ext":99}],99:[function(require,module,exports){
+},{"./_core":39,"./_global":49,"./_library":64,"./_object-dp":67,"./_wks-ext":91}],91:[function(require,module,exports){
 exports.f = require('./_wks');
 
-},{"./_wks":100}],100:[function(require,module,exports){
+},{"./_wks":92}],92:[function(require,module,exports){
 var store = require('./_shared')('wks');
 var uid = require('./_uid');
 var Symbol = require('./_global').Symbol;
@@ -3664,7 +2751,7 @@ var $exports = module.exports = function (name) {
 
 $exports.store = store;
 
-},{"./_global":57,"./_shared":89,"./_uid":97}],101:[function(require,module,exports){
+},{"./_global":49,"./_shared":81,"./_uid":89}],93:[function(require,module,exports){
 var classof = require('./_classof');
 var ITERATOR = require('./_wks')('iterator');
 var Iterators = require('./_iterators');
@@ -3674,7 +2761,7 @@ module.exports = require('./_core').getIteratorMethod = function (it) {
     || Iterators[classof(it)];
 };
 
-},{"./_classof":45,"./_core":47,"./_iterators":71,"./_wks":100}],102:[function(require,module,exports){
+},{"./_classof":37,"./_core":39,"./_iterators":63,"./_wks":92}],94:[function(require,module,exports){
 var anObject = require('./_an-object');
 var get = require('./core.get-iterator-method');
 module.exports = require('./_core').getIterator = function (it) {
@@ -3683,7 +2770,7 @@ module.exports = require('./_core').getIterator = function (it) {
   return anObject(iterFn.call(it));
 };
 
-},{"./_an-object":43,"./_core":47,"./core.get-iterator-method":101}],103:[function(require,module,exports){
+},{"./_an-object":35,"./_core":39,"./core.get-iterator-method":93}],95:[function(require,module,exports){
 var classof = require('./_classof');
 var ITERATOR = require('./_wks')('iterator');
 var Iterators = require('./_iterators');
@@ -3695,7 +2782,7 @@ module.exports = require('./_core').isIterable = function (it) {
     || Iterators.hasOwnProperty(classof(O));
 };
 
-},{"./_classof":45,"./_core":47,"./_iterators":71,"./_wks":100}],104:[function(require,module,exports){
+},{"./_classof":37,"./_core":39,"./_iterators":63,"./_wks":92}],96:[function(require,module,exports){
 'use strict';
 var ctx = require('./_ctx');
 var $export = require('./_export');
@@ -3734,7 +2821,7 @@ $export($export.S + $export.F * !require('./_iter-detect')(function (iter) { Arr
   }
 });
 
-},{"./_create-property":48,"./_ctx":49,"./_export":55,"./_is-array-iter":63,"./_iter-call":66,"./_iter-detect":69,"./_to-length":94,"./_to-object":95,"./core.get-iterator-method":101}],105:[function(require,module,exports){
+},{"./_create-property":40,"./_ctx":41,"./_export":47,"./_is-array-iter":55,"./_iter-call":58,"./_iter-detect":61,"./_to-length":86,"./_to-object":87,"./core.get-iterator-method":93}],97:[function(require,module,exports){
 'use strict';
 var addToUnscopables = require('./_add-to-unscopables');
 var step = require('./_iter-step');
@@ -3770,14 +2857,14 @@ addToUnscopables('keys');
 addToUnscopables('values');
 addToUnscopables('entries');
 
-},{"./_add-to-unscopables":42,"./_iter-define":68,"./_iter-step":70,"./_iterators":71,"./_to-iobject":93}],106:[function(require,module,exports){
+},{"./_add-to-unscopables":34,"./_iter-define":60,"./_iter-step":62,"./_iterators":63,"./_to-iobject":85}],98:[function(require,module,exports){
 var $export = require('./_export');
 // 19.1.2.4 / 15.2.3.6 Object.defineProperty(O, P, Attributes)
 $export($export.S + $export.F * !require('./_descriptors'), 'Object', { defineProperty: require('./_object-dp').f });
 
-},{"./_descriptors":51,"./_export":55,"./_object-dp":75}],107:[function(require,module,exports){
+},{"./_descriptors":43,"./_export":47,"./_object-dp":67}],99:[function(require,module,exports){
 
-},{}],108:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 'use strict';
 var $at = require('./_string-at')(true);
 
@@ -3796,7 +2883,7 @@ require('./_iter-define')(String, 'String', function (iterated) {
   return { value: point, done: false };
 });
 
-},{"./_iter-define":68,"./_string-at":90}],109:[function(require,module,exports){
+},{"./_iter-define":60,"./_string-at":82}],101:[function(require,module,exports){
 'use strict';
 // ECMAScript 6 symbols shim
 var global = require('./_global');
@@ -4032,13 +3119,13 @@ setToStringTag(Math, 'Math', true);
 // 24.3.3 JSON[@@toStringTag]
 setToStringTag(global.JSON, 'JSON', true);
 
-},{"./_an-object":43,"./_descriptors":51,"./_enum-keys":54,"./_export":55,"./_fails":56,"./_global":57,"./_has":58,"./_hide":59,"./_is-array":64,"./_is-object":65,"./_library":72,"./_meta":73,"./_object-create":74,"./_object-dp":75,"./_object-gopd":77,"./_object-gopn":79,"./_object-gopn-ext":78,"./_object-gops":80,"./_object-keys":83,"./_object-pie":84,"./_property-desc":85,"./_redefine":86,"./_set-to-string-tag":87,"./_shared":89,"./_to-iobject":93,"./_to-primitive":96,"./_uid":97,"./_wks":100,"./_wks-define":98,"./_wks-ext":99}],110:[function(require,module,exports){
+},{"./_an-object":35,"./_descriptors":43,"./_enum-keys":46,"./_export":47,"./_fails":48,"./_global":49,"./_has":50,"./_hide":51,"./_is-array":56,"./_is-object":57,"./_library":64,"./_meta":65,"./_object-create":66,"./_object-dp":67,"./_object-gopd":69,"./_object-gopn":71,"./_object-gopn-ext":70,"./_object-gops":72,"./_object-keys":75,"./_object-pie":76,"./_property-desc":77,"./_redefine":78,"./_set-to-string-tag":79,"./_shared":81,"./_to-iobject":85,"./_to-primitive":88,"./_uid":89,"./_wks":92,"./_wks-define":90,"./_wks-ext":91}],102:[function(require,module,exports){
 require('./_wks-define')('asyncIterator');
 
-},{"./_wks-define":98}],111:[function(require,module,exports){
+},{"./_wks-define":90}],103:[function(require,module,exports){
 require('./_wks-define')('observable');
 
-},{"./_wks-define":98}],112:[function(require,module,exports){
+},{"./_wks-define":90}],104:[function(require,module,exports){
 require('./es6.array.iterator');
 var global = require('./_global');
 var hide = require('./_hide');
@@ -4059,7 +3146,7 @@ for (var i = 0; i < DOMIterables.length; i++) {
   Iterators[NAME] = Iterators.Array;
 }
 
-},{"./_global":57,"./_hide":59,"./_iterators":71,"./_wks":100,"./es6.array.iterator":105}],113:[function(require,module,exports){
+},{"./_global":49,"./_hide":51,"./_iterators":63,"./_wks":92,"./es6.array.iterator":97}],105:[function(require,module,exports){
 'use strict';
 
 var matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
@@ -4072,7 +3159,7 @@ module.exports = function (str) {
 	return str.replace(matchOperatorsRe, '\\$&');
 };
 
-},{}],114:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -4258,11 +3345,932 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],115:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 'use strict';
 module.exports = {
 	stdout: false,
 	stderr: false
 };
 
-},{}]},{},[8]);
+},{}],108:[function(require,module,exports){
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Alphabet = void 0;
+
+var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
+
+var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
+
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
+var _errors = require("../globals/errors.js");
+
+var _globals = require("../globals/globals.js");
+
+var Alphabet = function Alphabet(sigma) {
+  (0, _classCallCheck2.default)(this, Alphabet);
+  (0, _defineProperty2.default)(this, "sigma", void 0);
+
+  if (!Array.isArray(sigma)) {
+    if (typeof sigma === "string") sigma = (0, _toConsumableArray2.default)(sigma);else throw new TypeError();
+  }
+
+  this.sigma = sigma;
+  if ((0, _globals.duplicates)((0, _globals.count)(this.sigma)).length > 0) throw new Error(_errors.ErrorCode.DUPLICATE_ALPHABET_VALS);
+};
+
+exports.Alphabet = Alphabet;
+
+},{"../globals/errors.js":113,"../globals/globals.js":114,"@babel/runtime/helpers/classCallCheck":9,"@babel/runtime/helpers/defineProperty":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/toConsumableArray":18}],109:[function(require,module,exports){
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createFSA = exports.FSA = void 0;
+
+var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
+
+var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
+
+var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
+
+var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
+
+var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
+
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
+var _chalk = _interopRequireDefault(require("chalk"));
+
+var _State = require("./State.js");
+
+var _Alphabet = require("./Alphabet.js");
+
+var _Transition = require("./Transition.js");
+
+var _errors = require("../globals/errors.js");
+
+var _globals = require("../globals/globals.js");
+
+var FSA =
+/*#__PURE__*/
+function () {
+  // FSA 5-tuple
+  // Q
+  // Σ
+  // δ
+  // q0
+  // F
+  // Other attributes
+  // States mapped to each member of Σ, will be empty after constructor returns
+  // State names mapped to their dest state names
+  // Will contain template literal for GraphViz
+  function FSA(states, alphabet, tfunc, start, accepts) {
+    (0, _classCallCheck2.default)(this, FSA);
+    (0, _defineProperty2.default)(this, "states", void 0);
+    (0, _defineProperty2.default)(this, "alphabet", void 0);
+    (0, _defineProperty2.default)(this, "tfunc", void 0);
+    (0, _defineProperty2.default)(this, "start", void 0);
+    (0, _defineProperty2.default)(this, "accepts", void 0);
+    (0, _defineProperty2.default)(this, "paths", void 0);
+    (0, _defineProperty2.default)(this, "links", void 0);
+    (0, _defineProperty2.default)(this, "digraph", void 0);
+    // states validations
+    if ((0, _globals.checkStateDuplicates)(states)) throw new Error(_errors.ErrorCode.DUPLICATE_STATE_NAMES);
+    this.states = states;
+    this.alphabet = alphabet; // Create paths map
+
+    this.createPaths(); // Start/Accept validations
+
+    if (!states.has(start)) throw new Error(_errors.ErrorCode.START_STATE_NOT_FOUND);
+    this.start = start;
+    if (Object.keys(accepts).length === 0 && accepts.constructor === Object) accepts = new Set([]); // Allow for {}
+
+    if (!(0, _globals.isSubSet)(accepts, states)) throw new Error(_errors.ErrorCode.ACCEPTS_NOT_SUBSET);
+    this.accepts = accepts; // TFunc validations
+
+    this.tfunc = tfunc;
+    this.validateTFunc(); // Digraph
+
+    this.digraph = this.generateDigraph();
+  }
+  /*
+   * Transition function should only contain states in Q, and one transition should exist
+   * for each combination of Q x Σ
+   */
+
+
+  (0, _createClass2.default)(FSA, [{
+    key: "validateTFunc",
+    value: function validateTFunc() {
+      var newTFunc = new Set(); // Will contain only necessary transitions
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = this.tfunc[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var _t = _step.value;
+          // Check for valid states
+          if (!this.states.has(_t.origin)) throw new Error(_errors.ErrorCode.ORIGIN_STATE_NOT_FOUND);
+          if (!this.states.has(_t.dest)) throw new Error(_errors.ErrorCode.DEST_STATE_NOT_FOUND);
+          var pathStateVals = (0, _globals.getOrDefault)(this.paths, _t.origin, new Set()); // Map transition to a path and remove on match
+
+          if (this.paths.has(_t.origin) && pathStateVals.has(_t.input)) {
+            if (this.alphabet.sigma.indexOf !== -1) {
+              newTFunc.add(_t);
+              pathStateVals.delete(_t.input);
+
+              if (pathStateVals.size === 0) {
+                this.paths.delete(_t.origin);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return != null) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      if (this.paths.size > 0) {
+        console.error(_chalk.default.redBright("Not all FSA paths have a transition specified:"));
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+          for (var _iterator2 = this.paths[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var _step2$value = (0, _slicedToArray2.default)(_step2.value, 2),
+                key = _step2$value[0],
+                val = _step2$value[1];
+
+            console.error(_chalk.default.redBright("State %s on input(s): %s"), key.name, (0, _toConsumableArray2.default)(val).join(" "));
+          }
+        } catch (err) {
+          _didIteratorError2 = true;
+          _iteratorError2 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+              _iterator2.return();
+            }
+          } finally {
+            if (_didIteratorError2) {
+              throw _iteratorError2;
+            }
+          }
+        }
+
+        throw new Error(_errors.ErrorCode.MISSING_REQUIRED_TRANSITION);
+      }
+
+      this.tfunc = newTFunc;
+    }
+  }, {
+    key: "createPaths",
+    value: function createPaths() {
+      this.paths = new Map();
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        for (var _iterator3 = this.states[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var state = _step3.value;
+          var _iteratorNormalCompletion4 = true;
+          var _didIteratorError4 = false;
+          var _iteratorError4 = undefined;
+
+          try {
+            for (var _iterator4 = this.alphabet.sigma[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+              var char = _step4.value;
+              var pathStateVals = (0, _globals.getOrDefault)(this.paths, state, new Set());
+              if (this.paths.has(state)) pathStateVals.add(char);else this.paths.set(state, new Set([char]));
+            }
+          } catch (err) {
+            _didIteratorError4 = true;
+            _iteratorError4 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion4 && _iterator4.return != null) {
+                _iterator4.return();
+              }
+            } finally {
+              if (_didIteratorError4) {
+                throw _iteratorError4;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return != null) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+    }
+  }, {
+    key: "receiveInput",
+    value: function receiveInput(input, state) {
+      if (this.alphabet.sigma.indexOf(input) === -1) throw new Error(_errors.ErrorCode.INVALID_INPUT_CHAR);
+      if (!this.states.has(state)) throw new Error(_errors.ErrorCode.INPUT_STATE_NOT_FOUND);
+      var path = Array.from(this.tfunc).find(function (obj) {
+        return obj.origin === state && obj.input === input;
+      });
+      if (path) return path.dest;else throw new Error(_errors.ErrorCode.INVALID_TRANSITION_OBJECT);
+    } // Determine digraph order based on start state, then following the chain
+
+  }, {
+    key: "determineStateOrder",
+    value: function determineStateOrder() {
+      var statesOrder = []; // Ordered state names for digraph
+      // Map origin state names to dest state names
+
+      this.links = new Map();
+      var _iteratorNormalCompletion5 = true;
+      var _didIteratorError5 = false;
+      var _iteratorError5 = undefined;
+
+      try {
+        for (var _iterator5 = this.tfunc[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+          var tr = _step5.value;
+          var linkStateVals = (0, _globals.getOrDefault)(this.links, tr.origin.name, new Set());
+          if (this.links.has(tr.origin.name)) linkStateVals.add(tr.dest.name);else this.links.set(tr.origin.name, new Set([tr.dest.name]));
+        } // Populate state order
+
+      } catch (err) {
+        _didIteratorError5 = true;
+        _iteratorError5 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion5 && _iterator5.return != null) {
+            _iterator5.return();
+          }
+        } finally {
+          if (_didIteratorError5) {
+            throw _iteratorError5;
+          }
+        }
+      }
+
+      this.parseLinks(statesOrder, this.start.name); // Check for dead states and reduce FSA if necessary
+
+      var stateArr = [];
+      Object.values((0, _toConsumableArray2.default)(this.states)).map(function (state) {
+        return stateArr.push(state.name);
+      });
+      var deadStates = stateArr.filter(function (x) {
+        return !statesOrder.includes(x);
+      });
+
+      if (deadStates.length > 0) {
+        console.warn(_chalk.default.yellowBright("Dead states detected, removing them and associated transitions: %O"), deadStates);
+        this.removeDeadStates(deadStates);
+      }
+
+      return statesOrder;
+    } // Reduce FSA by removing dead states and associated transitions
+
+  }, {
+    key: "removeDeadStates",
+    value: function removeDeadStates(deadStates) {
+      // Q
+      var _iteratorNormalCompletion6 = true;
+      var _didIteratorError6 = false;
+      var _iteratorError6 = undefined;
+
+      try {
+        for (var _iterator6 = this.states[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+          var state = _step6.value;
+          if (deadStates.indexOf(state.name) !== -1) this.states.delete(state);
+        } // F
+
+      } catch (err) {
+        _didIteratorError6 = true;
+        _iteratorError6 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion6 && _iterator6.return != null) {
+            _iterator6.return();
+          }
+        } finally {
+          if (_didIteratorError6) {
+            throw _iteratorError6;
+          }
+        }
+      }
+
+      var _iteratorNormalCompletion7 = true;
+      var _didIteratorError7 = false;
+      var _iteratorError7 = undefined;
+
+      try {
+        for (var _iterator7 = this.accepts[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+          var _state = _step7.value;
+          if (deadStates.indexOf(_state.name) !== -1) this.accepts.delete(_state);
+        } // δ
+
+      } catch (err) {
+        _didIteratorError7 = true;
+        _iteratorError7 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion7 && _iterator7.return != null) {
+            _iterator7.return();
+          }
+        } finally {
+          if (_didIteratorError7) {
+            throw _iteratorError7;
+          }
+        }
+      }
+
+      var _iteratorNormalCompletion8 = true;
+      var _didIteratorError8 = false;
+      var _iteratorError8 = undefined;
+
+      try {
+        for (var _iterator8 = this.tfunc[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+          var tr = _step8.value;
+          if (deadStates.indexOf(tr.origin.name) !== -1 || deadStates.indexOf(tr.dest.name) !== -1) this.tfunc.delete(tr);
+        }
+      } catch (err) {
+        _didIteratorError8 = true;
+        _iteratorError8 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion8 && _iterator8.return != null) {
+            _iterator8.return();
+          }
+        } finally {
+          if (_didIteratorError8) {
+            throw _iteratorError8;
+          }
+        }
+      }
+    } // Recursively parse graph while adding to an array in order, beginning with q0
+
+  }, {
+    key: "parseLinks",
+    value: function parseLinks(arr, name) {
+      arr.push(name);
+      var nameVal = (0, _globals.getOrDefault)(this.links, name, "");
+      var _iteratorNormalCompletion9 = true;
+      var _didIteratorError9 = false;
+      var _iteratorError9 = undefined;
+
+      try {
+        for (var _iterator9 = nameVal[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+          var st = _step9.value;
+          if (arr.indexOf(st) === -1) this.parseLinks(arr, st);
+        }
+      } catch (err) {
+        _didIteratorError9 = true;
+        _iteratorError9 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion9 && _iterator9.return != null) {
+            _iterator9.return();
+          }
+        } finally {
+          if (_didIteratorError9) {
+            throw _iteratorError9;
+          }
+        }
+      }
+    }
+  }, {
+    key: "generateDigraph",
+    value: function generateDigraph() {
+      // Prep outputs
+      var acceptArr = [];
+      var _iteratorNormalCompletion10 = true;
+      var _didIteratorError10 = false;
+      var _iteratorError10 = undefined;
+
+      try {
+        for (var _iterator10 = this.accepts[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+          var state = _step10.value;
+          acceptArr.push(state.name);
+        } // return template literal
+
+      } catch (err) {
+        _didIteratorError10 = true;
+        _iteratorError10 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion10 && _iterator10.return != null) {
+            _iterator10.return();
+          }
+        } finally {
+          if (_didIteratorError10) {
+            throw _iteratorError10;
+          }
+        }
+      }
+
+      return "digraph fsa {\n        ".concat(Object.values(this.determineStateOrder()).map(function (str) {
+        if (acceptArr.indexOf(str) !== -1) return str + " [shape = doublecircle];";else return str;
+      }).join("\n\t"), "\n        rankdir=LR;\n        node [shape = point ]; qi;\n        node [shape = circle];\n        qi -> ").concat(this.start.name, ";\n        ").concat(Object.values((0, _toConsumableArray2.default)(this.tfunc)).map(function (t) {
+        return t.origin.name + " -> " + t.dest.name + ' [ label = "' + t.input + '" ];';
+      }).join("\n\t"), "\n    }\n    ");
+    }
+  }]);
+  return FSA;
+}(); // Global export method for creating FSA
+
+
+exports.FSA = FSA;
+
+var createFSA = function createFSA(states, alphabet, transitions, start, accepts) {
+  // Type check and conversion for states
+  var _states = new Map();
+
+  if (typeof states === "string") {
+    _states.set(states, new _State.State(states));
+  } else if (Array.isArray(states)) {
+    var _iteratorNormalCompletion11 = true;
+    var _didIteratorError11 = false;
+    var _iteratorError11 = undefined;
+
+    try {
+      for (var _iterator11 = states[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+        var state = _step11.value;
+        if (!_states.has(state)) _states.set(state, new _State.State(state));
+      }
+    } catch (err) {
+      _didIteratorError11 = true;
+      _iteratorError11 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion11 && _iterator11.return != null) {
+          _iterator11.return();
+        }
+      } finally {
+        if (_didIteratorError11) {
+          throw _iteratorError11;
+        }
+      }
+    }
+  } else {
+    throw new TypeError(states);
+  } // Convert transition array to Set<Transition>
+
+
+  var _tfunc = new Set();
+
+  if (!Array.isArray(transitions) && (0, _typeof2.default)(transitions) === "object") transitions = [transitions];
+
+  if (Array.isArray(transitions)) {
+    var _iteratorNormalCompletion12 = true;
+    var _didIteratorError12 = false;
+    var _iteratorError12 = undefined;
+
+    try {
+      for (var _iterator12 = transitions[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
+        var tr = _step12.value;
+        if (!tr["from"] || !tr["to"] || !tr["input"]) throw new Error(_errors.ErrorCode.INVALID_TRANSITION_OBJECT);
+        var fromVal = (0, _globals.getOrDefault)(_states, tr["from"], null);
+        var toVal = (0, _globals.getOrDefault)(_states, tr["to"], null);
+
+        _tfunc.add(new _Transition.Transition(fromVal, toVal, tr["input"]));
+      }
+    } catch (err) {
+      _didIteratorError12 = true;
+      _iteratorError12 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion12 && _iterator12.return != null) {
+          _iterator12.return();
+        }
+      } finally {
+        if (_didIteratorError12) {
+          throw _iteratorError12;
+        }
+      }
+    }
+  } else {
+    throw new TypeError(transitions);
+  } // Convert remaining inputs
+
+
+  var _alphabet = new _Alphabet.Alphabet(alphabet);
+
+  if (typeof start !== "string") throw new TypeError(start);
+
+  var _start = (0, _globals.getOrDefault)(_states, start, null);
+
+  var _accepts = new Set();
+
+  if (typeof accepts === "string") {
+    if (_states.has(accepts)) _accepts.add((0, _globals.getOrDefault)(_states, accepts, null));
+  } else if (Array.isArray(accepts)) {
+    var _iteratorNormalCompletion13 = true;
+    var _didIteratorError13 = false;
+    var _iteratorError13 = undefined;
+
+    try {
+      for (var _iterator13 = accepts[Symbol.iterator](), _step13; !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
+        var _state2 = _step13.value;
+
+        _accepts.add((0, _globals.getOrDefault)(_states, _state2, null));
+      }
+    } catch (err) {
+      _didIteratorError13 = true;
+      _iteratorError13 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion13 && _iterator13.return != null) {
+          _iterator13.return();
+        }
+      } finally {
+        if (_didIteratorError13) {
+          throw _iteratorError13;
+        }
+      }
+    }
+  } else {
+    throw new TypeError(accepts);
+  }
+
+  return new FSA(new Set(_states.values()), _alphabet, _tfunc, _start, _accepts);
+};
+
+exports.createFSA = createFSA;
+
+},{"../globals/errors.js":113,"../globals/globals.js":114,"./Alphabet.js":108,"./State.js":110,"./Transition.js":111,"@babel/runtime/helpers/classCallCheck":9,"@babel/runtime/helpers/createClass":10,"@babel/runtime/helpers/defineProperty":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/slicedToArray":17,"@babel/runtime/helpers/toConsumableArray":18,"@babel/runtime/helpers/typeof":19,"chalk":21}],110:[function(require,module,exports){
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.State = void 0;
+
+var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
+
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
+var _errors = require("../globals/errors.js");
+
+var State = function State(name) {
+  (0, _classCallCheck2.default)(this, State);
+  (0, _defineProperty2.default)(this, "name", void 0);
+  this.name = name;
+  if (!this.name) throw new Error(_errors.ErrorCode.INVALID_STATE_NAME);
+};
+
+exports.State = State;
+
+},{"../globals/errors.js":113,"@babel/runtime/helpers/classCallCheck":9,"@babel/runtime/helpers/defineProperty":11,"@babel/runtime/helpers/interopRequireDefault":12}],111:[function(require,module,exports){
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Transition = void 0;
+
+var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
+
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
+var _State = require("./State.js");
+
+var Transition = function Transition(origin, dest, input) {
+  (0, _classCallCheck2.default)(this, Transition);
+  (0, _defineProperty2.default)(this, "origin", void 0);
+  (0, _defineProperty2.default)(this, "dest", void 0);
+  (0, _defineProperty2.default)(this, "input", void 0);
+  this.origin = origin;
+  this.dest = dest;
+  this.input = input;
+};
+
+exports.Transition = Transition;
+
+},{"./State.js":110,"@babel/runtime/helpers/classCallCheck":9,"@babel/runtime/helpers/defineProperty":11,"@babel/runtime/helpers/interopRequireDefault":12}],112:[function(require,module,exports){
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.stepOnceFSA = exports.simulateFSA = void 0;
+
+var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
+
+var _chalk = _interopRequireDefault(require("chalk"));
+
+var _FSA = require("../classes/FSA.js");
+
+var _State = require("../classes/State.js");
+
+var _errors = require("../globals/errors.js");
+
+var simulateFSA = function simulateFSA(w, fsa) {
+  var logging = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+  if (logging) console.log(_chalk.default.cyan("Beginning FSA Simulation")); //Accept either string or string[] for w
+
+  if (!Array.isArray(w)) {
+    if (typeof w === "string") w = (0, _toConsumableArray2.default)(w);else {
+      if (logging) console.error(_chalk.default.redBright("Input w was invalid type: %O"), w);
+      throw new TypeError();
+    }
+  } // Step through input
+
+
+  if (logging) console.log(_chalk.default.inverse("Input Processing Started"));
+  var currentState = fsa.start;
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = w[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var char = _step.value;
+      var prevState = currentState;
+
+      try {
+        currentState = fsa.receiveInput(char, prevState);
+      } catch (e) {
+        if (e.message === _errors.ErrorCode.INVALID_INPUT_CHAR) {
+          if (logging) console.error(_chalk.default.redBright("Invalid input symbol: '%s'"), char);
+        } else {
+          if (logging) console.error(_chalk.default.redBright(e));
+        }
+
+        return prevState.name;
+      }
+
+      if (logging) console.log("%s x %s -> %s", prevState.name, char, currentState.name);
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return != null) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  if (logging) console.log(_chalk.default.inverse("Input Processing Ended"));
+
+  if (fsa.accepts.has(currentState)) {
+    if (logging) console.log(_chalk.default.green("Input Accepted!"));
+    return currentState.name;
+  } else {
+    if (logging) console.log(_chalk.default.red("Input Rejected!"));
+    return currentState.name;
+  }
+};
+
+exports.simulateFSA = simulateFSA;
+
+var stepOnceFSA = function stepOnceFSA(w, qin, fsa) {
+  var logging = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+
+  // Type checks
+  if (typeof w !== "string") {
+    if (logging) console.error(_chalk.default.redBright("Input w was invalid type: %O"), w);
+    throw new TypeError();
+  }
+
+  if (typeof qin !== "string") {
+    if (logging) console.error(_chalk.default.redBright("Input state was invalid type: %O"), qin);
+    throw new TypeError();
+  } // Step once
+
+
+  if (logging) console.log(_chalk.default.inverse("Input Processing Started"));
+  var prevState;
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = fsa.states.values()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var state = _step2.value;
+      if (qin === state.name) prevState = state;
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
+  if (!prevState) {
+    throw new Error(_errors.ErrorCode.INVALID_STATE_NAME);
+  }
+
+  var newState = fsa.receiveInput(w, prevState);
+  if (logging) console.log("%s x %s -> %s", prevState.name, w, newState.name);
+  if (logging) console.log(_chalk.default.inverse("Input Processing Ended"));
+  return newState.name;
+};
+
+exports.stepOnceFSA = stepOnceFSA;
+
+},{"../classes/FSA.js":109,"../classes/State.js":110,"../globals/errors.js":113,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/toConsumableArray":18,"chalk":21}],113:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ErrorCode = void 0;
+var ErrorCode = Object.freeze({
+  DUPLICATE_ALPHABET_VALS: "E-001",
+  DUPLICATE_STATE_NAMES: "E-002",
+  INVALID_STATE_NAME: "E-003",
+  START_STATE_NOT_FOUND: "E-004",
+  ACCEPTS_NOT_SUBSET: "E-005",
+  ORIGIN_STATE_NOT_FOUND: "E-006",
+  DEST_STATE_NOT_FOUND: "E-007",
+  MISSING_REQUIRED_TRANSITION: "E-008",
+  INVALID_INPUT_CHAR: "E-009",
+  INPUT_STATE_NOT_FOUND: "E-010",
+  INVALID_TRANSITION_OBJECT: "E-011"
+});
+exports.ErrorCode = ErrorCode;
+
+},{}],114:[function(require,module,exports){
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getOrDefault = exports.isSubSet = exports.checkStateDuplicates = exports.duplicates = exports.count = void 0;
+
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
+var _State = require("../classes/State.js");
+
+// Count number of instances for each string in an array - returns key/val pairs
+var count = function count(names) {
+  return names.reduce(function (a, b) {
+    return Object.assign(a, (0, _defineProperty2.default)({}, b, (a[b] || 0) + 1));
+  }, {});
+}; // Returns keys with value > 1
+
+
+exports.count = count;
+
+var duplicates = function duplicates(dict) {
+  return Object.keys(dict).filter(function (a) {
+    return dict[a] > 1;
+  });
+}; // Check for duplicate keys in a Set<State> input
+
+
+exports.duplicates = duplicates;
+
+var checkStateDuplicates = function checkStateDuplicates(states) {
+  var check = new Set();
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = states[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var item = _step.value;
+      if (check.has(item.name)) return true;
+      check.add(item.name);
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return != null) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return false;
+}; // Check whether inputSet is a subset of otherSet
+
+
+exports.checkStateDuplicates = checkStateDuplicates;
+
+var isSubSet = function isSubSet(inputSet, otherSet) {
+  if (inputSet.size > otherSet.size) return false;else {
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+      for (var _iterator2 = inputSet[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var elem = _step2.value;
+        if (!otherSet.has(elem)) return false;
+      }
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
+        }
+      }
+    }
+
+    return true;
+  }
+}; // Flow hack - gets around problems with Map#get having possible void type
+
+
+exports.isSubSet = isSubSet;
+
+var getOrDefault = function getOrDefault(map, key, defaultValue) {
+  var val = map.get(key);
+  return val == null ? defaultValue : val;
+};
+
+exports.getOrDefault = getOrDefault;
+
+},{"../classes/State.js":110,"@babel/runtime/helpers/defineProperty":11,"@babel/runtime/helpers/interopRequireDefault":12}],115:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "simulateFSA", {
+  enumerable: true,
+  get: function get() {
+    return _Simulators.simulateFSA;
+  }
+});
+Object.defineProperty(exports, "stepOnceFSA", {
+  enumerable: true,
+  get: function get() {
+    return _Simulators.stepOnceFSA;
+  }
+});
+Object.defineProperty(exports, "createFSA", {
+  enumerable: true,
+  get: function get() {
+    return _FSA.createFSA;
+  }
+});
+
+var _Simulators = require("./engine/Simulators.js");
+
+var _FSA = require("./classes/FSA.js");
+
+},{"./classes/FSA.js":109,"./engine/Simulators.js":112}]},{},[115]);
