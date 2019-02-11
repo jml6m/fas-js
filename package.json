@@ -12,8 +12,8 @@
   },
   "scripts": {
     "xxbuild": "babel src/ -d lib/ && microbundle build --strict --sourcemap false -f es,umd --external chalk",
-    "build": "babel src/ -d lib/ && rollup -c",
-    "yybuild": "babel src/ -d lib/ && browserify lib/modules.js -o lib/modules.bundle.js",
+    "yybuild": "babel src/ -d lib/ && rollup -c",
+    "build": "babel src/ -d lib/ && browserify lib/modules.js -o lib/modules.bundle.js",
     "prebuild": "npm run clean",
     "clean": "rimraf lib/*",
     "prepublishOnly": "cross-env NODE_ENV=prod npm run build && npm run flow check",
