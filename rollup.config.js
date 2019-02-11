@@ -11,8 +11,8 @@ export default {
       format: "esm"
     },
     {
-      file: "lib/modules.umd.js",
-      format: "umd",
+      file: "lib/modules.iife.js",
+      format: "iife",
       name: "fasJs"
     }
   ],
