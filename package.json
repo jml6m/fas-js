@@ -4,8 +4,6 @@
   "version": "1.1.9",
   "source": "src/modules.js",
   "main": "lib/modules.js",
-  "umd:main": "lib/modules.umd.js",
-  "module": "lib/modules.mjs",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jml6m/fas-js.git"
@@ -38,16 +36,10 @@
     "chai": "^4.2.0",
     "cross-env": "^5.2.0",
     "flow-bin": "^0.91.0",
-    "microbundle": "^0.9.0",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
     "pre-commit": "^1.2.2",
-    "rimraf": "^2.6.3",
-    "rollup": "^1.1.2",
-    "rollup-plugin-commonjs": "^9.2.0",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.4.0",
-    "rollup-plugin-node-resolve": "^4.0.0"
+    "rimraf": "^2.6.3"
   },
   "nyc": {
     "sourceMap": false,
