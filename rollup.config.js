@@ -5,11 +5,17 @@ import globals from "rollup-plugin-node-globals";
 
 export default {
   input: "lib/modules.js",
-  output: {
-    file: "lib/modules.bundle.js",
-    format: "iife",
-    name: "fasJs"
-  },
+  output: [
+    {
+      file: "lib/modules.bundle.js",
+      format: "esm"
+    },
+    {
+      file: "lib/modules.umd.js",
+      format: "umd",
+      name: "fasJs"
+    }
+  ],
   plugins: [
     globals(),
     builtins(),
