@@ -9,8 +9,6 @@
     "url": "git+https://github.com/jml6m/fas-js.git"
   },
   "scripts": {
-    "xxbuild": "babel src/ -d lib/ && microbundle build --strict --sourcemap false -f es,umd --external chalk",
-    "yybuild": "babel src/ -d lib/ && rollup -c",
     "build": "babel src/ -d lib/ && browserify -t [ babelify --presets [ @babel/preset-env @babel/preset-flow ] ] src/modules.js --standalone fasJs > lib/modules.bfy.js",
     "prebuild": "npm run clean",
     "clean": "rimraf lib/*",
