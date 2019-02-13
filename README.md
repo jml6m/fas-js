@@ -28,9 +28,9 @@ Import into HTML file
 ```
 
 ## Background
-A finite automaton is a formally defined state machine, a concept that can then be expanded on to build more complex and powerful computational machines. I highly recommend the book "Introduction to the Theory of Computation" by Michael Sipser if you want to learn more about FSAs and related concepts.
+A finite automaton is a formally defined state machine, a concept that can then be expanded on to build more complex and powerful computational machines. I highly recommend the book "Introduction to the Theory of Computation" by Michael Sipser if you want to learn more about state machines and related concepts.
 
-An FSA is defined as a 5-tuple (Q, Σ, δ, q0, F) where:
+A **Finite State Automaton (FSA)** is defined as a 5-tuple (Q, Σ, δ, q0, F) where:
 
 1. Q is a finite set called **states**
 2. Σ is a finite set called **alphabet**
