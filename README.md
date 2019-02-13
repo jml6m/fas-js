@@ -1,4 +1,4 @@
-# fas-js
+# Finite Automaton Simulator
 
 [![npm version](https://badge.fury.io/js/fas-js.svg)](https://badge.fury.io/js/fas-js)
 [![devDependencies Status](https://david-dm.org/jml6m/fas-js/dev-status.svg)](https://david-dm.org/jml6m/fas-js?type=dev)
@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/jml6m/fas-js/branch/master/graph/badge.svg)](https://codecov.io/gh/jml6m/fas-js)
 [![jsDelivr](https://data.jsdelivr.com/v1/package/npm/fas-js/badge)](https://www.jsdelivr.com/package/npm/fas-js)
 
-Easily create and simulate any Finite State Automaton (FSA) using this JS library. Import into your own server side or browser based JS application.
+Easily create and simulate state machines using this JS library. Import into your own server side or browser based JS application.
 
 ![FSA Example](img/fsa_example.png)
 ###### Visualization of an FSA
