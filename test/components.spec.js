@@ -1,6 +1,6 @@
 import { State } from "../src/classes/State.js";
 import { Alphabet } from "../src/classes/Alphabet.js";
-import { Transition } from "../src/classes/Transition.js";
+import { DFATransition } from "../src/classes/DFATransition.js";
 import { ErrorCode } from "../src/globals/errors.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
@@ -52,12 +52,12 @@ describe("Alphabet Creation", function() {
 });
 
 describe("Transition Creation", function() {
-  describe("Transition#constructor()", function() {
+  describe("DFATransition#constructor()", function() {
     it("Should return valid class attributes", function() {
       const origin = new State("q1");
       const dest = new State("q2");
       const input = "a";
-      let transition = new Transition(origin, dest, input);
+      let transition = new DFATransition(origin, dest, input);
 
       assert(transition.origin === origin);
       assert(transition.dest === dest);

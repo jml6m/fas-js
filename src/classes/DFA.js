@@ -1,23 +1,19 @@
 // @flow
 import chalk from "chalk";
+
+import { Transition } from "../interfaces/Transition.js";
+import { FSA } from "../interfaces/FSA.js";
+
 import { State } from "./State.js";
 import { Alphabet } from "./Alphabet.js";
-import { Transition } from "./Transition.js";
+import { DFATransition } from "./DFATransition.js";
 import { ErrorCode } from "../globals/errors.js";
 import { checkStateDuplicates, isSubSet, getOrDefault } from "../globals/globals.js";
 
-export class FSA {
-  // FSA 5-tuple
-  states: Set<State>; // Q
-  alphabet: Alphabet; // Σ
-  tfunc: Set<Transition>; // δ
-  start: State; // q0
-  accepts: Set<State>; // F
-
-  // Other attributes
+export class DFA implements FSA {
+  // DFA specific attributes
   paths: Map<State, Set<string>>; // States mapped to each member of Σ, will be empty after constructor returns
   links: Map<string, Set<string>>; // State names mapped to their dest state names
-  digraph: string; // Will contain template literal for GraphViz
 
   constructor(states: Set<State>, alphabet: Alphabet, tfunc: Set<Transition>, start: State, accepts: Set<State>) {
     // states validations
@@ -187,7 +183,7 @@ export class FSA {
 }
 
 // Global export method for creating FSA
-export const createFSA = (
+export const createDFA = (
   states: Array<string>,
   alphabet: Array<string>,
   transitions: Array<Object>,
@@ -215,7 +211,7 @@ export const createFSA = (
       if (!tr["from"] || !tr["to"] || !tr["input"]) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
       const fromVal: State = getOrDefault(_states, tr["from"], null);
       const toVal: State = getOrDefault(_states, tr["to"], null);
-      _tfunc.add(new Transition(fromVal, toVal, tr["input"]));
+      _tfunc.add(new DFATransition(fromVal, toVal, tr["input"]));
     }
   } else {
     throw new TypeError(transitions);
@@ -237,5 +233,5 @@ export const createFSA = (
     throw new TypeError(accepts);
   }
 
-  return new FSA(new Set(_states.values()), _alphabet, _tfunc, _start, _accepts);
+  return new DFA(new Set(_states.values()), _alphabet, _tfunc, _start, _accepts);
 };

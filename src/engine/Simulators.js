@@ -1,6 +1,6 @@
 // @flow
 import chalk from "chalk";
-import { FSA } from "../classes/FSA.js";
+import { FSA } from "../interfaces/FSA.js";
 import { State } from "../classes/State.js";
 import { ErrorCode } from "../globals/errors.js";
 
