@@ -2,7 +2,7 @@ import { simulateFSA, stepOnceFSA } from "../src/modules.js";
 import { DFA } from "../src/classes/DFA.js";
 import { State } from "../src/classes/State.js";
 import { Alphabet } from "../src/classes/Alphabet.js";
-import { DFATransition } from "../src/classes/DFATransition.js";
+import { Transition } from "../src/classes/Transition.js";
 import { ErrorCode } from "../src/globals/errors.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
@@ -19,10 +19,10 @@ describe("DFA Simulations", function() {
         q1 = new State("q1");
         q2 = new State("q2");
 
-        t1 = new DFATransition(q1, q1, "0");
-        t2 = new DFATransition(q1, q2, "1");
-        t3 = new DFATransition(q2, q2, "1");
-        t4 = new DFATransition(q2, q1, "0");
+        t1 = new Transition(q1, q1, "0");
+        t2 = new Transition(q1, q2, "1");
+        t3 = new Transition(q2, q2, "1");
+        t4 = new Transition(q2, q1, "0");
 
         states = new Set([q1, q2]);
         alphabet = new Alphabet("01");
@@ -68,16 +68,16 @@ describe("DFA Simulations", function() {
         r1 = new State("r1");
         r2 = new State("r2");
 
-        t1 = new DFATransition(s, q1, "a");
-        t2 = new DFATransition(s, r1, "b");
-        t3 = new DFATransition(q1, q1, "a");
-        t4 = new DFATransition(q1, q2, "b");
-        t5 = new DFATransition(q2, q1, "a");
-        t6 = new DFATransition(q2, q2, "b");
-        t7 = new DFATransition(r1, r2, "a");
-        t8 = new DFATransition(r1, r1, "b");
-        t9 = new DFATransition(r2, r2, "a");
-        t10 = new DFATransition(r2, r1, "b");
+        t1 = new Transition(s, q1, "a");
+        t2 = new Transition(s, r1, "b");
+        t3 = new Transition(q1, q1, "a");
+        t4 = new Transition(q1, q2, "b");
+        t5 = new Transition(q2, q1, "a");
+        t6 = new Transition(q2, q2, "b");
+        t7 = new Transition(r1, r2, "a");
+        t8 = new Transition(r1, r1, "b");
+        t9 = new Transition(r2, r2, "a");
+        t10 = new Transition(r2, r1, "b");
 
         states = new Set([s, q1, q2, r1, r2]);
         alphabet = new Alphabet("ab");
@@ -116,10 +116,10 @@ describe("DFA Simulations", function() {
         q1 = new State("q1");
         q2 = new State("q2");
 
-        t1 = new DFATransition(q1, q1, "0");
-        t2 = new DFATransition(q1, q2, "1");
-        t3 = new DFATransition(q2, q2, "1");
-        t4 = new DFATransition(q2, q1, "0");
+        t1 = new Transition(q1, q1, "0");
+        t2 = new Transition(q1, q2, "1");
+        t3 = new Transition(q2, q2, "1");
+        t4 = new Transition(q2, q1, "0");
 
         states = new Set([q1, q2]);
         alphabet = new Alphabet("01");

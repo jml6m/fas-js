@@ -1,16 +1,23 @@
 // @flow
 import chalk from "chalk";
 
-import { Transition } from "../interfaces/Transition.js";
 import { FSA } from "../interfaces/FSA.js";
 
 import { State } from "./State.js";
 import { Alphabet } from "./Alphabet.js";
-import { DFATransition } from "./DFATransition.js";
+import { Transition } from "./Transition.js";
 import { ErrorCode } from "../globals/errors.js";
 import { checkStateDuplicates, isSubSet, getOrDefault } from "../globals/globals.js";
 
 export class DFA implements FSA {
+  // Inherited attributes from FSA.js
+  states: Set<State>;
+  alphabet: Alphabet;
+  tfunc: Set<Transition>;
+  start: State;
+  accepts: Set<State>;
+  digraph: string;
+
   // DFA specific attributes
   paths: Map<State, Set<string>>; // States mapped to each member of Σ, will be empty after constructor returns
   links: Map<string, Set<string>>; // State names mapped to their dest state names
@@ -40,6 +47,10 @@ export class DFA implements FSA {
     this.digraph = this.generateDigraph();
   }
 
+  isValidInputChar(input: string): boolean {
+    return this.alphabet.sigma.indexOf(input) !== -1;
+  }
+
   /*
    * Transition function should only contain states in Q, and one transition should exist
    * for each combination of Q x Σ
@@ -56,12 +67,14 @@ export class DFA implements FSA {
 
       // Map transition to a path and remove on match
       if (this.paths.has(_t.origin) && pathStateVals.has(_t.input)) {
-        if (this.alphabet.sigma.indexOf !== -1) {
+        if (this.isValidInputChar(_t.input)) {
           newTFunc.add(_t);
           pathStateVals.delete(_t.input);
           if (pathStateVals.size === 0) {
             this.paths.delete(_t.origin);
           }
+        } else {
+          throw new Error(ErrorCode.INVALID_INPUT_CHAR);
         }
       }
     }
@@ -211,7 +224,7 @@ export const createDFA = (
       if (!tr["from"] || !tr["to"] || !tr["input"]) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
       const fromVal: State = getOrDefault(_states, tr["from"], null);
       const toVal: State = getOrDefault(_states, tr["to"], null);
-      _tfunc.add(new DFATransition(fromVal, toVal, tr["input"]));
+      _tfunc.add(new Transition(fromVal, toVal, tr["input"]));
     }
   } else {
     throw new TypeError(transitions);

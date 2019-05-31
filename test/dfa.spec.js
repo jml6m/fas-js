@@ -1,7 +1,7 @@
 import { State } from "../src/classes/State.js";
 import { DFA, createDFA } from "../src/classes/DFA.js";
 import { Alphabet } from "../src/classes/Alphabet.js";
-import { DFATransition } from "../src/classes/DFATransition.js";
+import { Transition } from "../src/classes/Transition.js";
 import { ErrorCode } from "../src/globals/errors.js";
 import { isSubSet } from "../src/globals/globals.js";
 var assert = require("chai").assert;
@@ -21,10 +21,10 @@ describe("DFA Creation", function() {
       alphabet = new Alphabet("ab");
       accepts = new Set([q2]);
 
-      t1 = new DFATransition(q1, q1, "a");
-      t2 = new DFATransition(q1, q2, "b");
-      t3 = new DFATransition(q2, q1, "a");
-      t4 = new DFATransition(q2, q2, "b");
+      t1 = new Transition(q1, q1, "a");
+      t2 = new Transition(q1, q2, "b");
+      t3 = new Transition(q2, q1, "a");
+      t4 = new Transition(q2, q2, "b");
       transitions = new Set([t1, t2, t3, t4]);
     });
 
@@ -83,12 +83,12 @@ describe("DFA Creation", function() {
       alphabet = new Alphabet("ab");
       accepts = new Set([q2, q3]);
 
-      t1 = new DFATransition(q1, q1, "a");
-      t2 = new DFATransition(q1, q2, "b");
-      t3 = new DFATransition(q2, q1, "a");
-      t4 = new DFATransition(q2, q2, "b");
-      t5 = new DFATransition(q3, q3, "a");
-      t6 = new DFATransition(q3, q3, "b");
+      t1 = new Transition(q1, q1, "a");
+      t2 = new Transition(q1, q2, "b");
+      t3 = new Transition(q2, q1, "a");
+      t4 = new Transition(q2, q2, "b");
+      t5 = new Transition(q3, q3, "a");
+      t6 = new Transition(q3, q3, "b");
       transitions = new Set([t1, t2, t3, t4, t5, t6]);
     });
 
@@ -128,32 +128,32 @@ describe("DFA Creation", function() {
     });
 
     it("Should not allow invalid Transition origin state", function() {
-      const t1 = new DFATransition(new State("q1"), q1, "a");
+      const t1 = new Transition(new State("q1"), q1, "a");
       const transitions = new Set([t1]);
       expect(() => new DFA(states, alphabet, transitions, q1, accepts)).to.throw(ErrorCode.ORIGIN_STATE_NOT_FOUND);
     });
 
     it("Should not allow invalid Transition dest state", function() {
-      const t1 = new DFATransition(q1, new State("q1"), "a");
+      const t1 = new Transition(q1, new State("q1"), "a");
       const transitions = new Set([t1]);
       expect(() => new DFA(states, alphabet, transitions, q1, accepts)).to.throw(ErrorCode.DEST_STATE_NOT_FOUND);
     });
 
     it("Should fail because required transition is missing", function() {
-      const t1 = new DFATransition(q1, q1, "a");
-      const t2 = new DFATransition(q1, q2, "b");
-      const t3 = new DFATransition(q2, q2, "a");
+      const t1 = new Transition(q1, q1, "a");
+      const t2 = new Transition(q1, q2, "b");
+      const t3 = new Transition(q2, q2, "a");
       const transitions = new Set([t1, t2, t3]);
       expect(() => new DFA(states, alphabet, transitions, q1, accepts)).to.throw(ErrorCode.MISSING_REQUIRED_TRANSITION);
     });
 
     it("Should reduce tfunc if additional transitions found or invalid transition", function() {
-      const t1 = new DFATransition(q1, q1, "x"); // Should be ignored - invalid input symbol
-      const t2 = new DFATransition(q1, q2, "b");
-      const t3 = new DFATransition(q2, q2, "a");
-      const t4 = new DFATransition(q2, q1, "b");
-      const t5 = new DFATransition(q2, q2, "b"); // Should be ignored - duplicate origin/dest
-      const t6 = new DFATransition(q1, q1, "a");
+      const t1 = new Transition(q1, q1, "x"); // Should be ignored - invalid input symbol
+      const t2 = new Transition(q1, q2, "b");
+      const t3 = new Transition(q2, q2, "a");
+      const t4 = new Transition(q2, q1, "b");
+      const t5 = new Transition(q2, q2, "b"); // Should be ignored - duplicate origin/dest
+      const t6 = new Transition(q1, q1, "a");
       const transitions = new Set([t1, t2, t3, t4, t5, t6]);
 
       const dfa = new DFA(states, alphabet, transitions, q1, accepts);
@@ -225,10 +225,10 @@ describe("DFA Creation", function() {
       alphabet = new Alphabet("ab");
       accepts = new Set([q2]);
 
-      t1 = new DFATransition(q1, q1, "a");
-      t2 = new DFATransition(q1, q2, "b");
-      t3 = new DFATransition(q2, q1, "a");
-      t4 = new DFATransition(q2, q2, "b");
+      t1 = new Transition(q1, q1, "a");
+      t2 = new Transition(q1, q2, "b");
+      t3 = new Transition(q2, q1, "a");
+      t4 = new Transition(q2, q2, "b");
       transitions = new Set([t1, t2, t3, t4]);
       dfa = new DFA(states, alphabet, transitions, q1, accepts);
     });
