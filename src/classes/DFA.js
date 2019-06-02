@@ -195,7 +195,7 @@ export class DFA implements FSA {
   }
 }
 
-// Global export method for creating FSA
+// Global export method for creating DFA
 export const createDFA = (
   states: Array<string>,
   alphabet: Array<string>,

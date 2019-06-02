@@ -90,7 +90,7 @@ describe("DFA Simulations", function() {
       it("Should accept for a/b/aa/bab/ababba", function() {
         assert(acceptsNames.indexOf(simulateFSA("a", fsa)) !== -1);
         assert(acceptsNames.indexOf(simulateFSA("b", fsa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("aa", fsa)) !== -1);
+        assert(acceptsNames.indexOf(simulateFSA(["a", "a"], fsa)) !== -1); // Use array param for additional code coverage
         assert(acceptsNames.indexOf(simulateFSA("bab", fsa)) !== -1);
         assert(acceptsNames.indexOf(simulateFSA("ababba", fsa)) !== -1);
       });
