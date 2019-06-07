@@ -4,7 +4,7 @@ import { Alphabet } from "../src/classes/Alphabet.js";
 import { NFATransition } from "../src/classes/NFATransition.js";
 import { Transition } from "../src/classes/Transition.js";
 import { ErrorCode } from "../src/globals/errors.js";
-import { isSetsEqual } from "../src/globals/globals.js";
+import { isSetsEqual, isSubSet } from "../src/globals/globals.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 
@@ -85,6 +85,18 @@ describe("NFA Creation", function() {
     it("Should fail because tfunc contains invalid input char", function() {
       const ftfunc = new Set([t1, new NFATransition(q4, [q4], "9")]);
       expect(() => new NFA(states, alphabet, ftfunc, q1, accepts)).to.throw(ErrorCode.INVALID_INPUT_CHAR);
+    });
+
+    it("Should reduce tfunc if additional transitions found or invalid transition", function() {
+      const tt2 = new NFATransition(q1, [q2], "1");
+      const tt3 = new NFATransition(q2, [q2], "0");
+      const tt4 = new NFATransition(q2, [q1], "1");
+      const tt5 = new NFATransition(q2, [q2], "0"); // Should be ignored - duplicate origin/dest/input
+      const tt6 = new NFATransition(q1, [q1], "0");
+      const transitions2 = new Set([tt2, tt3, tt4, tt5, tt6]);
+
+      const nfa = new NFA(states, alphabet, transitions2, q1, accepts);
+      assert(nfa.tfunc.size === 4)
     });
   });
 

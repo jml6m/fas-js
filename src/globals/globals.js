@@ -34,3 +34,8 @@ export const getOrDefault = (map: Map<any, any>, key: any, defaultValue: any) =>
   const val = map.get(key)
   return val == null ? defaultValue : val
 }
+
+export const instanceOf = (ctor: Function, obj: Object) => {
+  return (obj instanceof ctor) ||
+   (ctor.name && ctor.name === obj.constructor.name);
+};

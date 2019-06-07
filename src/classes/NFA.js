@@ -9,7 +9,7 @@ import { Alphabet } from "../classes/Alphabet.js";
 import { Transition } from "../classes/Transition.js";
 
 import { ErrorCode } from "../globals/errors.js";
-import { getOrDefault } from "../globals/globals.js";
+import { getOrDefault, instanceOf } from "../globals/globals.js";
 
 export class NFA extends DFA {
   // Transition function is different for NFA
@@ -33,23 +33,67 @@ export class NFA extends DFA {
     return this.alphabet.sigma.indexOf(input) !== -1 || input === "";
   }
 
+  // NFA returns set of destination states rather than one state
+  receiveInputNFA(input: string, state: State | Array<State>): Set<State> {
+    let path: Array<Transition> = [];
+    if (this.alphabet.sigma.indexOf(input) === -1) throw new Error(ErrorCode.INVALID_INPUT_CHAR);
+    if (state instanceof State) {
+      if (!this.states.has(state)) throw new Error(ErrorCode.INPUT_STATE_NOT_FOUND);
+
+      path = Array.from(this.tfunc).filter(obj => {
+        return obj.origin === state && obj.input === input;
+      });
+    } else {
+      for (const _s of state) {
+        if (!this.states.has(_s)) throw new Error(ErrorCode.INPUT_STATE_NOT_FOUND);
+
+        const _addToPath: Array<Transition> = Array.from(this.tfunc).filter(obj => {
+          return obj.origin === _s && obj.input === input;
+        });
+
+        path = path.concat(_addToPath);
+      }
+    }
+
+    let retSet: Set<State> = new Set<State>();
+    if (path.length > 1) {
+      for (const _s of path) retSet.add(_s.dest);
+    } else if (path.length === 1) {
+      retSet.add(path[0].dest);
+    } else {
+      console.error(chalk.redBright("Invalid transition for origin '%o' and input '%s'"), JSON.stringify(state), input);
+      throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+    }
+
+    return retSet;
+  }
+
   // Validate tfunc according to NFA rules
   validateTFunc() {
     let newTFunc: Set<Transition> = new Set(); // Will contain only necessary transitions
 
     for (const _t of this.tfunc) {
+      let skip = false;
+
       // Check for valid states
       if (!this.states.has(_t.origin)) throw new Error(ErrorCode.ORIGIN_STATE_NOT_FOUND);
       if (!this.states.has(_t.dest)) throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
 
       const pathStateVals: Set<string> = getOrDefault(this.paths, _t.origin, new Set());
 
+      // Check for duplicate before adding
+      for (const _checkT of newTFunc) {
+        if (_checkT.origin === _t.origin && _checkT.dest === _t.dest && _checkT.input === _t.input) skip = true;
+      }
+
       // Map transition to a path and remove on match
-      if (this.paths.has(_t.origin)) {
-        if (this.isValidInputChar(_t.input)) {
-          newTFunc.add(_t);
-        } else {
-          throw new Error(ErrorCode.INVALID_INPUT_CHAR);
+      if (!skip) {
+        if (this.paths.has(_t.origin)) {
+          if (this.isValidInputChar(_t.input)) {
+            newTFunc.add(_t);
+          } else {
+            throw new Error(ErrorCode.INVALID_INPUT_CHAR);
+          }
         }
       }
     }
