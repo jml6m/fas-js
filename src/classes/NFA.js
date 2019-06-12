@@ -33,26 +33,43 @@ export class NFA extends DFA {
     return this.alphabet.sigma.indexOf(input) !== -1 || input === "";
   }
 
+  // Follow all ε transitions and add to `state` (origin states)
+  populateEpsilons(state: Array<State>): Array<State> {
+    let cont: boolean = true; // continue
+    while (cont) {
+      cont = false;
+
+      // Find all ε from origin set
+      const epsTransitions: Array<Transition> = Array.from(this.tfunc).filter(obj => {
+        return state.includes(obj.origin) && obj.input === "";
+      });
+
+      // Add new states, break if no new states found
+      for (const _t of epsTransitions) {
+        if (!state.includes(_t.dest)) {
+          state.push(_t.dest);
+          cont = true;
+        }
+      }
+    }
+    return state;
+  }
+
   // NFA returns set of destination states rather than one state
-  receiveInputNFA(input: string, state: State | Array<State>): Set<State> {
+  receiveInputNFA(input: string, state: Array<State>): Set<State> {
     let path: Array<Transition> = [];
     if (this.alphabet.sigma.indexOf(input) === -1) throw new Error(ErrorCode.INVALID_INPUT_CHAR);
-    if (state instanceof State) {
-      if (!this.states.has(state)) throw new Error(ErrorCode.INPUT_STATE_NOT_FOUND);
 
-      path = Array.from(this.tfunc).filter(obj => {
-        return obj.origin === state && obj.input === input;
+    // Empty transitions, will also convert state to Array
+    state = this.populateEpsilons(state);
+
+    // Looking at all origin states, based on input char, determine set of destination states
+    for (const _s of state) {
+      const _addToPath: Array<Transition> = Array.from(this.tfunc).filter(obj => {
+        return obj.origin === _s && obj.input === input;
       });
-    } else {
-      for (const _s of state) {
-        if (!this.states.has(_s)) throw new Error(ErrorCode.INPUT_STATE_NOT_FOUND);
 
-        const _addToPath: Array<Transition> = Array.from(this.tfunc).filter(obj => {
-          return obj.origin === _s && obj.input === input;
-        });
-
-        path = path.concat(_addToPath);
-      }
+      path = path.concat(_addToPath);
     }
 
     let retSet: Set<State> = new Set<State>();
@@ -61,8 +78,8 @@ export class NFA extends DFA {
     } else if (path.length === 1) {
       retSet.add(path[0].dest);
     } else {
-      console.error(chalk.redBright("Invalid transition for origin '%o' and input '%s'"), JSON.stringify(state), input);
-      throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+      // No valid transition found, returning input states
+      for (const _s of state) retSet.add(_s);
     }
 
     return retSet;

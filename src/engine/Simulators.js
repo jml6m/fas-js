@@ -7,7 +7,7 @@ import { DFA } from "../classes/DFA.js";
 import { ErrorCode } from "../globals/errors.js";
 import { instanceOf } from "../globals/globals.js";
 
-export const simulateDFA = (w: string[], dfa: DFA, logging: boolean = false): string => {
+export const simulateDFA = (w: string | string[], dfa: DFA, logging: boolean = false): string => {
   if (instanceOf(NFA, dfa)) {
     if (logging) console.error(chalk.redBright("This function does not support NFAs"));
     throw new TypeError();
@@ -28,17 +28,8 @@ export const simulateDFA = (w: string[], dfa: DFA, logging: boolean = false): st
   let currentState: State = dfa.start;
   for (const char of w) {
     const prevState: State = currentState;
-    try {
-      currentState = dfa.receiveInput(char, prevState);
-    } catch (e) {
-      if (e.message === ErrorCode.INVALID_INPUT_CHAR) {
-        if (logging) console.error(chalk.redBright("Invalid input symbol: '%s'"), char);
-      } else {
-        if (logging) console.error(chalk.redBright(e));
-      }
-      return prevState.name;
-    }
-    if (logging) console.log("%s x %s -> %s", prevState.name, char, currentState.name);
+    currentState = dfa.receiveInput(char, prevState);
+    if (logging) console.log("%s x '%s' -> %s", prevState.name, char, currentState.name);
   }
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 
@@ -52,7 +43,7 @@ export const simulateDFA = (w: string[], dfa: DFA, logging: boolean = false): st
   }
 };
 
-export const simulateNFA = async (w: string[], nfa: NFA, logging: boolean = false): string => {
+export const simulateNFA = async (w: string | string[], nfa: NFA, logging: boolean = false): Promise<string> => {
   if (!instanceOf(NFA, nfa)) {
     if (logging) console.error(chalk.redBright("Input FSA must be an NFA"));
     throw new TypeError();
@@ -60,61 +51,46 @@ export const simulateNFA = async (w: string[], nfa: NFA, logging: boolean = fals
   if (logging) console.log(chalk.cyan("Beginning NFA Simulation"));
 
   //Accept either string or string[] for w
-  if (!Array.isArray(w)) {
-    if (typeof w === "string") w = [...w];
-    else {
+  if (!(w instanceof Array)) {
+    if (typeof w === "string") {
+      if (w === "") w = [""];
+      else w = [...w];
+    } else {
       if (logging) console.error(chalk.redBright("Input w was invalid type: %O"), w);
       throw new TypeError();
     }
   }
 
   if (logging) console.log(chalk.inverse("Input Processing Started"));
-  let currentState: State | Array<State> = nfa.start;
+  let currentState: Array<State> = [nfa.start];
   for (const char of w) {
-    const prevState: State | Array<State> = currentState;
-    try {
-      let retVals: Set<State> = nfa.receiveInputNFA(char, prevState);
-      if (retVals.size === 1) {
-        currentState = Array.from(retVals).pop();
-      } else {
-        currentState = await Promise.all(
-          retVals.values(async item => {
-            await nfa.receiveInputNFA(char, item);
-          })
-        );
-      }
-    } catch (e) {
-      if (e.message === ErrorCode.INVALID_INPUT_CHAR) {
-        if (logging) console.error(chalk.redBright("Invalid input symbol: '%s'"), char);
-      } else {
-        if (logging) console.error(chalk.redBright(e));
-      }
-      return prevState; //TODO: This is probably not right for NFAs
+    const prevState: Array<State> = currentState;
+    let retVals: Set<State> = nfa.receiveInputNFA(char, prevState);
+    if (retVals.size === 1) {
+      currentState = Array.from(retVals);
+    } else {
+      // $FlowFixMe
+      currentState = await Promise.all(
+        // $FlowFixMe
+        retVals.values((item: State) => {
+          nfa.receiveInputNFA(char, item);
+        })
+      );
     }
-    if (logging) console.log("%o x %s -> %o", JSON.stringify(prevState), char, JSON.stringify(currentState));
+    if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), char, JSON.stringify(currentState));
   }
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 
   // Check for acceptance (arbitrarily selects which state to return if multiple accepts/rejects)
-  if (currentState instanceof State) {
-    if (nfa.accepts.has(currentState)) {
+  for (const _accState of nfa.accepts) {
+    if (currentState.includes(_accState)) {
       if (logging) console.log(chalk.green("Input Accepted!"));
-      return currentState.name;
-    } else {
-      if (logging) console.log(chalk.red("Input Rejected!"));
-      return currentState.name;
+      return _accState.name;
     }
-  } else {
-    for (const _accState of nfa.accepts) {
-      if (currentState.includes(_accState)) {
-        if (logging) console.log(chalk.green("Input Accepted!"));
-        return _accState.name;
-      }
-    }
-
-    if (logging) console.log(chalk.red("Input Rejected!"));
-    return currentState[0].name;
   }
+
+  if (logging) console.log(chalk.red("Input Rejected!"));
+  return currentState[0].name;
 };
 
 export const stepOnceDFA = (w: string, qin: string, dfa: DFA, logging: boolean = false): string => {
@@ -144,7 +120,7 @@ export const stepOnceDFA = (w: string, qin: string, dfa: DFA, logging: boolean =
   }
 
   let newState: State = dfa.receiveInput(w, prevState);
-  if (logging) console.log("%s x %s -> %s", prevState.name, w, newState.name);
+  if (logging) console.log("%s x '%s' -> %s", prevState.name, w, newState.name);
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 
   return newState.name;

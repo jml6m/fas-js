@@ -29,6 +29,7 @@
     "babelify": "^10.0.0",
     "browserify": "^16.2.3",
     "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "cross-env": "^5.2.0",
     "flow-bin": "^0.96.0",
     "mocha": "^6.0.2",
