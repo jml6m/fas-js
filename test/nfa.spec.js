@@ -4,7 +4,6 @@ import { Alphabet } from "../src/classes/Alphabet.js";
 import { NFATransition } from "../src/classes/NFATransition.js";
 import { Transition } from "../src/classes/Transition.js";
 import { ErrorCode } from "../src/globals/errors.js";
-import { isSetsEqual, isSubSet } from "../src/globals/globals.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 

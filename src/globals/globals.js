@@ -18,17 +18,6 @@ export const checkStateDuplicates = (states: Set<State>) => {
   return false;
 };
 
-// Check whether inputSet is a subset of otherSet
-export const isSubSet = (inputSet: Set<any>, otherSet: Set<any>): boolean => {
-  if (inputSet.size > otherSet.size) return false;
-  else {
-    for (var elem of inputSet) {
-      if (!otherSet.has(elem)) return false;
-    }
-    return true;
-  }
-};
-
 // Flow hack - gets around problems with Map#get having possible void type
 export const getOrDefault = (map: Map<any, any>, key: any, defaultValue: any) => {
   const val = map.get(key)

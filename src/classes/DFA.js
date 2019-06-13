@@ -7,7 +7,8 @@ import { State } from "./State.js";
 import { Alphabet } from "./Alphabet.js";
 import { Transition } from "./Transition.js";
 import { ErrorCode } from "../globals/errors.js";
-import { checkStateDuplicates, isSubSet, getOrDefault } from "../globals/globals.js";
+import { checkStateDuplicates, getOrDefault } from "../globals/globals.js";
+import Set from "core-js-pure/features/set";
 
 export class DFA implements FSA {
   // Inherited attributes from FSA.js
@@ -36,7 +37,7 @@ export class DFA implements FSA {
     if (!states.has(start)) throw new Error(ErrorCode.START_STATE_NOT_FOUND);
     this.start = start;
     if (Object.keys(accepts).length === 0 && accepts.constructor === Object) accepts = new Set([]); // Allow for {}
-    if (!isSubSet(accepts, states)) throw new Error(ErrorCode.ACCEPTS_NOT_SUBSET);
+    if (!Set.isSubsetOf(accepts, states)) throw new Error(ErrorCode.ACCEPTS_NOT_SUBSET);
     this.accepts = accepts;
 
     // TFunc validations

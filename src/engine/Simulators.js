@@ -43,7 +43,7 @@ export const simulateDFA = (w: string | string[], dfa: DFA, logging: boolean = f
   }
 };
 
-export const simulateNFA = async (w: string | string[], nfa: NFA, logging: boolean = false): Promise<string> => {
+export const simulateNFA = (w: string | string[], nfa: NFA, logging: boolean = false): Promise<string> => {
   if (!instanceOf(NFA, nfa)) {
     if (logging) console.error(chalk.redBright("Input FSA must be an NFA"));
     throw new TypeError();

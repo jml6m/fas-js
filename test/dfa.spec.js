@@ -3,7 +3,8 @@ import { DFA, createDFA } from "../src/classes/DFA.js";
 import { Alphabet } from "../src/classes/Alphabet.js";
 import { Transition } from "../src/classes/Transition.js";
 import { ErrorCode } from "../src/globals/errors.js";
-import { isSubSet } from "../src/globals/globals.js";
+import Set from "core-js-pure/features/set";
+
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 
@@ -33,7 +34,7 @@ describe("DFA Creation", function() {
 
       assert(dfa.states === states);
       assert(dfa.alphabet === alphabet);
-      assert(isSubSet(dfa.tfunc, transitions)); // tfunc can be reduced
+      assert(Set.isSubsetOf(dfa.tfunc, transitions)); // tfunc can be reduced
       assert(dfa.start === q1);
       assert(dfa.accepts === accepts);
       assert(dfa.paths.size === 0);
@@ -101,7 +102,7 @@ describe("DFA Creation", function() {
 
       assert(dfa.states === states);
       assert(dfa.alphabet === alphabet);
-      assert(isSubSet(dfa.tfunc, transitions)); // tfunc can be reduced
+      assert(Set.isSubsetOf(dfa.tfunc, transitions)); // tfunc can be reduced
       assert(dfa.start === q1);
       assert(dfa.accepts === accepts);
       assert(dfa.paths.size === 0);
