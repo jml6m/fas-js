@@ -92,7 +92,7 @@ describe("DFA Creation", function() {
       transitions = new Set([t1, t2, t3, t4, t5, t6]);
     });
 
-    it("Should return valid class attributes", function() {
+    it("Should return valid class attributes with dead states removed", function() {
       const dfa = new DFA(states, alphabet, transitions, q1, accepts);
       states.delete(q3);
       accepts.delete(q3);
@@ -109,13 +109,18 @@ describe("DFA Creation", function() {
   });
 
   describe("DFA#validateTFunc()", function() {
-    let q1, q2, q3;
+    let q1, q2;
+    let t1, t2, t3, t4;
     let states, alphabet, accepts;
 
     before(function() {
       q1 = new State("q1");
       q2 = new State("q2");
-      q3 = new State("q3");
+
+      t1 = new Transition(q1, q1, "a");
+      t2 = new Transition(q1, q2, "b");
+      t3 = new Transition(q2, q1, "a");
+      t4 = new Transition(q2, q2, "b");
 
       states = new Set([q1, q2]);
       alphabet = new Alphabet("ab");
@@ -139,6 +144,12 @@ describe("DFA Creation", function() {
       expect(() => new DFA(states, alphabet, transitions, q1, accepts)).to.throw(ErrorCode.DEST_STATE_NOT_FOUND);
     });
 
+    it("Should not allow invalid Transition input char", function() {
+      const t5 = new Transition(q1, q2, "z");
+      const transitions = new Set([t1, t2, t3, t4, t5]);
+      expect(() => new DFA(states, alphabet, transitions, q1, accepts)).to.throw(ErrorCode.INVALID_INPUT_CHAR);
+    });
+
     it("Should fail because required transition is missing", function() {
       const t1 = new Transition(q1, q1, "a");
       const t2 = new Transition(q1, q2, "b");
@@ -147,24 +158,15 @@ describe("DFA Creation", function() {
       expect(() => new DFA(states, alphabet, transitions, q1, accepts)).to.throw(ErrorCode.MISSING_REQUIRED_TRANSITION);
     });
 
-    it("Should reduce tfunc if additional transitions found or invalid transition", function() {
-      const t1 = new Transition(q1, q1, "x"); // Should be ignored - invalid input symbol
-      const t2 = new Transition(q1, q2, "b");
-      const t3 = new Transition(q2, q2, "a");
-      const t4 = new Transition(q2, q1, "b");
-      const t5 = new Transition(q2, q2, "b"); // Should be ignored - duplicate origin/dest
-      const t6 = new Transition(q1, q1, "a");
-      const transitions = new Set([t1, t2, t3, t4, t5, t6]);
-
-      const dfa = new DFA(states, alphabet, transitions, q1, accepts);
-      assert(isSubSet(dfa.tfunc, transitions));
-      assert(dfa.tfunc.has(t4) && !dfa.tfunc.has(t5) && !dfa.tfunc.has(t1));
-      assert(dfa.paths.size === 0);
+    it("Should not allow duplicate transition", function() {
+      const t5 = new Transition(q1, q2, "a");
+      const transitions = new Set([t1, t2, t3, t4, t5]);
+      expect(() => new DFA(states, alphabet, transitions, q1, accepts)).to.throw(ErrorCode.DUPLICATE_TRANSITION_OBJECT);
     });
   });
 
   describe("DFA#createDFA()", function() {
-    let states, aph, tr, tr2;
+    let states, aph, tr, tr2, tr3;
 
     before(function() {
       states = ["q1", "q2"];
@@ -176,6 +178,7 @@ describe("DFA Creation", function() {
         { from: "q1", to: "q1", input: "0" }
       ];
       tr2 = { from: "q1", to: "q1", input: "0" };
+      tr3 = { from: "q1", to: "q1" };
     });
 
     it("Should not accept invalid input types", function() {
@@ -202,6 +205,9 @@ describe("DFA Creation", function() {
       expect(() => createDFA(states, aph, tr, undefined, states)).to.throw(TypeError);
       expect(() => createDFA(states, aph, tr, 0, states)).to.throw(TypeError);
       expect(() => createDFA(states, aph, tr, () => {}, states)).to.throw(TypeError);
+
+      // Invalid transition object
+      expect(() => createDFA(states, aph, tr3, "q1", states)).to.throw(ErrorCode.INVALID_TRANSITION_OBJECT);
     });
 
     it("Should successfully create the DFA", function() {

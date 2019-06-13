@@ -66,16 +66,18 @@ export class DFA implements FSA {
       const pathStateVals: Set<string> = getOrDefault(this.paths, _t.origin, new Set());
 
       // Map transition to a path and remove on match
-      if (this.paths.has(_t.origin) && pathStateVals.has(_t.input)) {
-        if (this.isValidInputChar(_t.input)) {
+      if (this.isValidInputChar(_t.input)) {
+        if (this.paths.has(_t.origin) && pathStateVals.has(_t.input)) {
           newTFunc.add(_t);
           pathStateVals.delete(_t.input);
           if (pathStateVals.size === 0) {
             this.paths.delete(_t.origin);
           }
         } else {
-          throw new Error(ErrorCode.INVALID_INPUT_CHAR);
+          throw new Error(ErrorCode.DUPLICATE_TRANSITION_OBJECT);
         }
+      } else {
+        throw new Error(ErrorCode.INVALID_INPUT_CHAR);
       }
     }
 

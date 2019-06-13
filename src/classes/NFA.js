@@ -78,8 +78,8 @@ export class NFA extends DFA {
     } else if (path.length === 1) {
       retSet.add(path[0].dest);
     } else {
-      // No valid transition found, returning input states
-      for (const _s of state) retSet.add(_s);
+      // No valid transition found, returning empty set
+      return retSet;
     }
 
     return retSet;

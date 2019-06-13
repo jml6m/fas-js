@@ -40,7 +40,7 @@ A **Finite State Automaton (FSA)** is defined as a 5-tuple (Q, Σ, δ, q0, F) wh
 
 An FSA (a type of state machine) recognizes exactly one language. More formally, if A is the set of all strings that a given machine M accepts, then we can say that A is the language of machine M, or L(M) = A. When we say that M recognizes A, it means that the machine M accepts all possible strings within A. This library gives you tools to simulate a given input string <i>w</i> to determine if <i>w</i> ∈ A.
 
-An FSA can be conceptualized as a [Directed Graph](https://en.wikipedia.org/wiki/Directed_graph), and more speifically, an [Oriented Graph](https://en.wikipedia.org/wiki/Orientation_(graph_theory)). It's often visualized in this way for teaching and demonstration (see below) purposes. It is also important to understand [Sets](https://en.wikipedia.org/wiki/Set_(mathematics)) and their logical operators when working with FSAs.
+An FSA can be conceptualized as a [Directed Graph](https://en.wikipedia.org/wiki/Directed_graph), and more specifically, an [Oriented Graph](https://en.wikipedia.org/wiki/Orientation_(graph_theory)). It's often visualized in this way for teaching and demonstration (see below) purposes. It is also important to understand [Sets](https://en.wikipedia.org/wiki/Set_(mathematics)) and their logical operators when working with FSAs.
 
 ## Usage
 First, define your FSA according to the definition above.

@@ -64,24 +64,13 @@ export const simulateNFA = async (w: string | string[], nfa: NFA, logging: boole
   if (logging) console.log(chalk.inverse("Input Processing Started"));
   let currentState: Array<State> = [nfa.start];
   for (const char of w) {
-    const prevState: Array<State> = currentState;
-    let retVals: Set<State> = nfa.receiveInputNFA(char, prevState);
-    if (retVals.size === 1) {
-      currentState = Array.from(retVals);
-    } else {
-      // $FlowFixMe
-      currentState = await Promise.all(
-        // $FlowFixMe
-        retVals.values((item: State) => {
-          nfa.receiveInputNFA(char, item);
-        })
-      );
-    }
+    let prevState: Array<State> = currentState;
+    currentState = [...nfa.receiveInputNFA(char, currentState)];
     if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), char, JSON.stringify(currentState));
   }
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 
-  // Check for acceptance (arbitrarily selects which state to return if multiple accepts/rejects)
+  // Check for acceptance (arbitrarily selects which state to return if multiple accept scenarios found)
   for (const _accState of nfa.accepts) {
     if (currentState.includes(_accState)) {
       if (logging) console.log(chalk.green("Input Accepted!"));
@@ -89,8 +78,10 @@ export const simulateNFA = async (w: string | string[], nfa: NFA, logging: boole
     }
   }
 
+  // If rejection, return one of the final states or if input results in no final state, return empty string
   if (logging) console.log(chalk.red("Input Rejected!"));
-  return currentState[0].name;
+  if (currentState.length > 0) return currentState[0].name;
+  else return "";
 };
 
 export const stepOnceDFA = (w: string, qin: string, dfa: DFA, logging: boolean = false): string => {
