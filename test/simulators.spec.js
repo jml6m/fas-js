@@ -1,10 +1,6 @@
 import { simulateDFA, stepOnceDFA, simulateNFA } from "../src/modules.js";
-import { DFA } from "../src/classes/DFA.js";
-import { NFA } from "../src/classes/NFA.js";
-import { State } from "../src/classes/State.js";
-import { Alphabet } from "../src/classes/Alphabet.js";
-import { Transition } from "../src/classes/Transition.js";
-import { NFATransition } from "../src/classes/NFATransition.js";
+import { DFA, NFA } from "../src/automata";
+import { State, Alphabet, Transition, NFATransition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors.js";
 
 const chai = require("chai");
@@ -228,7 +224,7 @@ describe("NFA Simulations", function() {
         assert(acceptsNames.indexOf(simulateNFA("1110000", nfa)) === -1);
       });
 
-      it("Should only accept DFAs", () => {
+      it("Should only accept NFAs", () => {
         const test_dfa = new DFA(
           new Set([q1]),
           new Alphabet("01"),
@@ -276,39 +272,6 @@ describe("NFA Simulations", function() {
         assert(acceptsNames.indexOf(simulateNFA("01", nfa)) === -1);
         assert(acceptsNames.indexOf(simulateNFA("1101", nfa)) === -1);
         assert(acceptsNames.indexOf(simulateNFA("01011", nfa)) === -1);
-      });
-    });
-
-    describe("Accepts 00", function() {
-      let q1, q2, q3;
-      let t1, t2, t3;
-      let states, alphabet, accepts, acceptsNames, transitions, nfa;
-
-      before(function() {
-        q1 = new State("q1");
-        q2 = new State("q2");
-        q3 = new State("q3");
-
-        t1 = new NFATransition(q1, [q2], "0");
-        t2 = new NFATransition(q2, [q3], "0");
-
-        states = new Set([q1, q2, q3]);
-        alphabet = new Alphabet("01");
-        transitions = new Set([t1, t2]);
-        accepts = new Set([q3]);
-        acceptsNames = [q3.name];
-        nfa = new NFA(states, alphabet, transitions, q1, accepts);
-      });
-
-      it("Should accept for 00", () => {
-        assert(acceptsNames.indexOf(simulateNFA("00", nfa)) !== -1);
-      });
-
-      it("Should reject for 0/1", () => {
-        assert(acceptsNames.indexOf(simulateNFA("0", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateNFA("1", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateNFA("000", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateNFA("001", nfa)) === -1);
       });
     });
 

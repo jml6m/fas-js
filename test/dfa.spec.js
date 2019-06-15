@@ -1,7 +1,5 @@
-import { State } from "../src/classes/State.js";
-import { DFA, createDFA } from "../src/classes/DFA.js";
-import { Alphabet } from "../src/classes/Alphabet.js";
-import { Transition } from "../src/classes/Transition.js";
+import { DFA, createDFA } from "../src/automata";
+import { State, Alphabet, Transition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors.js";
 import Set from "core-js-pure/features/set";
 

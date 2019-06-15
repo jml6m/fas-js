@@ -1,5 +1,5 @@
 // @flow
-import { State } from "../classes/State.js";
+import { State } from "../components/State.js";
 
 // Count number of instances for each string in an array - returns key/val pairs
 export const count = (names: Array<string>): Object =>

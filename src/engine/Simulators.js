@@ -1,9 +1,8 @@
 // @flow
 import chalk from "chalk";
 import { FSA } from "../interfaces/FSA.js";
-import { State } from "../classes/State.js";
-import { NFA } from "../classes/NFA.js";
-import { DFA } from "../classes/DFA.js";
+import { State } from "../components/State.js";
+import { DFA, NFA } from "../automata";
 import { ErrorCode } from "../globals/errors.js";
 import { instanceOf } from "../globals/globals.js";
 
@@ -43,7 +42,7 @@ export const simulateDFA = (w: string | string[], dfa: DFA, logging: boolean = f
   }
 };
 
-export const simulateNFA = (w: string | string[], nfa: NFA, logging: boolean = false): Promise<string> => {
+export const simulateNFA = (w: string | string[], nfa: NFA, logging: boolean = false): string => {
   if (!instanceOf(NFA, nfa)) {
     if (logging) console.error(chalk.redBright("Input FSA must be an NFA"));
     throw new TypeError();

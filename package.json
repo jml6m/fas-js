@@ -31,7 +31,6 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "cross-env": "^5.2.0",
-    "extend": ">=2.0.2",
     "flow-bin": "^0.101.0",
     "mocha": "^6.0.2",
     "nyc": "^14.1.1",

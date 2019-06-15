@@ -1,8 +1,5 @@
-import { State } from "../src/classes/State.js";
-import { NFA, createNFA } from "../src/classes/NFA.js";
-import { Alphabet } from "../src/classes/Alphabet.js";
-import { NFATransition } from "../src/classes/NFATransition.js";
-import { Transition } from "../src/classes/Transition.js";
+import { State, Alphabet, NFATransition, Transition } from "../src/components";
+import { NFA, createNFA } from "../src/automata";
 import { ErrorCode } from "../src/globals/errors.js";
 var assert = require("chai").assert;
 var expect = require("chai").expect;
