@@ -12,5 +12,6 @@ export const ErrorCode: { [string]: string } = Object.freeze({
     INVALID_INPUT_CHAR: "E-009",
     INPUT_STATE_NOT_FOUND: "E-010",
     INVALID_TRANSITION_OBJECT: "E-011",
-    DUPLICATE_TRANSITION_OBJECT: "E-012"
+    DUPLICATE_TRANSITION_OBJECT: "E-012",
+    INVALID_STATE_ARRAY: "E-013"
 });

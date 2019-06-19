@@ -3,14 +3,24 @@ import chalk from "chalk";
 import { FSA } from "../interfaces/FSA.js";
 import { State } from "../components/State.js";
 import { DFA, NFA } from "../automata";
+import { FSAUtils } from "../utils";
 import { ErrorCode } from "../globals/errors.js";
 import { instanceOf } from "../globals/globals.js";
 
-export const simulateDFA = (w: string | string[], dfa: DFA, logging: boolean = false): string => {
-  if (instanceOf(NFA, dfa)) {
-    if (logging) console.error(chalk.redBright("This function does not support NFAs"));
-    throw new TypeError();
+export const simulateFSA = (w: string | string[], fsa: FSA, logging: boolean = false): string => {
+  if (instanceOf(NFA, fsa)) {
+    return simulateNFA(w, fsa, new FSAUtils(NFA), logging);
+  } else {
+    return simulateDFA(w, fsa, new FSAUtils(DFA), logging);
   }
+};
+
+export const stepOnceFSA = (w: string, qin: string, fsa: FSA, logging: boolean = false): string => {};
+
+/*
+ * Private methods
+ */
+function simulateDFA(w: string | string[], dfa: DFA, utils: FSAUtils, logging: boolean): string {
   if (logging) console.log(chalk.cyan("Beginning DFA Simulation"));
 
   //Accept either string or string[] for w
@@ -24,29 +34,25 @@ export const simulateDFA = (w: string | string[], dfa: DFA, logging: boolean = f
 
   // Step through the DFA
   if (logging) console.log(chalk.inverse("Input Processing Started"));
-  let currentState: State = dfa.start;
+  let currentState: State = dfa.getStartState();
   for (const char of w) {
     const prevState: State = currentState;
-    currentState = dfa.receiveInput(char, prevState);
+    currentState = utils.receiveInput(dfa, char, prevState);
     if (logging) console.log("%s x '%s' -> %s", prevState.name, char, currentState.name);
   }
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 
   // Check for acceptance
-  if (dfa.accepts.has(currentState)) {
+  if (dfa.getAcceptStates().has(currentState)) {
     if (logging) console.log(chalk.green("Input Accepted!"));
     return currentState.name;
   } else {
     if (logging) console.log(chalk.red("Input Rejected!"));
     return currentState.name;
   }
-};
+}
 
-export const simulateNFA = (w: string | string[], nfa: NFA, logging: boolean = false): string => {
-  if (!instanceOf(NFA, nfa)) {
-    if (logging) console.error(chalk.redBright("Input FSA must be an NFA"));
-    throw new TypeError();
-  }
+function simulateNFA(w: string | string[], nfa: NFA, utils: FSAUtils, logging: boolean): string {
   if (logging) console.log(chalk.cyan("Beginning NFA Simulation"));
 
   //Accept either string or string[] for w
@@ -61,16 +67,16 @@ export const simulateNFA = (w: string | string[], nfa: NFA, logging: boolean = f
   }
 
   if (logging) console.log(chalk.inverse("Input Processing Started"));
-  let currentState: Array<State> = [nfa.start];
+  let currentState: Array<State> = [nfa.getStartState()];
   for (const char of w) {
     let prevState: Array<State> = currentState;
-    currentState = [...nfa.receiveInputNFA(char, currentState)];
+    currentState = [...utils.receiveInput(nfa, char, currentState)];
     if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), char, JSON.stringify(currentState));
   }
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 
   // Check for acceptance (arbitrarily selects which state to return if multiple accept scenarios found)
-  for (const _accState of nfa.accepts) {
+  for (const _accState of nfa.getAcceptStates()) {
     if (currentState.includes(_accState)) {
       if (logging) console.log(chalk.green("Input Accepted!"));
       return _accState.name;
@@ -81,7 +87,7 @@ export const simulateNFA = (w: string | string[], nfa: NFA, logging: boolean = f
   if (logging) console.log(chalk.red("Input Rejected!"));
   if (currentState.length > 0) return currentState[0].name;
   else return "";
-};
+}
 
 export const stepOnceDFA = (w: string, qin: string, dfa: DFA, logging: boolean = false): string => {
   // Type checks
@@ -101,7 +107,7 @@ export const stepOnceDFA = (w: string, qin: string, dfa: DFA, logging: boolean =
   // Step once
   if (logging) console.log(chalk.inverse("Input Processing Started"));
   let prevState;
-  for (const state of dfa.states.values()) {
+  for (const state of dfa.getStates().values()) {
     if (qin === state.name) prevState = state;
   }
 
@@ -109,7 +115,7 @@ export const stepOnceDFA = (w: string, qin: string, dfa: DFA, logging: boolean =
     throw new Error(ErrorCode.INVALID_STATE_NAME);
   }
 
-  let newState: State = dfa.receiveInput(w, prevState);
+  let newState: State = new FSAUtils(DFA).receiveInput(dfa, w, prevState);
   if (logging) console.log("%s x '%s' -> %s", prevState.name, w, newState.name);
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 

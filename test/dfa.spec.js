@@ -1,7 +1,7 @@
+import Set from "core-js/features/set";
 import { DFA, createDFA } from "../src/automata";
 import { State, Alphabet, Transition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors.js";
-import Set from "core-js-pure/features/set";
 
 var assert = require("chai").assert;
 var expect = require("chai").expect;
@@ -30,20 +30,24 @@ describe("DFA Creation", function() {
     it("Should return valid class attributes", function() {
       const dfa = new DFA(states, alphabet, transitions, q1, accepts);
 
-      assert(dfa.states === states);
-      assert(dfa.alphabet === alphabet);
-      assert(Set.isSubsetOf(dfa.tfunc, transitions)); // tfunc can be reduced
-      assert(dfa.start === q1);
-      assert(dfa.accepts === accepts);
-      assert(dfa.paths.size === 0);
+      assert(dfa.getStates() === states);
+      assert(dfa.getAlphabet() === alphabet);
+      assert(dfa.getTFunc().isSubsetOf(transitions)); // tfunc can be reduced
+      assert(dfa.getStartState() === q1);
+      assert(dfa.getAcceptStates() === accepts);
+    });
+
+    it("Should have no public attributes", function() {
+      const dfa = new DFA(states, alphabet, transitions, q1, accepts);
+      assert(Object.getOwnPropertyNames(dfa).length === 0);
     });
 
     it("Should allow accepts to be empty set", function() {
       const emptySet = new Set([]);
       const dfa = new DFA(states, alphabet, transitions, q1, emptySet);
       const dfa2 = new DFA(states, alphabet, transitions, q1, {});
-      assert(dfa.accepts === emptySet);
-      assert(dfa2.accepts.size === 0);
+      assert(dfa.getAcceptStates() === emptySet);
+      assert(dfa2.getAcceptStates().size === 0);
     });
 
     it("Should fail because states contains duplicates", function() {
@@ -93,17 +97,12 @@ describe("DFA Creation", function() {
 
     it("Should return valid class attributes with dead states removed", function() {
       const dfa = new DFA(states, alphabet, transitions, q1, accepts);
-      states.delete(q3);
-      accepts.delete(q3);
-      transitions.delete(t5);
-      transitions.delete(t6);
 
-      assert(dfa.states === states);
-      assert(dfa.alphabet === alphabet);
-      assert(Set.isSubsetOf(dfa.tfunc, transitions)); // tfunc can be reduced
-      assert(dfa.start === q1);
-      assert(dfa.accepts === accepts);
-      assert(dfa.paths.size === 0);
+      assert(dfa.getStates().isSubsetOf(states));
+      assert(dfa.getAlphabet() === alphabet);
+      assert(dfa.getTFunc().isSubsetOf(transitions)); // tfunc can be reduced
+      assert(dfa.getStartState() === q1);
+      assert(dfa.getAcceptStates().isSubsetOf(accepts));
     });
   });
 
@@ -164,6 +163,43 @@ describe("DFA Creation", function() {
     });
   });
 
+  describe("DFA#generateDigraph()", function() {
+    let q1, q2, q3;
+    let t1, t2, t3, t4, t5, t6;
+    let states, alphabet, accepts, transitions, dfa;
+
+    before(function() {
+      q1 = new State("q1");
+      q2 = new State("q2");
+      q3 = new State("q3");
+
+      states = new Set([q1, q2, q3]);
+      alphabet = new Alphabet("ab");
+      accepts = new Set([q2, q3]);
+
+      t1 = new Transition(q1, q1, "a");
+      t2 = new Transition(q1, q2, "b");
+      t3 = new Transition(q2, q1, "a");
+      t4 = new Transition(q2, q2, "b");
+      t5 = new Transition(q3, q3, "a");
+      t6 = new Transition(q3, q3, "b");
+      transitions = new Set([t1, t2, t3, t4, t5, t6]);
+      dfa = new DFA(states, alphabet, transitions, q1, accepts);
+    });
+
+    it("Should generate correct digraph with dead states removed", function() {
+      const digraph = dfa.generateDigraph();
+      assert(digraph.includes("digraph fsa"));
+      assert(digraph.includes("q2 [shape = doublecircle];"));
+      assert(digraph.includes("node [shape = point ]; qi;"));
+      assert(digraph.includes("qi -> q1;"));
+      assert(digraph.includes('q1 -> q1 [ label = "a" ];'));
+      assert(digraph.includes('q1 -> q2 [ label = "b" ];'));
+      assert(digraph.includes('q2 -> q1 [ label = "a" ];'));
+      assert(digraph.includes('q2 -> q2 [ label = "b" ];'));
+    });
+  });
+
   describe("DFA#createDFA()", function() {
     let states, aph, tr, tr2, tr3;
 
@@ -213,38 +249,6 @@ describe("DFA Creation", function() {
       expect(() => createDFA(states, aph, tr, "q1", states)).to.not.throw();
       expect(() => createDFA(states, aph, tr, "q1", "q1")).to.not.throw();
       expect(() => createDFA("q1", "0", tr2, "q1", "q1")).to.not.throw();
-    });
-  });
-
-  describe("DFA#receiveInput()", function() {
-    let q1, q2, q3;
-    let t1, t2, t3, t4;
-    let states, alphabet, accepts, transitions, dfa;
-
-    before(function() {
-      q1 = new State("q1");
-      q2 = new State("q2");
-      q3 = new State("q3");
-
-      states = new Set([q1, q2]);
-      alphabet = new Alphabet("ab");
-      accepts = new Set([q2]);
-
-      t1 = new Transition(q1, q1, "a");
-      t2 = new Transition(q1, q2, "b");
-      t3 = new Transition(q2, q1, "a");
-      t4 = new Transition(q2, q2, "b");
-      transitions = new Set([t1, t2, t3, t4]);
-      dfa = new DFA(states, alphabet, transitions, q1, accepts);
-    });
-
-    it("Should return the destination state", function() {
-      assert(dfa.receiveInput("a", q1), q1);
-      assert(dfa.receiveInput("b", q1), q2);
-    });
-
-    it("Should throw error on invalid input state", function() {
-      expect(() => dfa.receiveInput("a", q3)).to.throw(ErrorCode.INPUT_STATE_NOT_FOUND);
     });
   });
 });

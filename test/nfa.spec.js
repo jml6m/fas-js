@@ -44,28 +44,33 @@ describe("NFA Creation", function() {
     it("Should return valid class attributes", function() {
       const nfa = new NFA(states, alphabet, transitions, q1, accepts);
 
-      assert(nfa.states === states);
-      assert(nfa.alphabet === alphabet);
-      assert(nfa.start === q1);
-      assert(nfa.accepts === accepts);
+      assert(nfa.getStates() === states);
+      assert(nfa.getAlphabet() === alphabet);
+      assert(nfa.getStartState() === q1);
+      assert(nfa.getAcceptStates() === accepts);
 
       // Validate TFunc
-      assert(nfa.tfunc.length === checkTfunc.length);
-      for (const t in nfa.tfunc) assert(checkTfunc.has(t));
+      assert(nfa.getTFunc().length === checkTfunc.length);
+      for (const t in nfa.getTFunc()) assert(checkTfunc.has(t));
+    });
+
+    it("Should have no public attributes", function() {
+      const nfa = new NFA(states, alphabet, transitions, q1, accepts);
+      assert(Object.getOwnPropertyNames(nfa).length === 0);
     });
 
     it("Should allow accepts to be empty set", function() {
       const emptySet = new Set([]);
       const nfa = new NFA(states, alphabet, transitions, q1, emptySet);
       const nfa2 = new NFA(states, alphabet, transitions, q1, {});
-      assert(nfa.accepts === emptySet);
-      assert(nfa2.accepts.size === 0);
+      assert(nfa.getAcceptStates() === emptySet);
+      assert(nfa2.getAcceptStates().size === 0);
     });
 
     it("Should automatically add empty string to alphabet", function() {
       const alph2 = new Alphabet("01");
       const nfa = new NFA(states, alph2, transitions, q1, accepts);
-      assert(nfa.alphabet === alph2);
+      assert(nfa.getAlphabet() === alph2);
     });
 
     it("Should fail because tfunc contains invalid origin state", function() {
@@ -92,7 +97,50 @@ describe("NFA Creation", function() {
       const transitions2 = new Set([tt2, tt3, tt4, tt5, tt6]);
 
       const nfa = new NFA(states, alphabet, transitions2, q1, accepts);
-      assert(nfa.tfunc.size === 4)
+      assert(nfa.getTFunc().size === 4);
+    });
+  });
+
+  describe("NFA#generateDigraph()", function() {
+    let q1, q2, q3, q4;
+    let t1, t2, t3, t4, t5, t6, t7;
+    let states, alphabet, accepts, transitions, nfa;
+
+    before(function() {
+      q1 = new State("q1");
+      q2 = new State("q2");
+      q3 = new State("q3");
+      q4 = new State("q4");
+
+      states = new Set([q1, q2, q3, q4]);
+      alphabet = new Alphabet(["0", "1", ""]);
+      accepts = new Set([q4]);
+
+      t1 = new NFATransition(q1, [q1], "0");
+      t2 = new NFATransition(q1, [q1, q2], "1");
+      t3 = new NFATransition(q2, [q3], "0");
+      t4 = new NFATransition(q2, [q3], "");
+      t5 = new NFATransition(q3, [q4], "1");
+      t6 = new NFATransition(q4, [q4], "0");
+      t7 = new NFATransition(q4, [q4], "1");
+      transitions = new Set([t1, t2, t3, t4, t5, t6, t7]);
+      nfa = new NFA(states, alphabet, transitions, q1, accepts);
+    });
+
+    it("Should generate correct digraph", function() {
+      const digraph = nfa.generateDigraph();
+      assert(digraph.includes("digraph fsa"));
+      assert(digraph.includes("q4 [shape = doublecircle];"));
+      assert(digraph.includes("node [shape = point ]; qi;"));
+      assert(digraph.includes("qi -> q1;"));
+      assert(digraph.includes('q1 -> q1 [ label = "0" ];'));
+      assert(digraph.includes('q1 -> q1 [ label = "1" ];'));
+      assert(digraph.includes('q1 -> q2 [ label = "1" ];'));
+      assert(digraph.includes('q2 -> q3 [ label = "0" ];'));
+      assert(digraph.includes('q2 -> q3 [ label = "ε" ];'));
+      assert(digraph.includes('q3 -> q4 [ label = "1" ];'));
+      assert(digraph.includes('q4 -> q4 [ label = "0" ];'));
+      assert(digraph.includes('q4 -> q4 [ label = "1" ];'));
     });
   });
 
