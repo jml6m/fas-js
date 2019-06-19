@@ -1,7 +1,8 @@
-import { simulateFSA, stepOnceDFA } from "../src/modules.js";
+import { simulateFSA, stepOnceFSA } from "../src/modules.js";
 import { DFA, NFA } from "../src/automata";
 import { State, Alphabet, Transition, NFATransition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors.js";
+import { compare } from "../src/globals/globals.js";
 
 const chai = require("chai");
 const assert = chai.assert;
@@ -110,7 +111,7 @@ describe("DFA Simulations", function() {
   });
 
   // Logging enabled on some tests for code coverage
-  describe("Simulators#stepOnceDFA()", function() {
+  describe("Simulators#stepOnceFSA()", function() {
     describe("w ends in a 1", function() {
       let q1, q2;
       let t1, t2, t3, t4;
@@ -140,30 +141,26 @@ describe("DFA Simulations", function() {
         nfa = new NFA(states, alphabet, nfaTFunc, q1, accepts);
       });
 
-      it("Should not accept NFAs", function() {
-        expect(() => stepOnceDFA("0", q1.name, nfa, true)).to.throw(TypeError);
-      });
-
       it("Should not accept invalid w type", function() {
         // Type check clauses tested here
-        expect(() => stepOnceDFA(null, q1.name, dfa, true)).to.throw(TypeError);
-        expect(() => stepOnceDFA(undefined, q1.name, dfa)).to.throw(TypeError);
-        expect(() => stepOnceDFA(0, q1.name, dfa)).to.throw(TypeError);
-        expect(() => stepOnceDFA(() => {}, q1.name, dfa)).to.throw(TypeError);
+        expect(() => stepOnceFSA(null, q1.name, dfa, true)).to.throw(TypeError);
+        expect(() => stepOnceFSA(undefined, q1.name, dfa)).to.throw(TypeError);
+        expect(() => stepOnceFSA(0, q1.name, dfa)).to.throw(TypeError);
+        expect(() => stepOnceFSA(() => {}, q1.name, dfa)).to.throw(TypeError);
 
-        expect(() => stepOnceDFA("0", null, dfa, true)).to.throw(TypeError);
-        expect(() => stepOnceDFA("0", undefined, dfa)).to.throw(TypeError);
-        expect(() => stepOnceDFA("0", 0, dfa)).to.throw(TypeError);
-        expect(() => stepOnceDFA("0", () => {}, dfa)).to.throw(TypeError);
+        expect(() => stepOnceFSA("0", null, dfa, true)).to.throw(TypeError);
+        expect(() => stepOnceFSA("0", undefined, dfa)).to.throw(TypeError);
+        expect(() => stepOnceFSA("0", 0, dfa)).to.throw(TypeError);
+        expect(() => stepOnceFSA("0", () => {}, dfa)).to.throw(TypeError);
       });
 
       it("Should return valid states for valid transitions", function() {
-        assert(stepOnceDFA("0", q1.name, dfa, true) === q1.name);
-        assert(stepOnceDFA("1", q1.name, dfa) === q2.name);
+        assert(stepOnceFSA("0", q1.name, dfa, true) === q1.name);
+        assert(stepOnceFSA("1", q1.name, dfa) === q2.name);
       });
 
       it("Should throw exception for invalid state", function() {
-        expect(() => stepOnceDFA("0", "invalid", dfa)).to.throw(ErrorCode.INVALID_STATE_NAME);
+        expect(() => stepOnceFSA("0", "invalid", dfa)).to.throw(ErrorCode.INVALID_STATE_NAME);
       });
     });
   });
@@ -308,6 +305,42 @@ describe("NFA Simulations", function() {
         assert(acceptsNames.indexOf(simulateFSA("00", nfa)) === -1);
         assert(acceptsNames.indexOf(simulateFSA("10", nfa)) === -1);
         assert(acceptsNames.indexOf(simulateFSA("010", nfa)) === -1);
+      });
+    });
+  });
+
+  describe("Simulators#stepOnceFSA()", function() {
+    describe("w ends in a 1", function() {
+      let q1, q2, q3, q4;
+      let t1, t2, t3, t4, t5, t6;
+      let states, alphabet, accepts, acceptsNames, transitions, nfa;
+
+      before(function() {
+        q1 = new State("q1");
+        q2 = new State("q2");
+        q3 = new State("q3");
+        q4 = new State("q4");
+
+        t1 = new NFATransition(q1, [q1], "1");
+        t2 = new NFATransition(q2, [q1, q3], "");
+        t3 = new NFATransition(q3, [q3, q4], "0");
+        t4 = new NFATransition(q3, [q3], "1");
+
+        states = new Set([q1, q2, q3, q4]);
+        alphabet = new Alphabet("01");
+        transitions = new Set([t1, t2, t3, t4]);
+        accepts = new Set([q1, q4]);
+        acceptsNames = [q1.name, q4.name];
+        nfa = new NFA(states, alphabet, transitions, q2, accepts);
+      });
+
+      it("Should return valid states for valid transitions", function() {
+        assert(compare(stepOnceFSA("", q2.name, nfa, true), [q1.name, q3.name]));
+        assert(compare(stepOnceFSA("0", [q1.name, q3.name], nfa), [q3.name, q4.name]));
+      });
+
+      it("Should throw exception for invalid states", function() {
+        expect(() => stepOnceFSA("0", ["q1", "invalid"], nfa)).to.throw(ErrorCode.INVALID_STATE_NAME);
       });
     });
   });

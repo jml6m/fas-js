@@ -15,7 +15,55 @@ export const simulateFSA = (w: string | string[], fsa: FSA, logging: boolean = f
   }
 };
 
-export const stepOnceFSA = (w: string, qin: string, fsa: FSA, logging: boolean = false): string => {};
+export const stepOnceFSA = (
+  w: string,
+  qin: string | Array<string>,
+  fsa: FSA,
+  logging: boolean = false
+): string | Array<string> => {
+  if (typeof w !== "string") {
+    if (logging) console.error(chalk.redBright("Input w was invalid type: %O"), w);
+    throw new TypeError();
+  }
+  if (typeof qin !== "string" && !Array.isArray(qin)) {
+    if (logging) console.error(chalk.redBright("Input state was invalid type: %O"), qin);
+    throw new TypeError();
+  }
+
+  // Step once
+  if (logging) console.log(chalk.inverse("Input Processing Started"));
+  let prevState: mixed;
+  if (typeof qin === "string") {
+    for (const state of fsa.getStates().values()) {
+      if (qin === state.name) prevState = state;
+    }
+    if (!prevState) throw new Error(ErrorCode.INVALID_STATE_NAME);
+  } else {
+    prevState = [];
+    for (const state of fsa.getStates().values()) {
+      if (qin.includes(state.name)) prevState.push(state);
+    }
+    if (prevState.length !== qin.length) {
+      throw new Error(ErrorCode.INVALID_STATE_NAME);
+    }
+  }
+
+  let newState: State | Set<State>;
+  if (instanceOf(NFA, fsa)) newState = new FSAUtils(NFA).receiveInput(fsa, w, prevState);
+  else newState = new FSAUtils(DFA).receiveInput(fsa, w, prevState);
+
+  if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), w, JSON.stringify(newState));
+  if (logging) console.log(chalk.inverse("Input Processing Ended"));
+
+  if (newState instanceof State) return newState.name;
+  else {
+    let retArray: Array<string> = [];
+    for (const _s of newState) {
+      retArray.push(_s.name);
+    }
+    return retArray;
+  }
+};
 
 /*
  * Private methods
@@ -38,7 +86,7 @@ function simulateDFA(w: string | string[], dfa: DFA, utils: FSAUtils, logging: b
   for (const char of w) {
     const prevState: State = currentState;
     currentState = utils.receiveInput(dfa, char, prevState);
-    if (logging) console.log("%s x '%s' -> %s", prevState.name, char, currentState.name);
+    if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), char, JSON.stringify(currentState));
   }
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 
@@ -88,36 +136,3 @@ function simulateNFA(w: string | string[], nfa: NFA, utils: FSAUtils, logging: b
   if (currentState.length > 0) return currentState[0].name;
   else return "";
 }
-
-export const stepOnceDFA = (w: string, qin: string, dfa: DFA, logging: boolean = false): string => {
-  // Type checks
-  if (instanceOf(NFA, dfa)) {
-    if (logging) console.error(chalk.redBright("This function does not support NFAs"));
-    throw new TypeError();
-  }
-  if (typeof w !== "string") {
-    if (logging) console.error(chalk.redBright("Input w was invalid type: %O"), w);
-    throw new TypeError();
-  }
-  if (typeof qin !== "string") {
-    if (logging) console.error(chalk.redBright("Input state was invalid type: %O"), qin);
-    throw new TypeError();
-  }
-
-  // Step once
-  if (logging) console.log(chalk.inverse("Input Processing Started"));
-  let prevState;
-  for (const state of dfa.getStates().values()) {
-    if (qin === state.name) prevState = state;
-  }
-
-  if (!prevState) {
-    throw new Error(ErrorCode.INVALID_STATE_NAME);
-  }
-
-  let newState: State = new FSAUtils(DFA).receiveInput(dfa, w, prevState);
-  if (logging) console.log("%s x '%s' -> %s", prevState.name, w, newState.name);
-  if (logging) console.log(chalk.inverse("Input Processing Ended"));
-
-  return newState.name;
-};
