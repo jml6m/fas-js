@@ -13,7 +13,7 @@ export const compare = (a1: Array<string | number | boolean>, a2: Array<string |
   const s1 = new Set(a1);
   const s2 = new Set(a2);
   return s1.size === s2.size && [...s1].every(v => s2.has(v));
-}
+};
 
 // Check for duplicate keys in a Set<State> input
 export const checkStateDuplicates = (states: Set<State>) => {

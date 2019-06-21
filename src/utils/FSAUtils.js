@@ -34,6 +34,9 @@ export const FSAUtils = ((v: Function) => {
     // Empty transitions
     state = populateEpsilons(nfa.getTFunc(), state);
 
+    // For ε input, return states already determined
+    if (input === "") return new Set<State>(state);
+
     // Looking at all origin states, based on input char, determine set of destination states
     for (const _s of state) {
       const _addToPath: Array<Transition> = Array.from(nfa.getTFunc()).filter(obj => {

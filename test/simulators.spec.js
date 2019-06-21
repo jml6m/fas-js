@@ -335,7 +335,7 @@ describe("NFA Simulations", function() {
       });
 
       it("Should return valid states for valid transitions", function() {
-        assert(compare(stepOnceFSA("", q2.name, nfa, true), [q1.name, q3.name]));
+        assert(compare(stepOnceFSA("", q2.name, nfa, true), [q1.name, q2.name, q3.name]));
         assert(compare(stepOnceFSA("0", [q1.name, q3.name], nfa), [q3.name, q4.name]));
       });
 
