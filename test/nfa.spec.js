@@ -1,6 +1,9 @@
 import { State, Alphabet, NFATransition, Transition } from "../src/components";
-import { NFA, createNFA } from "../src/automata";
+import { NFA } from "../src/automata";
 import { ErrorCode } from "../src/globals/errors.js";
+import { compare, instanceOf } from "../src/globals/globals.js";
+import { createFSA } from "../src/utils";
+
 var assert = require("chai").assert;
 var expect = require("chai").expect;
 
@@ -70,7 +73,7 @@ describe("NFA Creation", function() {
     it("Should automatically add empty string to alphabet", function() {
       const alph2 = new Alphabet("01");
       const nfa = new NFA(states, alph2, transitions, q1, accepts);
-      assert(nfa.getAlphabet() === alph2);
+      assert(compare(nfa.getAlphabet().sigma, alphabet.sigma));
     });
 
     it("Should fail because tfunc contains invalid origin state", function() {
@@ -144,8 +147,8 @@ describe("NFA Creation", function() {
     });
   });
 
-  describe("NFA#createNFA()", function() {
-    let states, aph, tr, tr2, tr_fail;
+  describe("NFA#createFSA()", function() {
+    let states, aph, tr, tr2, tr3, tr_fail;
 
     before(function() {
       states = ["q1", "q2", "q3", "q4"];
@@ -159,44 +162,45 @@ describe("NFA Creation", function() {
         { from: "q4", to: "q4", input: "0" },
         { from: "q4", to: "q4", input: "1" }
       ];
-      tr2 = { from: "q1", to: "q1", input: "0" };
-      tr_fail = { from: null, to: "q1", input: "0" };
+      tr2 = { from: "q1", to: "q1", input: "" };
+      tr3 = { from: "q1", to: "q1,q2", input: "0" };
+      tr_fail = { from: null, to: "q1,q2", input: "0" };
     });
 
     it("Should not accept invalid input types", function() {
       // Invalid states type
-      expect(() => createNFA(null, aph, tr, "q1", states)).to.throw(TypeError);
-      expect(() => createNFA(undefined, aph, tr, "q1", states)).to.throw(TypeError);
-      expect(() => createNFA(0, aph, tr, "q1", states)).to.throw(TypeError);
-      expect(() => createNFA(() => {}, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(null, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(undefined, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(0, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(() => {}, aph, tr, "q1", states)).to.throw(TypeError);
 
       // Invalid transitions type
-      expect(() => createNFA(states, aph, null, "q1", states)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, undefined, "q1", states)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, 0, "q1", states)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, () => {}, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, null, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, undefined, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, 0, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, () => {}, "q1", states)).to.throw(TypeError);
 
       // Invalid accepts type
-      expect(() => createNFA(states, aph, tr, "q1", null)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, tr, "q1", undefined)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, tr, "q1", 0)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, tr, "q1", () => {})).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", null)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", undefined)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", 0)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", () => {})).to.throw(TypeError);
 
       // Invalid start type
-      expect(() => createNFA(states, aph, tr, null, states)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, tr, undefined, states)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, tr, 0, states)).to.throw(TypeError);
-      expect(() => createNFA(states, aph, tr, () => {}, states)).to.throw(TypeError);
-    });
+      expect(() => createFSA(states, aph, tr, null, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, undefined, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, 0, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, () => {}, states)).to.throw(TypeError);
 
-    it("Should fail on invalid transition objeect", function() {
-      expect(() => createNFA(states, aph, tr_fail, "q1", states)).to.throw(ErrorCode.INVALID_TRANSITION_OBJECT);
+      // Invalid transition object
+      expect(() => createFSA(states, aph, tr_fail, "q1", states)).to.throw(ErrorCode.INVALID_TRANSITION_OBJECT);
     });
 
     it("Should successfully create the NFA", function() {
-      expect(() => createNFA(states, aph, tr, "q1", states)).to.not.throw();
-      expect(() => createNFA(states, aph, tr, "q1", "q1")).to.not.throw();
-      expect(() => createNFA("q1", "0", tr2, "q1", "q1")).to.not.throw();
+      assert(instanceOf(NFA, createFSA(states, aph, tr, "q1", states)));
+      assert(instanceOf(NFA, createFSA(states, aph, tr, "q1", "q1")));
+      assert(instanceOf(NFA, createFSA(states, aph, tr3, "q1", "q1")));
+      assert(instanceOf(NFA, createFSA("q1", "", tr2, "q1", "q1")));
     });
   });
 });

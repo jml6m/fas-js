@@ -1,11 +1,11 @@
 // @flow
 import chalk from "chalk";
 import { ErrorCode } from "../globals/errors.js";
-import { instanceOf } from "../globals/globals.js";
+import { instanceOf, getOrDefault } from "../globals/globals.js";
 import { FSA } from "../interfaces/FSA.js";
 import { State, Transition, Alphabet } from "../components";
 import { DFA, NFA } from "../automata";
-import { DFAUtils, NFAUtils } from "../utils";
+import { DFAUtils, NFAUtils, createDFA, createNFA } from "../utils";
 
 /*
  * This class will take an input FSA constructor function
@@ -117,3 +117,56 @@ export const FSAUtils = ((v: Function) => {
 
   return FSAUtils;
 })();
+
+// Global export method for creating FSA
+export const createFSA = (
+  states: Array<string>,
+  alphabet: Array<string>,
+  transitions: Array<Object>,
+  start: string,
+  accepts: Array<string>
+): FSA => {
+  // Type check and conversion for states
+  let _states: Map<string, State> = new Map();
+  if (typeof states === "string") {
+    _states.set(states, new State(states));
+  } else if (Array.isArray(states)) {
+    for (const state of states) {
+      if (!_states.has(state)) _states.set(state, new State(state));
+    }
+  } else {
+    throw new TypeError(states);
+  }
+
+  // Convert remaining inputs
+  let _alphabet = new Alphabet(alphabet);
+  if (typeof start !== "string") throw new TypeError(start);
+  let _start: State = getOrDefault(_states, start, null);
+
+  let _accepts: Set<State> = new Set();
+  if (typeof accepts === "string") {
+    if (_states.has(accepts)) _accepts.add(getOrDefault(_states, accepts, null));
+  } else if (Array.isArray(accepts)) {
+    for (const state of accepts) {
+      _accepts.add(getOrDefault(_states, state, null));
+    }
+  } else {
+    throw new TypeError(accepts);
+  }
+
+  /*
+   * Determine, based on tfunc structure, whether to create a DFA or NFA
+   * If the "to" field of any member of the tfunc object is comma seperated, or any input
+   * char is "", then create an NFA
+   */
+  if (!Array.isArray(transitions) && typeof transitions === "object") transitions = [transitions];
+  if (Array.isArray(transitions)) {
+    for (const tr of transitions) {
+      if (tr["to"].indexOf(",") != -1 || tr["input"] === "")
+        return createNFA(_states, _alphabet, transitions, _start, _accepts);
+    }
+    return createDFA(_states, _alphabet, transitions, _start, _accepts);
+  } else {
+    throw new TypeError(transitions);
+  }
+};

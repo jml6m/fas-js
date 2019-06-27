@@ -43,17 +43,18 @@ describe("DFA Simulations", function() {
       });
 
       it("Should accept for 101/1/111/10101", function() {
-        assert(acceptsNames.indexOf(simulateFSA("101", dfa, true)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("1", dfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("111", dfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("10101", dfa)) !== -1);
+        assert(acceptsNames.indexOf(simulateFSA("101", dfa, true, true)) !== -1);
+        assert(acceptsNames.indexOf(simulateFSA("1", dfa, undefined, true)) !== -1); // undefined or false can be used if returnEndState param is passed in
+        assert(simulateFSA("111", dfa));
+        assert(simulateFSA("10101", dfa));
       });
 
       it("Should reject for empty/0/10/0110/xyz", function() {
-        assert(acceptsNames.indexOf(simulateFSA("", dfa, true)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("0", dfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("10", dfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("0110", dfa)) === -1);
+        assert(!simulateFSA("", dfa));
+        assert(acceptsNames.indexOf(simulateFSA("0", dfa, true, true)) === -1);
+        assert(!simulateFSA("0", dfa));
+        assert(!simulateFSA("10", dfa));
+        assert(!simulateFSA("0110", dfa));
       });
 
       it("Should only accept DFAs", function() {
@@ -94,18 +95,18 @@ describe("DFA Simulations", function() {
       });
 
       it("Should accept for a/b/aa/bab/ababba", function() {
-        assert(acceptsNames.indexOf(simulateFSA("a", dfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("b", dfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA(["a", "a"], dfa)) !== -1); // Use array param for additional code coverage
-        assert(acceptsNames.indexOf(simulateFSA("bab", dfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("ababba", dfa)) !== -1);
+        assert(simulateFSA("a", dfa));
+        assert(simulateFSA("b", dfa));
+        assert(simulateFSA(["a", "a"], dfa)); // Use array param for additional code coverage
+        assert(simulateFSA("bab", dfa));
+        assert(simulateFSA("ababba", dfa));
       });
 
       it("Should reject for empty/ab/aab/baba/baxb", function() {
-        assert(acceptsNames.indexOf(simulateFSA("", dfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("ab", dfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("aab", dfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("baba", dfa)) === -1);
+        assert(!simulateFSA("", dfa));
+        assert(!simulateFSA("ab", dfa));
+        assert(!simulateFSA("aab", dfa));
+        assert(!simulateFSA("baba", dfa));
       });
     });
   });
@@ -205,17 +206,17 @@ describe("NFA Simulations", function() {
       });
 
       it("Should accept for 1111/100/111/10101", () => {
-        assert(acceptsNames.indexOf(simulateFSA("1111", nfa, true)) !== -1); // Demo the NFA logging
-        assert(acceptsNames.indexOf(simulateFSA("100", nfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("111", nfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("10101", nfa)) !== -1);
+        assert(acceptsNames.indexOf(simulateFSA("1111", nfa, true, true)) !== -1); // Demo the NFA logging
+        assert(acceptsNames.indexOf(simulateFSA("100", nfa, false, true)) !== -1);
+        assert(simulateFSA("111", nfa));
+        assert(simulateFSA("10101", nfa));
       });
 
       it("Should reject for empty/0/10/1110000", () => {
-        assert(acceptsNames.indexOf(simulateFSA("", nfa, true)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("0", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA(["1", "0"], nfa)) === -1); // Use array param for additional code coverage
-        assert(acceptsNames.indexOf(simulateFSA("1110000", nfa)) === -1);
+        assert(acceptsNames.indexOf(simulateFSA("", nfa, true, true)) === -1);
+        assert(!simulateFSA("0", nfa));
+        assert(!simulateFSA(["1", "0"], nfa)); // Use array param for additional code coverage
+        assert(!simulateFSA("1110000", nfa));
       });
 
       it("Should only accept NFAs", () => {
@@ -255,17 +256,17 @@ describe("NFA Simulations", function() {
       });
 
       it("Should accept for empty/11/0/1110/010", () => {
-        assert(acceptsNames.indexOf(simulateFSA("", nfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("11", nfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("0", nfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("1110", nfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("010", nfa)) !== -1);
+        assert(simulateFSA("", nfa));
+        assert(simulateFSA("11", nfa));
+        assert(simulateFSA("0", nfa));
+        assert(simulateFSA("1110", nfa));
+        assert(simulateFSA("010", nfa));
       });
 
       it("Should reject for 01/1101/01011/", () => {
-        assert(acceptsNames.indexOf(simulateFSA("01", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("1101", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("01011", nfa)) === -1);
+        assert(!simulateFSA("01", nfa));
+        assert(!simulateFSA("1101", nfa));
+        assert(!simulateFSA("01011", nfa));
       });
     });
 
@@ -295,16 +296,17 @@ describe("NFA Simulations", function() {
       });
 
       it("Should accept for 1/01", () => {
-        assert(acceptsNames.indexOf(simulateFSA("1", nfa)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("01", nfa)) !== -1);
+        assert(simulateFSA("1", nfa));
+        assert(simulateFSA("01", nfa));
       });
 
       it("Should reject for empty/0/00/10/010", () => {
-        assert(acceptsNames.indexOf(simulateFSA("", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("0", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("00", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("10", nfa)) === -1);
-        assert(acceptsNames.indexOf(simulateFSA("010", nfa)) === -1);
+        assert(!simulateFSA("", nfa));
+        assert(!simulateFSA("0", nfa));
+        assert(!simulateFSA("00", nfa));
+        assert(acceptsNames.indexOf(simulateFSA("00", nfa, false, true)) === -1);
+        assert(!simulateFSA("10", nfa));
+        assert(!simulateFSA("010", nfa));
       });
     });
   });

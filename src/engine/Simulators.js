@@ -7,11 +7,16 @@ import { FSAUtils } from "../utils";
 import { ErrorCode } from "../globals/errors.js";
 import { instanceOf } from "../globals/globals.js";
 
-export const simulateFSA = (w: string | string[], fsa: FSA, logging: boolean = false): string => {
+export const simulateFSA = (
+  w: string | string[],
+  fsa: FSA,
+  logging: boolean = false,
+  returnEndState: boolean = false
+): boolean | string => {
   if (instanceOf(NFA, fsa)) {
-    return simulateNFA(w, fsa, new FSAUtils(NFA), logging);
+    return simulateNFA(w, fsa, new FSAUtils(NFA), logging, returnEndState);
   } else {
-    return simulateDFA(w, fsa, new FSAUtils(DFA), logging);
+    return simulateDFA(w, fsa, new FSAUtils(DFA), logging, returnEndState);
   }
 };
 
@@ -68,7 +73,13 @@ export const stepOnceFSA = (
 /*
  * Private methods
  */
-function simulateDFA(w: string | string[], dfa: DFA, utils: FSAUtils, logging: boolean): string {
+function simulateDFA(
+  w: string | string[],
+  dfa: DFA,
+  utils: FSAUtils,
+  logging: boolean,
+  returnEndState: boolean
+): boolean | string {
   if (logging) console.log(chalk.cyan("Beginning DFA Simulation"));
 
   //Accept either string or string[] for w
@@ -93,14 +104,22 @@ function simulateDFA(w: string | string[], dfa: DFA, utils: FSAUtils, logging: b
   // Check for acceptance
   if (dfa.getAcceptStates().has(currentState)) {
     if (logging) console.log(chalk.green("Input Accepted!"));
-    return currentState.name;
+    if (returnEndState) return currentState.name;
+    else return true;
   } else {
     if (logging) console.log(chalk.red("Input Rejected!"));
-    return currentState.name;
+    if (returnEndState) return currentState.name;
+    else return false;
   }
 }
 
-function simulateNFA(w: string | string[], nfa: NFA, utils: FSAUtils, logging: boolean): string {
+function simulateNFA(
+  w: string | string[],
+  nfa: NFA,
+  utils: FSAUtils,
+  logging: boolean,
+  returnEndState: boolean
+): boolean | string {
   if (logging) console.log(chalk.cyan("Beginning NFA Simulation"));
 
   //Accept either string or string[] for w
@@ -127,12 +146,17 @@ function simulateNFA(w: string | string[], nfa: NFA, utils: FSAUtils, logging: b
   for (const _accState of nfa.getAcceptStates()) {
     if (currentState.includes(_accState)) {
       if (logging) console.log(chalk.green("Input Accepted!"));
-      return _accState.name;
+      if (returnEndState) return _accState.name;
+      else return true;
     }
   }
 
   // If rejection, return one of the final states or if input results in no final state, return empty string
   if (logging) console.log(chalk.red("Input Rejected!"));
-  if (currentState.length > 0) return currentState[0].name;
-  else return "";
+  if (returnEndState) {
+    if (currentState.length > 0) return currentState[0].name;
+    else return "";
+  } else {
+    return false;
+  }
 }

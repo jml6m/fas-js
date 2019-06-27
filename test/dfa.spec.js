@@ -1,7 +1,9 @@
 import Set from "core-js/features/set";
-import { DFA, createDFA } from "../src/automata";
+import { DFA } from "../src/automata";
 import { State, Alphabet, Transition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors.js";
+import { instanceOf } from "../src/globals/globals.js";
+import { createFSA } from "../src/utils";
 
 var assert = require("chai").assert;
 var expect = require("chai").expect;
@@ -9,8 +11,8 @@ var expect = require("chai").expect;
 describe("DFA Creation", function() {
   describe("DFA#constructor()", function() {
     let q1, q2;
-    let t1, t2, t3, t4;
-    let states, alphabet, accepts, transitions;
+    let t1, t2, t3, t4, t5, t6;
+    let states, alphabet, alph2, accepts, transitions, tfunc_with_empty;
 
     before(function() {
       q1 = new State("q1");
@@ -18,6 +20,7 @@ describe("DFA Creation", function() {
 
       states = new Set([q1, q2]);
       alphabet = new Alphabet("ab");
+      alph2 = new Alphabet(["a", "b", " "]);
       accepts = new Set([q2]);
 
       t1 = new Transition(q1, q1, "a");
@@ -25,6 +28,10 @@ describe("DFA Creation", function() {
       t3 = new Transition(q2, q1, "a");
       t4 = new Transition(q2, q2, "b");
       transitions = new Set([t1, t2, t3, t4]);
+
+      t5 = new Transition(q1, q1, " ");
+      t6 = new Transition(q2, q2, " ");
+      tfunc_with_empty = new Set([t1, t2, t3, t4, t5, t6]);
     });
 
     it("Should return valid class attributes", function() {
@@ -35,6 +42,13 @@ describe("DFA Creation", function() {
       assert(dfa.getTFunc().isSubsetOf(transitions)); // tfunc can be reduced
       assert(dfa.getStartState() === q1);
       assert(dfa.getAcceptStates() === accepts);
+    });
+
+    it("Should allow ' ' (space) as sigma character", function() {
+      const dfa = new DFA(states, alph2, tfunc_with_empty, q1, accepts);
+
+      assert(dfa.getAlphabet().sigma.length === 3);
+      assert(dfa.getAlphabet() === alph2);
     });
 
     it("Should have no public attributes", function() {
@@ -200,12 +214,13 @@ describe("DFA Creation", function() {
     });
   });
 
-  describe("DFA#createDFA()", function() {
-    let states, aph, tr, tr2, tr3;
+  describe("DFA#createFSA()", function() {
+    let states, aph, aph2, tr, tr2, tr3;
 
     before(function() {
       states = ["q1", "q2"];
       aph = "01";
+      aph2 = ["0", "1", " "];
       tr = [
         { from: "q1", to: "q2", input: "1" },
         { from: "q2", to: "q1", input: "0" },
@@ -218,37 +233,37 @@ describe("DFA Creation", function() {
 
     it("Should not accept invalid input types", function() {
       // Invalid states type
-      expect(() => createDFA(null, aph, tr, "q1", states)).to.throw(TypeError);
-      expect(() => createDFA(undefined, aph, tr, "q1", states)).to.throw(TypeError);
-      expect(() => createDFA(0, aph, tr, "q1", states)).to.throw(TypeError);
-      expect(() => createDFA(() => {}, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(null, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(undefined, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(0, aph, tr, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(() => {}, aph, tr, "q1", states)).to.throw(TypeError);
 
       // Invalid transitions type
-      expect(() => createDFA(states, aph, null, "q1", states)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, undefined, "q1", states)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, 0, "q1", states)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, () => {}, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, null, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, undefined, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, 0, "q1", states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, () => {}, "q1", states)).to.throw(TypeError);
 
       // Invalid accepts type
-      expect(() => createDFA(states, aph, tr, "q1", null)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, tr, "q1", undefined)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, tr, "q1", 0)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, tr, "q1", () => {})).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", null)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", undefined)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", 0)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, "q1", () => {})).to.throw(TypeError);
 
       // Invalid start type
-      expect(() => createDFA(states, aph, tr, null, states)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, tr, undefined, states)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, tr, 0, states)).to.throw(TypeError);
-      expect(() => createDFA(states, aph, tr, () => {}, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, null, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, undefined, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, 0, states)).to.throw(TypeError);
+      expect(() => createFSA(states, aph, tr, () => {}, states)).to.throw(TypeError);
 
       // Invalid transition object
-      expect(() => createDFA(states, aph, tr3, "q1", states)).to.throw(ErrorCode.INVALID_TRANSITION_OBJECT);
+      expect(() => createFSA(states, aph, tr3, "q1", states)).to.throw(ErrorCode.INVALID_TRANSITION_OBJECT);
     });
 
     it("Should successfully create the DFA", function() {
-      expect(() => createDFA(states, aph, tr, "q1", states)).to.not.throw();
-      expect(() => createDFA(states, aph, tr, "q1", "q1")).to.not.throw();
-      expect(() => createDFA("q1", "0", tr2, "q1", "q1")).to.not.throw();
+      assert(instanceOf(DFA, createFSA(states, aph, tr, "q1", states)));
+      assert(instanceOf(DFA, createFSA(states, aph, tr, "q1", "q1")));
+      assert(instanceOf(DFA, createFSA("q1", "0", tr2, "q1", "q1")));
     });
   });
 });

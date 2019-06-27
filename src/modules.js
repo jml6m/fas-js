@@ -1,3 +1,3 @@
 // @flow
 export { simulateFSA, stepOnceFSA } from "./engine/Simulators.js";
-export { createDFA, createNFA } from "./automata";
+export { createFSA } from "./utils/FSAUtils.js";

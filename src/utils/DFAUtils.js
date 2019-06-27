@@ -1,9 +1,9 @@
 // @flow
 import chalk from "chalk";
 
-import { FSA } from "../interfaces/FSA.js";
 import { ErrorCode } from "../globals/errors.js";
 import { State, Alphabet, Transition } from "../components";
+import { DFA } from "../automata";
 import { getOrDefault } from "../globals/globals.js";
 
 export class DFAUtils {
@@ -136,3 +136,22 @@ export class DFAUtils {
     return _alph.sigma.indexOf(input) !== -1;
   }
 }
+
+// Global export method for creating DFA
+export const createDFA = (
+  states: Map<string, State>,
+  alphabet: Alphabet,
+  transitions: Array<Object>,
+  start: State,
+  accepts: Set<State>
+): DFA => {
+  // Convert transition array to Set<Transition>
+  let _tfunc: Set<Transition> = new Set();
+  for (const tr of transitions) {
+    if (!tr["from"] || !tr["to"] || !tr["input"]) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+    const fromVal: State = getOrDefault(states, tr["from"], null);
+    const toVal: State = getOrDefault(states, tr["to"], null);
+    _tfunc.add(new Transition(fromVal, toVal, tr["input"]));
+  }
+  return new DFA(new Set(states.values()), alphabet, _tfunc, start, accepts);
+};

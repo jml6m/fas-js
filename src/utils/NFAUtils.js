@@ -1,7 +1,7 @@
 // @flow
 import { DFAUtils } from "./DFAUtils.js";
-import { FSA } from "../interfaces/FSA.js";
-import { State, Transition, Alphabet } from "../components";
+import { NFA } from "../automata";
+import { State, Transition, Alphabet, NFATransition } from "../components";
 import { ErrorCode } from "../globals/errors.js";
 import { getOrDefault } from "../globals/globals.js";
 
@@ -71,3 +71,28 @@ export class NFAUtils extends DFAUtils {
     return newTFunc;
   }
 }
+
+export const createNFA = (
+  states: Map<string, State>,
+  alphabet: Alphabet,
+  transitions: Array<Object>,
+  start: State,
+  accepts: Set<State>
+): NFA => {
+  // Convert transition array to Set<NFATransition>
+  let _tfunc: Set<NFATransition> = new Set();
+  for (const tr of transitions) {
+    if (!tr["from"] || !tr["to"] || (!tr["input"] && tr["input"] !== ""))
+      throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+    const fromVal: State = getOrDefault(states, tr["from"], null);
+    const toVal: Array<string> = tr["to"].split(",");
+
+    let destStates: Array<State> = [];
+    toVal.forEach(_dest => {
+      destStates.push(getOrDefault(states, _dest, null));
+    });
+
+    _tfunc.add(new NFATransition(fromVal, destStates, tr["input"]));
+  }
+  return new NFA(new Set(states.values()), alphabet, _tfunc, start, accepts);
+};
