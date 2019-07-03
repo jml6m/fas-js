@@ -1,5 +1,8 @@
 {
-  "presets": ["@babel/preset-flow", "@babel/preset-env"],
+  "presets": ["@babel/preset-flow", ["@babel/preset-env", {
+    "useBuiltIns": "usage", // or "entry"
+    "corejs": 3,
+  }]],
   "plugins": ["@babel/plugin-proposal-class-properties"],
   "env": {
     "test": {

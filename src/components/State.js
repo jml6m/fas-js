@@ -6,7 +6,6 @@ export class State {
 
   constructor(name: string) {
     this.name = name;
-    if(!this.name)
-      throw new Error(ErrorCode.INVALID_STATE_NAME);
+    if (!this.name) throw new Error(ErrorCode.INVALID_STATE_NAME);
   }
 }
