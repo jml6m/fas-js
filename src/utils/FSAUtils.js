@@ -46,15 +46,18 @@ export const FSAUtils = ((v: Function) => {
       path = path.concat(_addToPath);
     }
 
-    let retSet: Set<State> = new Set<State>();
+    let resultArr: Array<State> = [];
     if (path.length > 1) {
-      for (const _s of path) retSet.add(_s.dest);
+      for (const _s of path) resultArr.push(_s.dest);
     } else if (path.length === 1) {
-      retSet.add(path[0].dest);
+      resultArr.push(path[0].dest);
     } else {
       // No valid transition found, returning empty set
-      return retSet;
+      return new Set<State>();
     }
+
+    // Empty transitions on result set
+    const retSet: Set<State> = new Set<State>(populateEpsilons(nfa.getTFunc(), resultArr));
 
     return retSet;
   }
@@ -156,7 +159,7 @@ export const createFSA = (
 
   /*
    * Determine, based on tfunc structure, whether to create a DFA or NFA
-   * If the "to" field of any member of the tfunc object is comma seperated, or any input
+   * If the "to" field of any member of the tfunc object is comma separated, or any input
    * char is "", then create an NFA
    */
   if (!Array.isArray(transitions) && typeof transitions === "object") transitions = [transitions];

@@ -12,7 +12,7 @@ export const simulateFSA = (
   fsa: FSA,
   logging: boolean = false,
   returnEndState: boolean = false
-): boolean | string => {
+): boolean | string | Array<string> => {
   if (instanceOf(NFA, fsa)) {
     return simulateNFA(w, fsa, new FSAUtils(NFA), logging, returnEndState);
   } else {
@@ -37,12 +37,13 @@ export const stepOnceFSA = (
 
   // Step once
   if (logging) console.log(chalk.inverse("Input Processing Started"));
-  let prevState: mixed;
+  let prevState: State | Array<State> = [];
   if (typeof qin === "string") {
     for (const state of fsa.getStates().values()) {
       if (qin === state.name) prevState = state;
     }
-    if (!prevState) throw new Error(ErrorCode.INVALID_STATE_NAME);
+    if (!prevState || (Array.isArray(prevState) && prevState.length === 0))
+      throw new Error(ErrorCode.INVALID_STATE_NAME);
   } else {
     prevState = [];
     for (const state of fsa.getStates().values()) {
@@ -53,8 +54,8 @@ export const stepOnceFSA = (
     }
   }
 
-  let newState: State | Set<State>;
-  if (instanceOf(NFA, fsa)) newState = new FSAUtils(NFA).receiveInput(fsa, w, prevState);
+  let newState: State | Array<State>;
+  if (instanceOf(NFA, fsa)) newState = [...new FSAUtils(NFA).receiveInput(fsa, w, prevState)];
   else newState = new FSAUtils(DFA).receiveInput(fsa, w, prevState);
 
   if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), w, JSON.stringify(newState));
@@ -119,7 +120,7 @@ function simulateNFA(
   utils: FSAUtils,
   logging: boolean,
   returnEndState: boolean
-): boolean | string {
+): boolean | Array<string> {
   if (logging) console.log(chalk.cyan("Beginning NFA Simulation"));
 
   //Accept either string or string[] for w
@@ -142,20 +143,33 @@ function simulateNFA(
   }
   if (logging) console.log(chalk.inverse("Input Processing Ended"));
 
-  // Check for acceptance (arbitrarily selects which state to return if multiple accept scenarios found)
+  /*
+   * Check for acceptance or rejection.
+   * If returnEndState:
+   *    If accept, return all final accept states.
+   *    If reject, return all final states or if no final state return empty string
+   */
+  let retObj: Array<string> = [];
   for (const _accState of nfa.getAcceptStates()) {
     if (currentState.includes(_accState)) {
-      if (logging) console.log(chalk.green("Input Accepted!"));
-      if (returnEndState) return _accState.name;
-      else return true;
+      if (!returnEndState) {
+        if (logging) console.log(chalk.green("Input Accepted!"));
+        return true;
+      }
+      retObj.push(_accState.name);
     }
   }
+  if (retObj.length > 0) {
+    if (logging) console.log(chalk.green("Input Accepted!"));
+    return retObj;
+  }
 
-  // If rejection, return one of the final states or if input results in no final state, return empty string
   if (logging) console.log(chalk.red("Input Rejected!"));
   if (returnEndState) {
-    if (currentState.length > 0) return currentState[0].name;
-    else return "";
+    if (currentState.length > 0) {
+      for (const _cState of currentState) retObj.push(_cState.name);
+    }
+    return retObj;
   } else {
     return false;
   }

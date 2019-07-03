@@ -4,8 +4,9 @@ import { DFA, NFA } from "../src/automata";
 import { State, Alphabet, Transition, NFATransition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors.js";
 
-var assert = require("chai").assert;
-var expect = require("chai").expect;
+const chai = require("chai");
+const assert = chai.assert;
+const expect = chai.expect;
 
 describe("FSAUtils test", function() {
   let q1, q2, q3;

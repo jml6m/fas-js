@@ -5,14 +5,15 @@ import { ErrorCode } from "../src/globals/errors.js";
 import { instanceOf } from "../src/globals/globals.js";
 import { createFSA } from "../src/utils";
 
-var assert = require("chai").assert;
-var expect = require("chai").expect;
+const chai = require("chai");
+const assert = chai.assert;
+const expect = chai.expect;
 
 describe("DFA Creation", function() {
   describe("DFA#constructor()", function() {
     let q1, q2;
-    let t1, t2, t3, t4, t5, t6;
-    let states, alphabet, alph2, accepts, transitions, tfunc_with_empty;
+    let t1, t2, t3, t4, t5, t6, t7, t8;
+    let states, alphabet, accepts, transitions, tfunc_with_space, tfunc_with_empty;
 
     before(function() {
       q1 = new State("q1");
@@ -20,7 +21,6 @@ describe("DFA Creation", function() {
 
       states = new Set([q1, q2]);
       alphabet = new Alphabet("ab");
-      alph2 = new Alphabet(["a", "b", " "]);
       accepts = new Set([q2]);
 
       t1 = new Transition(q1, q1, "a");
@@ -31,7 +31,11 @@ describe("DFA Creation", function() {
 
       t5 = new Transition(q1, q1, " ");
       t6 = new Transition(q2, q2, " ");
-      tfunc_with_empty = new Set([t1, t2, t3, t4, t5, t6]);
+      tfunc_with_space = new Set([t1, t2, t3, t4, t5, t6]);
+
+      t7 = new Transition(q1, q1, "");
+      t8 = new Transition(q2, q2, "");
+      tfunc_with_empty = new Set([t1, t2, t3, t4, t7, t8]);
     });
 
     it("Should return valid class attributes", function() {
@@ -42,13 +46,20 @@ describe("DFA Creation", function() {
       assert(dfa.getTFunc().isSubsetOf(transitions)); // tfunc can be reduced
       assert(dfa.getStartState() === q1);
       assert(dfa.getAcceptStates() === accepts);
+      assert(dfa.getType() === "DFA");
     });
 
     it("Should allow ' ' (space) as sigma character", function() {
-      const dfa = new DFA(states, alph2, tfunc_with_empty, q1, accepts);
+      const alph2 = new Alphabet(["a", "b", " "]);
+      const dfa = new DFA(states, alph2, tfunc_with_space, q1, accepts);
 
       assert(dfa.getAlphabet().sigma.length === 3);
       assert(dfa.getAlphabet() === alph2);
+    });
+
+    it("Should not allow '' (ε) as sigma character", function() {
+      const alph3 = new Alphabet(["a", "b", ""]);
+      expect(() => new DFA(states, alph3, tfunc_with_empty, q1, accepts)).to.throw(ErrorCode.INVALID_INPUT_CHAR);
     });
 
     it("Should have no public attributes", function() {

@@ -170,9 +170,9 @@ describe("DFA Simulations", function() {
 describe("NFA Simulations", function() {
   // Logging enabled on some tests for code coverage
   describe("Simulators#simulateFSA()", function() {
-    describe("w contains 1 in third position from the end", function() {
+    describe("w contains 1 in third or second position from the end", function() {
       let q1, q2, q3, q4;
-      let t1, t2, t3, t4, t5, t6;
+      let t1, t2, t3, t4, t5, t6, t7;
       let states, alphabet, accepts, acceptsNames, transitions, nfa;
 
       before(function() {
@@ -187,10 +187,11 @@ describe("NFA Simulations", function() {
         t4 = new NFATransition(q2, [q3], "1");
         t5 = new NFATransition(q3, [q4], "0");
         t6 = new NFATransition(q3, [q4], "1");
+        t7 = new NFATransition(q2, [q3], "");
 
         states = new Set([q1, q2, q3, q4]);
         alphabet = new Alphabet("01");
-        transitions = new Set([t1, t2, t3, t4, t5, t6]);
+        transitions = new Set([t1, t2, t3, t4, t5, t6, t7]);
         accepts = new Set([q4]);
         acceptsNames = [q4.name];
         nfa = new NFA(states, alphabet, transitions, q1, accepts);
@@ -205,18 +206,18 @@ describe("NFA Simulations", function() {
         expect(() => simulateFSA("xyz", nfa)).to.throw(ErrorCode.INVALID_INPUT_CHAR);
       });
 
-      it("Should accept for 1111/100/111/10101", () => {
-        assert(acceptsNames.indexOf(simulateFSA("1111", nfa, true, true)) !== -1); // Demo the NFA logging
-        assert(acceptsNames.indexOf(simulateFSA("100", nfa, false, true)) !== -1);
-        assert(simulateFSA("111", nfa));
-        assert(simulateFSA("10101", nfa));
+      it("Should accept for 1111/100/0101/10", () => {
+        assert(compare(simulateFSA("1111", nfa, true, true), acceptsNames)); // Demo the NFA logging
+        assert(compare(simulateFSA("100", nfa, false, true), acceptsNames));
+        assert(simulateFSA("0101", nfa, true));
+        assert(simulateFSA("10", nfa));
       });
 
-      it("Should reject for empty/0/10/1110000", () => {
-        assert(acceptsNames.indexOf(simulateFSA("", nfa, true, true)) === -1);
+      it("Should reject for empty/0/00/1110000", () => {
+        assert(!compare(simulateFSA("", nfa, true, true), acceptsNames));
         assert(!simulateFSA("0", nfa));
-        assert(!simulateFSA(["1", "0"], nfa)); // Use array param for additional code coverage
-        assert(!simulateFSA("1110000", nfa));
+        assert(!simulateFSA(["0", "0"], nfa)); // Use array param for additional code coverage
+        assert(!compare(simulateFSA("1110000", nfa, false, true), acceptsNames));
       });
 
       it("Should only accept NFAs", () => {
@@ -231,9 +232,9 @@ describe("NFA Simulations", function() {
       });
     });
 
-    describe("Any binary string with last symbol 0 or all 1s or empty", function() {
-      let q1, q2, q3, q4;
-      let t1, t2, t3, t4, t5, t6;
+    describe("Test NFA with eps transition to accept state", function() {
+      let q1, q2, q3, q4, q5;
+      let t1, t2, t3, t4, t5, t6, t7, t8, t9;
       let states, alphabet, accepts, acceptsNames, transitions, nfa;
 
       before(function() {
@@ -241,32 +242,39 @@ describe("NFA Simulations", function() {
         q2 = new State("q2");
         q3 = new State("q3");
         q4 = new State("q4");
+        q5 = new State("q5");
 
-        t1 = new NFATransition(q1, [q1], "1");
-        t2 = new NFATransition(q2, [q1, q3], "");
-        t3 = new NFATransition(q3, [q3, q4], "0");
-        t4 = new NFATransition(q3, [q3], "1");
+        t1 = new NFATransition(q1, [q2], "a");
+        t2 = new NFATransition(q2, [q2], "a");
+        t3 = new NFATransition(q2, [q3], "");
+        t4 = new NFATransition(q3, [q3], "b");
+        t5 = new NFATransition(q3, [q4], "a");
+        t6 = new NFATransition(q3, [q4], "b");
+        t7 = new NFATransition(q4, [q4], "a");
+        t8 = new NFATransition(q4, [q2], "b");
+        t9 = new NFATransition(q4, [q5], "");
 
-        states = new Set([q1, q2, q3, q4]);
-        alphabet = new Alphabet("01");
-        transitions = new Set([t1, t2, t3, t4]);
-        accepts = new Set([q1, q4]);
-        acceptsNames = [q1.name, q4.name];
-        nfa = new NFA(states, alphabet, transitions, q2, accepts);
+        states = new Set([q1, q2, q3, q4, q5]);
+        alphabet = new Alphabet("ab");
+        transitions = new Set([t1, t2, t3, t4, t5, t6, t7, t8, t9]);
+        accepts = new Set([q5]);
+        acceptsNames = [q5.name];
+        nfa = new NFA(states, alphabet, transitions, q1, accepts);
       });
 
-      it("Should accept for empty/11/0/1110/010", () => {
-        assert(simulateFSA("", nfa));
-        assert(simulateFSA("11", nfa));
-        assert(simulateFSA("0", nfa));
-        assert(simulateFSA("1110", nfa));
-        assert(simulateFSA("010", nfa));
+      it("Should accept valid inputs", () => {
+        assert(simulateFSA("aa", nfa));
+        assert(simulateFSA("aaa", nfa, true));
+        assert(simulateFSA("aab", nfa));
+        assert(simulateFSA("abbabbabbba", nfa));
+        assert(simulateFSA("abbabbaaab", nfa));
       });
 
-      it("Should reject for 01/1101/01011/", () => {
-        assert(!simulateFSA("01", nfa));
-        assert(!simulateFSA("1101", nfa));
-        assert(!simulateFSA("01011", nfa));
+      it("Should reject invalid inupts", () => {
+        assert(!simulateFSA("", nfa));
+        assert(!simulateFSA("a", nfa));
+        assert(!simulateFSA("b", nfa));
+        assert(!simulateFSA("baaa", nfa));
       });
     });
 
@@ -303,8 +311,7 @@ describe("NFA Simulations", function() {
       it("Should reject for empty/0/00/10/010", () => {
         assert(!simulateFSA("", nfa));
         assert(!simulateFSA("0", nfa));
-        assert(!simulateFSA("00", nfa));
-        assert(acceptsNames.indexOf(simulateFSA("00", nfa, false, true)) === -1);
+        assert(!compare(simulateFSA("00", nfa, false, true), acceptsNames));
         assert(!simulateFSA("10", nfa));
         assert(!simulateFSA("010", nfa));
       });

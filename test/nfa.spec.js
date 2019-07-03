@@ -4,8 +4,9 @@ import { ErrorCode } from "../src/globals/errors.js";
 import { compare, instanceOf } from "../src/globals/globals.js";
 import { createFSA } from "../src/utils";
 
-var assert = require("chai").assert;
-var expect = require("chai").expect;
+const chai = require("chai");
+const assert = chai.assert;
+const expect = chai.expect;
 
 describe("NFA Creation", function() {
   describe("NFA#constructor()", function() {
@@ -51,6 +52,7 @@ describe("NFA Creation", function() {
       assert(nfa.getAlphabet() === alphabet);
       assert(nfa.getStartState() === q1);
       assert(nfa.getAcceptStates() === accepts);
+      assert(nfa.getType() === "NFA");
 
       // Validate TFunc
       assert(nfa.getTFunc().length === checkTfunc.length);
@@ -106,7 +108,7 @@ describe("NFA Creation", function() {
 
   describe("NFA#generateDigraph()", function() {
     let q1, q2, q3, q4;
-    let t1, t2, t3, t4, t5, t6, t7;
+    let t1, t2, t3, t4, t5, t6, t7, t8;
     let states, alphabet, accepts, transitions, nfa;
 
     before(function() {
@@ -116,17 +118,18 @@ describe("NFA Creation", function() {
       q4 = new State("q4");
 
       states = new Set([q1, q2, q3, q4]);
-      alphabet = new Alphabet(["0", "1", ""]);
+      alphabet = new Alphabet(["0", "1", "label", "a", "b"]);
       accepts = new Set([q4]);
 
       t1 = new NFATransition(q1, [q1], "0");
-      t2 = new NFATransition(q1, [q1, q2], "1");
+      t2 = new NFATransition(q1, [q1, q2], "label");
       t3 = new NFATransition(q2, [q3], "0");
       t4 = new NFATransition(q2, [q3], "");
       t5 = new NFATransition(q3, [q4], "1");
       t6 = new NFATransition(q4, [q4], "0");
-      t7 = new NFATransition(q4, [q4], "1");
-      transitions = new Set([t1, t2, t3, t4, t5, t6, t7]);
+      t7 = new NFATransition(q4, [q4], "a");
+      t8 = new NFATransition(q4, [q4], "b");
+      transitions = new Set([t1, t2, t3, t4, t5, t6, t7, t8]);
       nfa = new NFA(states, alphabet, transitions, q1, accepts);
     });
 
@@ -136,14 +139,11 @@ describe("NFA Creation", function() {
       assert(digraph.includes("q4 [shape = doublecircle];"));
       assert(digraph.includes("node [shape = point ]; qi;"));
       assert(digraph.includes("qi -> q1;"));
-      assert(digraph.includes('q1 -> q1 [ label = "0" ];'));
-      assert(digraph.includes('q1 -> q1 [ label = "1" ];'));
-      assert(digraph.includes('q1 -> q2 [ label = "1" ];'));
-      assert(digraph.includes('q2 -> q3 [ label = "0" ];'));
-      assert(digraph.includes('q2 -> q3 [ label = "ε" ];'));
+      assert(digraph.includes('q1 -> q1 [ label = "0,label" ];'));
+      assert(digraph.includes('q1 -> q2 [ label = "label" ];'));
+      assert(digraph.includes('q2 -> q3 [ label = "0,ε" ];'));
       assert(digraph.includes('q3 -> q4 [ label = "1" ];'));
-      assert(digraph.includes('q4 -> q4 [ label = "0" ];'));
-      assert(digraph.includes('q4 -> q4 [ label = "1" ];'));
+      assert(digraph.includes('q4 -> q4 [ label = "0,a,b" ];'));
     });
   });
 

@@ -21,8 +21,14 @@ export class DFAUtils {
 
     for (const _t of _tfunc) {
       // Check for valid states
-      if (!_states.has(_t.origin)) throw new Error(ErrorCode.ORIGIN_STATE_NOT_FOUND);
-      if (!_states.has(_t.dest)) throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
+      if (!_states.has(_t.origin)) {
+        console.error(chalk.redBright("Origin state was invalid: %o"), JSON.stringify(_t.origin));
+        throw new Error(ErrorCode.ORIGIN_STATE_NOT_FOUND);
+      }
+      if (!_states.has(_t.dest)) {
+        console.error(chalk.redBright("Dest state was invalid: %o"), JSON.stringify(_t.dest));
+        throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
+      }
 
       const pathStateVals: Set<string> = getOrDefault(_paths, _t.origin, new Set());
 
@@ -132,7 +138,9 @@ export class DFAUtils {
     }
   }
 
+  // DFA does not allow empty symbol
   static isValidInputChar(input: string, _alph: Alphabet): boolean {
+    if (input === "") return false;
     return _alph.sigma.indexOf(input) !== -1;
   }
 }

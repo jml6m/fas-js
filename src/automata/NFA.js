@@ -1,12 +1,8 @@
 // @flow
-import chalk from "chalk";
 import Set from "core-js/features/set";
-
 import { FSA } from "../interfaces/FSA.js";
 import { DFA } from "./DFA.js";
 import { State, Alphabet, NFATransition, Transition } from "../components";
-import { ErrorCode } from "../globals/errors.js";
-import { getOrDefault } from "../globals/globals.js";
 
 export const NFA = ((
   states: Set<State>,
@@ -41,6 +37,10 @@ export const NFA = ((
       }
 
       super(states, alphabet, expandedTfunc, start, accepts);
+    }
+
+    getType(): string {
+      return "NFA";
     }
   }
 

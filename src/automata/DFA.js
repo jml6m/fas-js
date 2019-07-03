@@ -3,7 +3,7 @@ import Set from "core-js/features/set";
 import { FSA } from "../interfaces/FSA.js";
 import { State, Alphabet, Transition } from "../components";
 import { ErrorCode } from "../globals/errors.js";
-import { checkStateDuplicates, getOrDefault, instanceOf } from "../globals/globals.js";
+import { checkStateDuplicates, getOrDefault } from "../globals/globals.js";
 import { FSAUtils } from "../utils";
 
 export const DFA = ((
@@ -68,11 +68,36 @@ export const DFA = ((
     getAcceptStates(): Set<State> {
       return this.#accepts;
     }
+    getType(): string {
+      return "DFA";
+    }
 
     generateDigraph(): string {
       // Prep outputs
       let acceptArr: Array<string> = [];
       for (const state of this.#accepts) acceptArr.push(state.name);
+
+      // Duplicate origin/dest combinations should share a line
+      let pairs: Map<string, string> = new Map();
+      (Object.values([...this.#tfunc]): any).map(function(t: Transition) {
+        const key: string = t.origin.name + t.dest.name;
+        let _input: string = t.input;
+        if (_input === "") _input = "ε";
+        if (!pairs.has(key)) {
+          pairs.set(key, t.origin.name + " -> " + t.dest.name + ' [ label = "' + _input + '" ];');
+        } else {
+          /*
+           * To edit an existing line, split out the input(s), convert to number, sort them ascending, and add the new one
+           */
+          let _line: string = getOrDefault(pairs, key, null);
+          const _oldinput: string = _line.split('"')[1];
+          let _toAdd: Array<string> = _oldinput.split(",");
+          _toAdd.push(_input);
+          _toAdd.sort();
+          _line = _line.replace('"' + _oldinput + '"', '"' + _toAdd.toString() + '"');
+          pairs.set(key, _line);
+        }
+      });
 
       // return template literal
       return `digraph fsa {
@@ -88,11 +113,9 @@ export const DFA = ((
           node [shape = point ]; qi;
           node [shape = circle];
           qi -> ${this.#start.name};
-          ${(Object.values([...this.#tfunc]): any)
-            .map(function(t: Transition) {
-              let _input: string = t.input;
-              if (_input === "") _input = "ε";
-              return t.origin.name + " -> " + t.dest.name + ' [ label = "' + _input + '" ];';
+          ${(Object.values([...pairs]): any)
+            .map(function([key, val]) {
+              return val;
             })
             .join("\n\t")}
       }
