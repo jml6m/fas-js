@@ -69,7 +69,7 @@
     "turing"
   ],
   "dependencies": {
-    "@babel/runtime": "7.6.0",
+    "@babel/runtime": "7.8.4",
     "chalk": "^2.4.2",
     "core-js": "^3.2.1",
     "regenerator-runtime": "^0.13.3"
