@@ -32,7 +32,7 @@
     "cross-env": "^6.0.0",
     "flow-bin": "^0.119.1",
     "mocha": "^6.2.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "pre-commit": "^1.2.2",
     "rimraf": "^3.0.0",
     "tinyify": "^2.5.1"
@@ -70,7 +70,7 @@
   ],
   "dependencies": {
     "@babel/runtime": "7.8.4",
-    "chalk": "^2.4.2",
+    "chalk": "^3.0.0",
     "core-js": "^3.2.1",
     "regenerator-runtime": "^0.13.3"
   },
