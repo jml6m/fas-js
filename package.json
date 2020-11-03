@@ -20,22 +20,23 @@
   "author": "Joseph Lewkovich",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
-    "@babel/core": "^7.6.0",
-    "@babel/plugin-proposal-class-properties": "^7.5.5",
-    "@babel/preset-env": "^7.6.0",
-    "@babel/preset-flow": "^7.0.0",
-    "@babel/register": "^7.6.0",
-    "babel-plugin-istanbul": "^5.2.0",
+    "@babel/core": "^7.12.3",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
+    "@babel/preset-flow": "^7.12.1",
+    "@babel/register": "^7.12.1",
+    "babel-plugin-istanbul": "^6.0.0",
     "babelify": "^10.0.0",
-    "browserify": "^16.5.0",
+    "browserify": "^17.0.0",
     "chai": "^4.2.0",
-    "cross-env": "^6.0.0",
-    "flow-bin": "^0.107.0",
-    "mocha": "^6.2.0",
-    "nyc": "^14.1.1",
+    "cross-env": "^7.0.2",
+    "deep-equal-in-any-order": "^1.0.28",
+    "flow-bin": "^0.137.0",
+    "mocha": "^8.2.0",
+    "nyc": "^15.1.0",
     "pre-commit": "^1.2.2",
-    "rimraf": "^3.0.0",
-    "tinyify": "^2.5.1"
+    "rimraf": "^3.0.2",
+    "tinyify": "^3.0.0"
   },
   "nyc": {
     "sourceMap": false,
@@ -69,10 +70,10 @@
     "turing"
   ],
   "dependencies": {
-    "@babel/runtime": "7.6.0",
-    "chalk": "^2.4.2",
+    "@babel/runtime": "7.12.1",
+    "chalk": "^4.1.0",
     "core-js": "^3.2.1",
-    "regenerator-runtime": "^0.13.3"
+    "regenerator-runtime": "^0.13.7"
   },
   "files": [
     "lib/bundle.js"

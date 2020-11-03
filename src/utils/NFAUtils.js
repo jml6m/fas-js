@@ -19,7 +19,7 @@ export class NFAUtils extends DFAUtils {
       cont = false;
 
       // Find all ε from origin set
-      const epsTransitions: Array<Transition> = Array.from(_tfunc).filter(obj => {
+      const epsTransitions: Array<Transition> = Array.from(_tfunc).filter((obj) => {
         return state.includes(obj.origin) && obj.input === "";
       });
 
@@ -95,7 +95,7 @@ export const createNFA = (
     const toVal: Array<string> = tr["to"].split(",");
 
     let destStates: Array<State> = [];
-    toVal.forEach(_dest => {
+    toVal.forEach((_dest) => {
       destStates.push(getOrDefault(states, _dest, null));
     });
 

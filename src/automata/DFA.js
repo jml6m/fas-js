@@ -6,6 +6,8 @@ import { ErrorCode } from "../globals/errors.js";
 import { checkStateDuplicates, getOrDefault } from "../globals/globals.js";
 import { FSAUtils } from "../utils";
 
+// $FlowFixMe[incompatible-call]
+// $FlowFixMe[signature-verification-failure]
 export const DFA = ((
   states: Set<State>,
   alphabet: Alphabet,
@@ -79,7 +81,7 @@ export const DFA = ((
 
       // Duplicate origin/dest combinations should share a line
       let pairs: Map<string, string> = new Map();
-      (Object.values([...this.#tfunc]): any).map(function(t: Transition) {
+      (Object.values([...this.#tfunc]): any).map(function (t: Transition) {
         const key: string = t.origin.name + t.dest.name;
         let _input: string = t.input;
         if (_input === "") _input = "ε";
@@ -104,7 +106,7 @@ export const DFA = ((
           ${(Object.values(
             this.#utils.determineStateOrder(this.#links, this.#tfunc, this.#states, this.#start, this.#accepts)
           ): any)
-            .map(function(str: string) {
+            .map(function (str: string) {
               if (acceptArr.indexOf(str) !== -1) return str + " [shape = doublecircle];";
               else return str;
             })
@@ -114,7 +116,7 @@ export const DFA = ((
           node [shape = circle];
           qi -> ${this.#start.name};
           ${(Object.values([...pairs]): any)
-            .map(function([key, val]) {
+            .map(function ([key, val]) {
               return val;
             })
             .join("\n\t")}

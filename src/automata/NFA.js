@@ -4,6 +4,8 @@ import { FSA } from "../interfaces/FSA.js";
 import { DFA } from "./DFA.js";
 import { State, Alphabet, NFATransition, Transition } from "../components";
 
+// $FlowFixMe[incompatible-call]
+// $FlowFixMe[signature-verification-failure]
 export const NFA = ((
   states: Set<State>,
   alphabet: Alphabet,
@@ -31,7 +33,7 @@ export const NFA = ((
       // If NFATransition has multiple dest states, break them up into separate Transitions
       let expandedTfunc: Set<Transition> = new Set<Transition>();
       for (const _t of tfunc) {
-        _t.dest.forEach(_dest => {
+        _t.dest.forEach((_dest) => {
           expandedTfunc.add(new Transition(_t.origin, _dest, _t.input));
         });
       }

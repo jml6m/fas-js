@@ -4,13 +4,15 @@ import { ErrorCode } from "../globals/errors.js";
 import { instanceOf, getOrDefault } from "../globals/globals.js";
 import { FSA } from "../interfaces/FSA.js";
 import { State, Transition, Alphabet } from "../components";
-import { DFA, NFA } from "../automata";
+import { DFA, NFA, RegEx } from "../automata";
 import { DFAUtils, NFAUtils, createDFA, createNFA } from "../utils";
 
 /*
  * This class will take an input FSA constructor function
  * to determine which util methods need to be called
  */
+
+// $FlowFixMe[signature-verification-failure]
 export const FSAUtils = ((v: Function) => {
   /*
    * Private methods
@@ -19,7 +21,7 @@ export const FSAUtils = ((v: Function) => {
     if (dfa.getAlphabet().sigma.indexOf(input) === -1) throw new Error(ErrorCode.INVALID_INPUT_CHAR);
     if (!dfa.getStates().has(state)) throw new Error(ErrorCode.INPUT_STATE_NOT_FOUND);
 
-    const path = Array.from(dfa.getTFunc()).find(obj => {
+    const path = Array.from(dfa.getTFunc()).find((obj) => {
       return obj.origin === state && obj.input === input;
     });
 
@@ -39,7 +41,7 @@ export const FSAUtils = ((v: Function) => {
 
     // Looking at all origin states, based on input char, determine set of destination states
     for (const _s of state) {
-      const _addToPath: Array<Transition> = Array.from(nfa.getTFunc()).filter(obj => {
+      const _addToPath: Array<Transition> = Array.from(nfa.getTFunc()).filter((obj) => {
         return obj.origin === _s && obj.input === input;
       });
 
@@ -96,7 +98,7 @@ export const FSAUtils = ((v: Function) => {
       _tfunc: Set<Transition>,
       _alph: Alphabet
     ): Set<Transition> {
-      if (this._type === NFA) {
+      if (this._type === NFA || this._type == RegEx) {
         return NFAUtils.validateTFunc(_states, _paths, _tfunc, _alph);
       } else {
         return DFAUtils.validateTFunc(_states, _paths, _tfunc, _alph);
@@ -172,4 +174,40 @@ export const createFSA = (
   } else {
     throw new TypeError(transitions);
   }
+};
+
+export const createRegEx = (regex: string | Array<string>, alphabet: Alphabet): NFA => {
+  // Accept either string or string[] for regex
+  if (!Array.isArray(regex)) {
+    if (typeof regex === "string") regex = [...regex];
+    else throw new TypeError();
+  } else {
+    let onlyStrings = regex.every((e) => typeof e === "string"); // Array values must be strings
+    if (!onlyStrings) throw new TypeError();
+  }
+
+  // Check regex syntax
+  if (
+    regex[0] === "%" ||
+    regex[regex.length - 1] === "%" ||
+    (regex[regex.length - 2] === "%" && regex[regex.length - 1] === "u")
+  )
+    throw new Error(ErrorCode.INVALID_REGEX_SYNTAX);
+
+  // Check alphabet for reserved characters
+  if (alphabet.sigma.includes("%")) throw new Error(ErrorCode.INVALID_INPUT_CHAR);
+
+  // Regex can only contain alphabet characters and valid operators
+  for (let i = 0; i < regex.length; i++) {
+    if (!alphabet.sigma.includes(regex[i])) {
+      if (regex[i] !== "%") throw new Error(ErrorCode.INVALID_REGEX_SYNTAX);
+      else {
+        if (regex[i + 1] !== "s" && regex[i + 1] !== "p" && regex[i + 1] !== "u")
+          throw new Error(ErrorCode.INVALID_REGEX_SYNTAX);
+        i++;
+      }
+    }
+  }
+
+  return new RegEx(regex, alphabet);
 };

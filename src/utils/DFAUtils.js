@@ -96,7 +96,7 @@ export class DFAUtils {
     // Check for dead states and reduce FSA if necessary
     let stateArr: Array<string> = [];
     (Object.values([..._states]): any).map((state: State) => stateArr.push(state.name));
-    const deadStates = stateArr.filter(x => !statesOrder.includes(x));
+    const deadStates = stateArr.filter((x) => !statesOrder.includes(x));
     if (deadStates.length > 0) {
       console.warn(
         chalk.yellowBright("Dead states detected, removing them and associated transitions: %O"),

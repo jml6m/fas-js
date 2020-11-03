@@ -90,6 +90,12 @@ function simulateDFA(
       if (logging) console.error(chalk.redBright("Input w was invalid type: %O"), w);
       throw new TypeError();
     }
+  } else {
+    let onlyStrings = w.every((e) => typeof e === "string"); // Array values must be strings
+    if (!onlyStrings) {
+      if (logging) console.error(chalk.redBright("Input w was invalid type: %O"), w);
+      throw new TypeError();
+    }
   }
 
   // Step through the DFA
@@ -124,11 +130,18 @@ function simulateNFA(
   if (logging) console.log(chalk.cyan("Beginning NFA Simulation"));
 
   //Accept either string or string[] for w
-  if (!(w instanceof Array)) {
+  if (!Array.isArray(w)) {
     if (typeof w === "string") {
+      // NFA allows ε as input
       if (w === "") w = [""];
       else w = [...w];
     } else {
+      if (logging) console.error(chalk.redBright("Input w was invalid type: %O"), w);
+      throw new TypeError();
+    }
+  } else {
+    let onlyStrings = w.every((e) => typeof e === "string"); // Array values must be strings
+    if (!onlyStrings) {
       if (logging) console.error(chalk.redBright("Input w was invalid type: %O"), w);
       throw new TypeError();
     }
