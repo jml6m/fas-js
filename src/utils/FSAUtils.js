@@ -188,7 +188,7 @@ export const createRegEx = (regex: string | Array<string>, alphabet: Alphabet): 
 
   // Check regex syntax
   if (
-    regex[0] === "%" ||
+    regex[0] === "%" || // TODO: This changes when parenthesis added
     regex[regex.length - 1] === "%" ||
     (regex[regex.length - 2] === "%" && regex[regex.length - 1] === "u")
   )
@@ -202,7 +202,7 @@ export const createRegEx = (regex: string | Array<string>, alphabet: Alphabet): 
     if (!alphabet.sigma.includes(regex[i])) {
       if (regex[i] !== "%") throw new Error(ErrorCode.INVALID_REGEX_SYNTAX);
       else {
-        if (regex[i + 1] !== "s" && regex[i + 1] !== "p" && regex[i + 1] !== "u")
+        if ((regex[i + 1] !== "s" && regex[i + 1] !== "p" && regex[i + 1] !== "u") || regex[i + 2] === "%")
           throw new Error(ErrorCode.INVALID_REGEX_SYNTAX);
         i++;
       }

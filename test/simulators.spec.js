@@ -219,7 +219,40 @@ describe("NFA Simulations", function () {
       });
     });
 
-    describe("Test NFA with eps transition to accept state", function () {
+    describe("NFA returns empty string", function () {
+      let q1, q2;
+      let t1, t2, t3, t4, t5, t6, t7;
+      let states, alphabet, accepts, acceptsNames, transitions, nfa;
+
+      before(function () {
+        q1 = new State("q1");
+        q2 = new State("q2");
+
+        t1 = new NFATransition(q1, [q1], "0");
+        t2 = new NFATransition(q1, [q2], "1");
+        t3 = new NFATransition(q2, [q1], "0");
+
+        states = new Set([q1, q2]);
+        alphabet = new Alphabet("01");
+        transitions = new Set([t1, t2, t3]);
+        accepts = new Set([q2]);
+        nfa = new NFA(states, alphabet, transitions, q1, accepts);
+      });
+
+      it("Should accept for 1/101", () => {
+        assert(simulateFSA("1", nfa));
+        assert(simulateFSA("101", nfa));
+      });
+
+      it("Should reject for empty/0/00/1110000", () => {
+        assert(!simulateFSA("", nfa));
+        assert(!simulateFSA("0", nfa));
+        assert(!simulateFSA("11", nfa)); // primarily testing this case
+        assert(!simulateFSA("111", nfa)); // and this case
+      });
+    });
+
+    describe("NFA with eps transition to accept state", function () {
       let q1, q2, q3, q4, q5;
       let t1, t2, t3, t4, t5, t6, t7, t8, t9;
       let states, alphabet, accepts, acceptsNames, transitions, nfa;
@@ -471,38 +504,24 @@ describe("RegEx Simulations", function () {
   });
 
   describe("Simulators#stepOnceFSA()", function () {
-    describe("w ends in a 1", function () {
-      /*       let q1, q2, q3, q4;
-      let t1, t2, t3, t4, t5, t6;
-      let states, alphabet, accepts, acceptsNames, transitions, nfa;
+    describe("1*0+", function () {
+      let regex, alphabet, _rx0;
 
       before(function () {
-        q1 = new State("q1");
-        q2 = new State("q2");
-        q3 = new State("q3");
-        q4 = new State("q4");
+        regex = "1%s0%p";
+        alphabet = new Alphabet(["0", "1"]);
 
-        t1 = new NFATransition(q1, [q1], "1");
-        t2 = new NFATransition(q2, [q1, q3], "");
-        t3 = new NFATransition(q3, [q3, q4], "0");
-        t4 = new NFATransition(q3, [q3], "1");
-
-        states = new Set([q1, q2, q3, q4]);
-        alphabet = new Alphabet("01");
-        transitions = new Set([t1, t2, t3, t4]);
-        accepts = new Set([q1, q4]);
-        acceptsNames = [q1.name, q4.name];
-        nfa = new NFA(states, alphabet, transitions, q2, accepts);
+        _rx0 = new RegEx(regex, alphabet);
       });
 
       it("Should return valid states for valid transitions", function () {
-        assert(compare(stepOnceFSA("", q2.name, nfa, true), [q1.name, q2.name, q3.name]));
-        assert(compare(stepOnceFSA("0", [q1.name, q3.name], nfa), [q3.name, q4.name]));
+        assert(compare(stepOnceFSA("", "q2", _rx0), ["q1", "q2", "q3"]));
+        assert(compare(stepOnceFSA("0", ["q1", "q3"], _rx0, true), ["q4", "q5"]));
       });
 
       it("Should throw exception for invalid states", function () {
-        expect(() => stepOnceFSA("0", ["q1", "invalid"], nfa)).to.throw(ErrorCode.INVALID_STATE_NAME);
-      }); */
+        expect(() => stepOnceFSA("0", ["q1", "invalid"], _rx0)).to.throw(ErrorCode.INVALID_STATE_NAME);
+      });
     });
   });
 });

@@ -93,6 +93,7 @@ describe("RegEx Creation", function () {
       expect(() => createRegEx("01%u", alph1)).to.throw(ErrorCode.INVALID_REGEX_SYNTAX);
       expect(() => createRegEx("01y0", alph1)).to.throw(ErrorCode.INVALID_REGEX_SYNTAX);
       expect(() => createRegEx("01%r0", alph1)).to.throw(ErrorCode.INVALID_REGEX_SYNTAX);
+      expect(() => createRegEx("0%s%s0", alph1)).to.throw(ErrorCode.INVALID_REGEX_SYNTAX);
     });
 
     it("Should successfully create the NFA", function () {

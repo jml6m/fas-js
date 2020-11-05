@@ -50,7 +50,6 @@ export const RegEx = ((regex: string, sigma: Array<string>) => {
         indexOfEntryStates.push(stateNum);
         for (let j = 0; j < reg_spread_next[i].length; j++) {
           if (j !== reg_spread_next[i].length - 1 && reg_spread_next[i][j + 1].includes("%")) {
-            //Special tokens
             j++;
             stateNum = processNextToken(_states, _tfunc, reg_spread_next[i], _accepts, stateNum, j);
           } else {

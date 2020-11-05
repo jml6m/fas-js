@@ -158,7 +158,7 @@ else
 ## Demo
 This library provides an engine that creates and simulates an FSA. The demo below provides a UI that utilizes this engine and visualizes the FSA as it's being processed. It's a great way to learn about FSAs and experiment with your own FSA creations! The UI and graph visualizations were built using [preact](https://github.com/developit/preact), [d3.js](https://github.com/d3/d3), and [d3-graphviz](https://github.com/magjac/d3-graphviz).
 
-[Demo on ObservableHQ](https://beta.observablehq.com/@jml6m/state-machine-simulator) (Learn more about ObservableHQ [here](https://beta.observablehq.com/collection/@observablehq/introduction))
+[Demo on ObservableHQ](https://beta.observablehq.com/@jml6m/state-machine-simulator)
 
 ## License
 This library is distributed under the GPL 3.0 license found in the [LICENSE](https://github.com/jml6m/fas-js/blob/master/LICENSE) file.
