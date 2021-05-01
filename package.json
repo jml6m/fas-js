@@ -35,7 +35,7 @@
     "nyc": "^14.1.1",
     "pre-commit": "^1.2.2",
     "rimraf": "^3.0.0",
-    "tinyify": "^2.5.1"
+    "tinyify": "^3.0.0"
   },
   "nyc": {
     "sourceMap": false,
