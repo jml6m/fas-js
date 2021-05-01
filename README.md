@@ -105,6 +105,8 @@ const nfa = createFSA(states2, alphabet, nfa_tfunc, start, accepts2);
 
 <span style="font-size:18px"><b>getType</b>(): string</span> - returns either `"DFA"` or `"NFA"`
 
+<span style="font-size:18px"><b>getNodeCount</b>(): number</span> - returns the number of nodes in the FSA
+
 <span style="font-size:18px"><b>generateDigraph</b>(): string</span> - returns digraph according to [DOT](https://www.graphviz.org/doc/info/lang.html) language to be used for visualization.
 
 ## Simulation

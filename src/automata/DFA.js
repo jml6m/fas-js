@@ -71,6 +71,9 @@ export const DFA = ((
     getType(): string {
       return "DFA";
     }
+    getNodeCount(): number {
+      return this.#states.size;
+    }
 
     generateDigraph(): string {
       // Prep outputs

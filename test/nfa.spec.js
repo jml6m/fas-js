@@ -53,6 +53,7 @@ describe("NFA Creation", function() {
       assert(nfa.getStartState() === q1);
       assert(nfa.getAcceptStates() === accepts);
       assert(nfa.getType() === "NFA");
+      assert(nfa.getNodeCount() === states.size);
 
       // Validate TFunc
       assert(nfa.getTFunc().length === checkTfunc.length);

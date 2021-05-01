@@ -10,5 +10,6 @@ export interface FSA {
   getAcceptStates(): Set<State>; // F
 
   getType(): string; // type of FSA
+  getNodeCount(): number;
   generateDigraph(): string;
 }

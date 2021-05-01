@@ -47,6 +47,7 @@ describe("DFA Creation", function() {
       assert(dfa.getStartState() === q1);
       assert(dfa.getAcceptStates() === accepts);
       assert(dfa.getType() === "DFA");
+      assert(dfa.getNodeCount() === states.size);
     });
 
     it("Should allow ' ' (space) as sigma character", function() {
