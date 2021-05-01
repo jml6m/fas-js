@@ -1,0 +1,45 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: monthly
+    time: "10:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: babel-plugin-istanbul
+    versions:
+    - "> 5.2.0"
+  - dependency-name: "@babel/preset-flow"
+    versions:
+    - "> 7.0.0"
+  - dependency-name: "@babel/register"
+    versions:
+    - "> 7.6.0"
+  - dependency-name: "@babel/runtime"
+    versions:
+    - "> 7.6.0"
+  - dependency-name: chalk
+    versions:
+    - "> 2.4.2"
+  - dependency-name: cross-env
+    versions:
+    - "> 6.0.0"
+  - dependency-name: cross-env
+    versions:
+    - "> 6.0.0, < 6.1"
+  - dependency-name: flow-bin
+    versions:
+    - "> 0.107.0"
+  - dependency-name: mocha
+    versions:
+    - "> 6.2.0, < 6.3"
+  - dependency-name: rimraf
+    versions:
+    - "> 3.0.0"
+  - dependency-name: lodash
+    versions:
+    - 4.17.20
+  - dependency-name: elliptic
+    versions:
+    - 6.5.3
