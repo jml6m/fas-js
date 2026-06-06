@@ -30,6 +30,9 @@ updates:
       - dependency-name: cross-env
         versions:
           - "> 6.0.0"
+      - dependency-name: cross-env
+        versions:
+          - "> 6.0.0, < 6.1"
       - dependency-name: flow-bin
         versions:
           - "> 0.107.0"
