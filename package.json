@@ -78,5 +78,8 @@
   },
   "files": [
     "lib/bundle.js"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }
