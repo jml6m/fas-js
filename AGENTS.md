@@ -68,7 +68,7 @@ Do not change the public API surface without bumping the major version (human de
 
 ## 🔄 CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): runs `npm audit --audit-level=high` + `npm test` on Node 18/20/22 for every PR and `master` push.
+- **CI** (`.github/workflows/ci.yml`): runs `npm audit --audit-level=high` + `npm test` on Node 18/20/22 for every PR and `master` push; uploads coverage to Codecov via OIDC (tokenless) on the Node 20 matrix entry.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags; uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (weekly, `github-actions` ecosystem) auto-bumps them.
 

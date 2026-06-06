@@ -16,6 +16,9 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -30,3 +33,10 @@ jobs:
       - run: npm audit --audit-level=high
         continue-on-error: true
       - run: npm test
+      - name: Upload coverage to Codecov
+        if: matrix.node == 20
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          use_oidc: true
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
