@@ -22,6 +22,10 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org
           cache: npm
+      # npm CLI 10 (shipped with Node 20) does not fully support npm Trusted
+      # Publishing OIDC; the registry PUT falls through unauthenticated and
+      # returns a misleading 404. Upgrade to npm 11.5.1+ before publishing.
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm test
       - run: npm publish --provenance --access public
