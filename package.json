@@ -16,7 +16,9 @@
     "flow": "flow",
     "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
   },
-  "precommit": "test",
+  "pre-commit": [
+    "test"
+  ],
   "author": "Joseph Lewkovich",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
@@ -76,5 +78,8 @@
   },
   "files": [
     "lib/bundle.js"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }
