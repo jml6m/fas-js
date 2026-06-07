@@ -1,12 +1,11 @@
 # Finite Automaton Simulator
 
+[![CI](https://github.com/jml6m/fas-js/actions/workflows/ci.yml/badge.svg)](https://github.com/jml6m/fas-js/actions/workflows/ci.yml)
 [![npm version](https://badge.fury.io/js/fas-js.svg)](https://badge.fury.io/js/fas-js)
-[![dependencies](https://img.shields.io/librariesio/release/npm/fas-js.svg)](https://libraries.io/npm/fas-js)
 [![Known Vulnerabilities](https://snyk.io/test/github/jml6m/fas-js/badge.svg)](https://snyk.io/test/github/jml6m/fas-js)
 [![codecov](https://codecov.io/gh/jml6m/fas-js/branch/master/graph/badge.svg)](https://codecov.io/gh/jml6m/fas-js)
 [![downloads](https://img.shields.io/npm/dm/fas-js.svg)](https://npmjs.org/package/fas-js)
 [![jsDelivr](https://data.jsdelivr.com/v1/package/npm/fas-js/badge)](https://www.jsdelivr.com/package/npm/fas-js)
-[![dependabot status](https://img.shields.io/badge/dependabot-enabled-blue.svg)](https://github.com/jml6m/fas-js/network/alerts)
 
 Easily create and simulate state machines using this JS library. Import into your own server side or browser based JS application.
 
