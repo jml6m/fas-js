@@ -1,0 +1,24 @@
+{
+  "tabWidth": 2,
+  "printWidth": 165,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "plugins": ["prettier-plugin-organize-imports", "prettier-plugin-pkg"],
+  "overrides": [
+    {
+      "files": ["*.json", "*.jsonc", "*.json5"],
+      "options": {
+        "parser": "json",
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": "*.md",
+      "options": {
+        "tabWidth": 2
+      }
+    }
+  ]
+}
