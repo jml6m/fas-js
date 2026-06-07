@@ -14,7 +14,9 @@
     "clean": "rimraf lib/*",
     "prepublishOnly": "npm run build && npm run flow check",
     "flow": "flow",
-    "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js"
+    "test": "npm run build && cross-env NODE_ENV=test nyc --check-coverage --lines 90 mocha --require @babel/register ./test/**/*.spec.js",
+    "audit:ci": "npm audit --audit-level=high",
+    "npm:reinstall": "rm -rf node_modules package-lock.json && npm install"
   },
   "pre-commit": [
     "test"
