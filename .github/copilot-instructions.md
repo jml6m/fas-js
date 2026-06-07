@@ -6,7 +6,7 @@
 **Build:** Browserify + Babelify + tinyify → `lib/bundle.js`
 **Types:** Flow
 
-> **📌 Single Source of Truth**: This document is the authoritative reference for coding standards, architecture rules, and project policies. If there is a conflict with generated copies (for example `.github/copilot-instructions.md`), follow `AGENTS.md`.
+> **📌 Single Source of Truth**: `AGENTS.md` is the authoritative reference for coding standards, architecture rules, and project policies. This file is a generated mirror for Copilot; if there is a conflict, follow `AGENTS.md`.
 
 ---
 
