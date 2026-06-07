@@ -6,7 +6,7 @@
 **Build:** Browserify + Babelify + tinyify → `lib/bundle.js`
 **Types:** Flow
 
-> **📌 Single Source of Truth**: This document is the authoritative reference for coding standards, architecture rules, and project policies. If there is a conflict between this document and any other file, `AGENTS.md` takes precedence.
+> **📌 Single Source of Truth**: This document is the authoritative reference for coding standards, architecture rules, and project policies. If there is a conflict with generated copies (for example `.github/copilot-instructions.md`), follow `AGENTS.md`.
 
 ---
 
@@ -37,12 +37,12 @@ For unsupervised runs (e.g. automated fixes):
 ```bash
 npm ci              # install
 npm run build       # browserify → lib/bundle.js (requires lib/ directory)
-npm test            # build + flow check + mocha + nyc coverage
-npm audit --audit-level=high  # security check (also runs in CI)
+npm run flow check  # Flow type check
+npm test            # build + mocha + nyc coverage
 ```
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
-- Flow types are checked as part of `prepublishOnly` and `npm test` via `@babel/preset-flow`.
+- Flow types are checked as part of `prepublishOnly` via `npm run flow check` (Babel’s `@babel/preset-flow` strips types during build; it does not type-check).
 - Coverage threshold: 90% lines (enforced by nyc in `npm test`).
 
 ---
@@ -69,7 +69,7 @@ Do not change the public API surface without bumping the major version (human de
 ## 🔄 CI / CD
 
 - **CI** (`.github/workflows/ci.yml`): runs `npm audit --audit-level=high` + `npm test` on Node 18/20/22 for every PR and `master` push; uploads coverage to Codecov via OIDC (tokenless) on the Node 20 matrix entry.
-- **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags; uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
+- **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (weekly, `github-actions` ecosystem) auto-bumps them.
 
 ---
