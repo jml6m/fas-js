@@ -19,18 +19,20 @@ Audit and plan the v1.1 prep modernization of fas-js: dependencies, build output
 
 ### Task list
 
-- [ ] Dependency audit (#TBD)
-- [ ] Dependabot strategy (#TBD)
-- [ ] Build target spec (#TBD)
-- [ ] TypeScript migration plan (#TBD)
-- [ ] Test runner decision (#TBD)
-- [ ] Coverage policy — 100% (#TBD)
-- [ ] Windows dev support (#TBD)
-- [ ] API contract tests (#TBD)
-- [ ] Security remediation (#TBD)
-- [ ] Demo migration (#TBD)
-- [ ] README modernization (#TBD)
-- [ ] master → main rename runbook (#TBD)
+- [x] Dependency audit (#214)
+- [x] Dependabot strategy (#215)
+- [x] Build target spec (#216)
+- [x] TypeScript migration plan (#217)
+- [x] Test runner decision (#218)
+- [x] Coverage policy — 100% (#219)
+- [x] Windows dev support (#220)
+- [x] API contract tests (#221)
+- [x] Security remediation (#222)
+- [x] Demo migration (#223)
+- [x] README modernization (#224)
+- [x] master → main rename runbook (#225)
+
+**Parent epic:** #226
 
 ---
 
