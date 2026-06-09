@@ -1,0 +1,47 @@
+name: Epic (Parent Issue)
+description: Track a larger initiative that spans multiple sub-issues.
+title: "[Epic]: "
+labels: ["epic"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Epic guidelines
+
+        - **When to use:** Work that naturally breaks into **3 or more** distinct sub-issues (e.g., TypeScript migration, demo port, security audit).
+        - **How to use:**
+          1. Create child issues first (`gh issue create`).
+          2. Note their numbers (`#45`, `#46`, …).
+          3. Create this parent epic and paste those IDs into the task list below.
+        - **Branch:** All implementation PRs target `main-v1-1-prep` unless explicitly a stable hotfix.
+  - type: textarea
+    id: description
+    attributes:
+      label: Epic description
+      description: What is the high-level goal?
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Task list (sub-issues)
+      description: Markdown checkboxes with real issue numbers once children exist.
+      value: |
+        - [ ] Task 1 (e.g. #123)
+        - [ ] Task 2
+        - [ ] Task 3
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      description: Which project phase does this epic belong to?
+      options:
+        - v1.1 prep — governance
+        - v1.1 prep — toolchain audit
+        - v1.1 prep — modernization
+        - v1.1 prep — demo / docs
+        - v2 — new functionality
+    validations:
+      required: true

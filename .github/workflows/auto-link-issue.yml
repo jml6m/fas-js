@@ -1,0 +1,44 @@
+name: Auto-Link Issue
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  contents: read
+
+jobs:
+  link-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@ed597411d8f32433762f32dcba8c78b66b8149a0 # v8.0.0
+        with:
+          script: |
+            const headRepo = context.payload.pull_request.head.repo.full_name;
+            const baseRepo = context.payload.pull_request.base.repo.full_name;
+            if (headRepo !== baseRepo) {
+              console.log('Fork PR detected — skipping auto-link to avoid permission errors.');
+              return;
+            }
+
+            const branch = context.payload.pull_request.head.ref;
+            const match = branch.match(/^(\d+)-/);
+
+            if (match) {
+              const issueNumber = match[1];
+              const prBody = context.payload.pull_request.body || '';
+              const linkText = `Closes #${issueNumber}`;
+              const closingRefRegex = /\b(closes|fixes|resolves)\s+#\d+\b/i;
+
+              if (!closingRefRegex.test(prBody)) {
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.payload.pull_request.number,
+                  body: `${linkText}\n\n${prBody}`
+                });
+                console.log(`Linked PR to issue #${issueNumber}`);
+              }
+            }
