@@ -22,10 +22,12 @@ The v1.1 demo is a static site with no npm build step of its own. It loads:
 
 Features:
 
-- Pre-loaded binary DFA from the README example (accepts strings ending in `1`)
+- Define a custom DFA or NFA (states, alphabet, transitions JSON, start, accepts)
+- Load built-in examples (DFA ending in `1`, NFA accepting `01` or `1`)
+- Build via `createFSA()` with validation feedback
 - Full simulation via `simulateFSA()`
 - Step-through mode via `stepOnceFSA()`
-- Graph visualization via `fsa.generateDigraph()`
+- Graph visualization via `fsa.generateDigraph()` (Graphviz WASM + d3-graphviz)
 
 ## Local development
 
@@ -33,9 +35,7 @@ The demo does not commit `vendor/fas-js.bundle.js`. Build the library and copy t
 
 ```bash
 npm ci
-npm run build
-mkdir -p demo/v1.1/vendor
-cp lib/bundle.js demo/v1.1/vendor/fas-js.bundle.js
+npm run build   # postbuild copies lib/bundle.js → demo/v1.1/vendor/fas-js.bundle.js
 ```
 
 Then serve `demo/v1.1/` with any static file server, for example:

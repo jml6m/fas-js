@@ -1,11 +1,10 @@
-// @flow
-import { ErrorCode } from "../globals/errors.js";
-import { count, duplicates } from "../globals/globals.js";
+import { ErrorCode } from "../globals/errors";
+import { count, duplicates } from "../globals/globals";
 
 export class Alphabet {
   sigma: string[];
 
-  constructor(sigma: string[]) {
+  constructor(sigma: string | string[]) {
     if (!Array.isArray(sigma)) {
       if (typeof sigma === "string") sigma = [...sigma];
       else throw new TypeError();

@@ -2,9 +2,9 @@
 
 **Project:** fas-js
 **Runtime:** Node.js (>=18)
-**Testing:** Mocha + nyc (coverage)
-**Build:** Browserify + Babelify + tinyify → `lib/bundle.js`
-**Types:** Flow
+**Testing:** Mocha + c8 (coverage)
+**Build:** tsup → `lib/index.js`, `lib/index.cjs`, `lib/bundle.js`
+**Types:** TypeScript (strict)
 
 > **📌 Single Source of Truth**: This document is the authoritative reference for coding standards, architecture rules, and project policies. If there is a conflict with generated copies (for example `.github/copilot-instructions.md`), follow `AGENTS.md`.
 
@@ -61,23 +61,23 @@ Use the issue templates in `.github/ISSUE_TEMPLATE/`. Blank issues are disabled.
 
 ```bash
 npm ci              # install
-npm run build       # browserify → lib/bundle.js (requires lib/ directory)
-npm run flow check  # Flow type check
-npm test            # build + mocha + nyc coverage
+npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/index.d.ts
+npm run typecheck   # TypeScript type check (no emit)
+npm test            # build + mocha + c8 coverage
 ```
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
-- Flow types are checked as part of `prepublishOnly` via `npm run flow check` (Babel’s `@babel/preset-flow` strips types during build; it does not type-check).
-- Coverage threshold: **90%** lines on `master` (current); **100%** target on `main-v1-1-prep` (enforced by nyc in `npm test` once raised). Documented exceptions only for genuinely complex edge cases.
+- TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
+- Coverage threshold on `main-v1-1-prep`: **100%** lines/statements/functions, **93%** branches (c8 in `npm test`). Interface-only and barrel `index.ts` files are excluded; branch counts include tsx instrumentation overhead on defensive paths.
 
 ---
 
 ## 🏗️ Architecture
 
-- **Source**: `src/` — Flow-typed JavaScript modules
-- **Entry**: `src/modules.js` exports public API (`simulateFSA`, `stepOnceFSA`, `createFSA`)
-- **Build output**: `lib/bundle.js` (UMD bundle, standalone `fasJs`)
-- **Tests**: `test/**/*.spec.js` — Mocha + Chai + Babel register
+- **Source**: `src/` — TypeScript modules
+- **Entry**: `src/modules.ts` exports public API (`simulateFSA`, `stepOnceFSA`, `createFSA`)
+- **Build output**: `lib/index.js` (ESM), `lib/index.cjs` (CJS), `lib/bundle.js` (IIFE global `fasJs`), `lib/index.d.ts`
+- **Tests**: `test/**/*.spec.js` — Mocha + Chai + tsx loader
 
 Do not change the public API surface without bumping the major version (human decision).
 

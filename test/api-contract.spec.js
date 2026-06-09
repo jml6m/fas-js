@@ -2,7 +2,7 @@
  * Public API contract tests — must pass on every v1.1 prep PR.
  * Locks behavior of createFSA, simulateFSA, and stepOnceFSA.
  */
-import { createFSA, simulateFSA, stepOnceFSA } from "../src/modules.js";
+import { createFSA, simulateFSA, stepOnceFSA } from "../src/modules";
 
 const chai = require("chai");
 const assert = chai.assert;

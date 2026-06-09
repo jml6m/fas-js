@@ -1,8 +1,8 @@
-import Set from "core-js/features/set";
-import { FSAUtils } from "../src/utils/FSAUtils.js";
+import { FSAUtils } from "../src/utils/FSAUtils";
 import { DFA, NFA } from "../src/automata";
 import { State, Alphabet, Transition, NFATransition } from "../src/components";
-import { ErrorCode } from "../src/globals/errors.js";
+import { ErrorCode } from "../src/globals/errors";
+import { isSupersetOf, instanceOf, getOrDefault, count, duplicates } from "../src/globals/globals";
 
 const chai = require("chai");
 const assert = chai.assert;
@@ -81,6 +81,53 @@ describe("FSAUtils test", function() {
 
     it("Should reject invalid input char", function() {
       expect(() => nfa_utils.receiveInput(nfa, "x", q1)).to.throw(ErrorCode.INVALID_INPUT_CHAR);
+    });
+
+    it("Should return empty set when no transition exists", function() {
+      const nfaStates = new Set([q1]);
+      const nfaAlph = new Alphabet("ab");
+      const nfaTrans = new Set([new NFATransition(q1, [q1], "a")]);
+      const simpleNfa = new NFA(nfaStates, nfaAlph, nfaTrans, q1, new Set());
+      const result = nfa_utils.receiveInput(simpleNfa, "b", [q1]);
+      assert(result.size === 0);
+    });
+  });
+
+  describe("globals helpers", function() {
+    it("Should evaluate isSupersetOf", function() {
+      const superset = new Set([q1, q2, q3]);
+      const subset = new Set([q1, q2]);
+      assert(isSupersetOf(superset, subset) === true);
+      assert(isSupersetOf(subset, superset) === false);
+    });
+
+    it("Should evaluate count and duplicates", function() {
+      assert.deepEqual(count(["a", "b", "a"]), { a: 2, b: 1 });
+      assert.deepEqual(duplicates({ a: 2, b: 1 }), ["a"]);
+    });
+
+    it("Should resolve getOrDefault for present and missing keys", function() {
+      const map = new Map([["q1", q1]]);
+      assert(getOrDefault(map, "q1", q2) === q1);
+      assert(getOrDefault(map, "missing", q2) === q2);
+    });
+
+    it("Should fall back to constructor name in instanceOf", function() {
+      const mockNfa = { constructor: { name: "NFA" } };
+      assert(instanceOf(NFA, mockNfa) === true);
+    });
+  });
+
+  describe("FSAUtils#receiveInputDFA() edge cases", function() {
+    it("Should reject missing transition path", function() {
+      const mockDfa = {
+        getAlphabet: () => alphabet,
+        getStates: () => new Set([q1]),
+        getTFunc: () => new Set(),
+      };
+      expect(() => dfa_utils.receiveInput(mockDfa, "a", q1)).to.throw(
+        ErrorCode.INVALID_TRANSITION_OBJECT
+      );
     });
   });
 });

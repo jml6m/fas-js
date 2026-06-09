@@ -6,7 +6,7 @@
     <title>FSA Simulator — fas-js v1.1</title>
     <meta
       name="description"
-      content="Interactive finite state automaton simulator powered by fas-js."
+      content="Define, simulate, and visualize finite state automata with fas-js."
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -17,13 +17,13 @@
           <p class="eyebrow">fas-js demo</p>
           <h1>Finite State Automaton Simulator</h1>
           <p class="subtitle">
-            Explore a pre-loaded binary DFA that accepts strings ending in
-            <code>1</code>. Run a full simulation or step through the input one
-            symbol at a time.
+            Define a DFA or NFA, build it with <code>createFSA</code>, then run a
+            full simulation or step through an input string one symbol at a time.
+            The graph highlights the active state.
           </p>
         </div>
         <div class="header__meta">
-          <span class="badge" id="fsa-type">DFA</span>
+          <span class="badge" id="fsa-type">—</span>
           <a
             class="link"
             href="https://github.com/jml6m/fas-js"
@@ -35,6 +35,95 @@
       </header>
 
       <main class="layout">
+        <section class="panel editor-panel" aria-labelledby="editor-heading">
+          <h2 id="editor-heading">Define FSA</h2>
+
+          <label class="field" for="example-select">
+            <span class="field__label">Load example</span>
+            <select id="example-select">
+              <option value="dfaEndsIn1">DFA — strings ending in 1</option>
+              <option value="nfaAccepts01or1">NFA — accepts 01 or 1</option>
+            </select>
+          </label>
+
+          <label class="field" for="states-input">
+            <span class="field__label">States (Q)</span>
+            <input
+              id="states-input"
+              type="text"
+              value="q1,q2"
+              placeholder="q1,q2,q3"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </label>
+
+          <label class="field" for="alphabet-input">
+            <span class="field__label">Alphabet (Σ)</span>
+            <input
+              id="alphabet-input"
+              type="text"
+              value="01"
+              placeholder="01 or a,b"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </label>
+
+          <label class="field" for="start-input">
+            <span class="field__label">Start state (q0)</span>
+            <input
+              id="start-input"
+              type="text"
+              value="q1"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </label>
+
+          <label class="field" for="accepts-input">
+            <span class="field__label">Accept states (F)</span>
+            <input
+              id="accepts-input"
+              type="text"
+              value="q2"
+              placeholder="q2 or q1,q4"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </label>
+
+          <label class="field" for="transitions-input">
+            <span class="field__label">Transitions (δ) — JSON array</span>
+            <textarea
+              id="transitions-input"
+              rows="8"
+              spellcheck="false"
+            >[
+  { "from": "q1", "to": "q2", "input": "1" },
+  { "from": "q2", "to": "q1", "input": "0" },
+  { "from": "q2", "to": "q2", "input": "1" },
+  { "from": "q1", "to": "q1", "input": "0" }
+]</textarea>
+          </label>
+
+          <p class="hint">
+            For NFAs use comma-separated destinations in <code>to</code> and
+            <code>""</code> for ε transitions. A complete DFA needs every
+            state × symbol pair.
+          </p>
+
+          <div class="button-row">
+            <button id="build-btn" type="button" class="btn btn--primary">
+              Build FSA
+            </button>
+          </div>
+
+          <div id="build-status" class="build-status" role="status" aria-live="polite">
+            Press Build FSA to validate and load the machine.
+          </div>
+        </section>
+
         <section class="panel controls" aria-labelledby="controls-heading">
           <h2 id="controls-heading">Simulation</h2>
 
@@ -44,7 +133,7 @@
               id="input-string"
               type="text"
               value="101"
-              placeholder="Enter symbols from alphabet 01"
+              placeholder="Enter symbols from the alphabet"
               autocomplete="off"
               spellcheck="false"
             />
@@ -77,29 +166,31 @@
           <dl class="status-grid">
             <div>
               <dt>Current state</dt>
-              <dd id="current-state">q1</dd>
+              <dd id="current-state">—</dd>
             </div>
             <div>
               <dt>Next symbol</dt>
-              <dd id="next-symbol">1</dd>
+              <dd id="next-symbol">—</dd>
             </div>
             <div>
               <dt>Position</dt>
-              <dd id="position">0 / 3</dd>
+              <dd id="position">0 / 0</dd>
             </div>
           </dl>
 
           <div id="result" class="result result--idle" role="status" aria-live="polite">
-            Enter an input string and press Simulate or Step.
+            Build an FSA, then simulate or step through an input string.
           </div>
         </section>
 
         <section class="panel graph-panel" aria-labelledby="graph-heading">
           <h2 id="graph-heading">State machine graph</h2>
-          <div id="graph" class="graph" aria-label="FSA graph visualization"></div>
+          <div id="graph" class="graph" aria-label="FSA graph visualization">
+            <p class="graph-placeholder">Build an FSA to render its graph.</p>
+          </div>
           <p class="footnote">
-            Graph rendered from <code>fsa.generateDigraph()</code> using D3 and
-            d3-graphviz.
+            Graph rendered from <code>fsa.generateDigraph()</code> using D3,
+            d3-graphviz, and Graphviz WASM.
           </p>
         </section>
       </main>
@@ -115,7 +206,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@hpcc-js/wasm@2.16.2/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@hpcc-js/wasm@2.16.2/dist/graphviz.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-graphviz@5.6.0/build/d3-graphviz.min.js"></script>
     <script src="./vendor/fas-js.bundle.js"></script>
     <script src="./app.js"></script>

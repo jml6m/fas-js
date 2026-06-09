@@ -1,7 +1,7 @@
 import { State, Alphabet, NFATransition, Transition } from "../src/components";
 import { NFA } from "../src/automata";
-import { ErrorCode } from "../src/globals/errors.js";
-import { compare, instanceOf } from "../src/globals/globals.js";
+import { ErrorCode } from "../src/globals/errors";
+import { compare, instanceOf } from "../src/globals/globals";
 import { createFSA } from "../src/utils";
 
 const chai = require("chai");

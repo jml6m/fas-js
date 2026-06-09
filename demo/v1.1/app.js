@@ -3,28 +3,44 @@
 (function () {
   "use strict";
 
-  const { createFSA, simulateFSA, stepOnceFSA } = fasJs;
-
-  const EXAMPLE = {
-    states: ["q1", "q2"],
-    alphabet: "01",
-    transitions: [
-      { from: "q1", to: "q2", input: "1" },
-      { from: "q2", to: "q1", input: "0" },
-      { from: "q2", to: "q2", input: "1" },
-      { from: "q1", to: "q1", input: "0" },
-    ],
-    start: "q1",
-    accepts: ["q2"],
+  const EXAMPLES = {
+    dfaEndsIn1: {
+      states: ["q1", "q2"],
+      alphabet: "01",
+      transitions: [
+        { from: "q1", to: "q2", input: "1" },
+        { from: "q2", to: "q1", input: "0" },
+        { from: "q2", to: "q2", input: "1" },
+        { from: "q1", to: "q1", input: "0" },
+      ],
+      start: "q1",
+      accepts: ["q2"],
+      defaultInput: "101",
+    },
+    nfaAccepts01or1: {
+      states: ["q1", "q2", "q3", "q4"],
+      alphabet: "01",
+      transitions: [
+        { from: "q1", to: "q2", input: "0" },
+        { from: "q2", to: "q3", input: "1" },
+        { from: "q1", to: "q4", input: "1" },
+        { from: "q3", to: "q3", input: "" },
+        { from: "q4", to: "q4", input: "" },
+      ],
+      start: "q1",
+      accepts: ["q3", "q4"],
+      defaultInput: "01",
+    },
   };
 
-  const fsa = createFSA(
-    EXAMPLE.states,
-    EXAMPLE.alphabet,
-    EXAMPLE.transitions,
-    EXAMPLE.start,
-    EXAMPLE.accepts
-  );
+  const exampleSelectEl = document.getElementById("example-select");
+  const statesEl = document.getElementById("states-input");
+  const alphabetEl = document.getElementById("alphabet-input");
+  const startEl = document.getElementById("start-input");
+  const acceptsEl = document.getElementById("accepts-input");
+  const transitionsEl = document.getElementById("transitions-input");
+  const buildBtn = document.getElementById("build-btn");
+  const buildStatusEl = document.getElementById("build-status");
 
   const inputEl = document.getElementById("input-string");
   const simulateBtn = document.getElementById("simulate-btn");
@@ -38,8 +54,159 @@
   const fsaTypeEl = document.getElementById("fsa-type");
   const graphEl = document.getElementById("graph");
 
+  let createFSA;
+  let simulateFSA;
+  let stepOnceFSA;
+  let fsa = null;
+  let fsaDef = null;
   let graphviz = null;
+  let graphvizReady = false;
   let stepSession = null;
+
+  function splitList(value) {
+    return value
+      .split(/[,\s]+/)
+      .map(function (part) {
+        return part.trim();
+      })
+      .filter(Boolean);
+  }
+
+  function parseAlphabet(value) {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      throw new Error("Alphabet cannot be empty.");
+    }
+    if (trimmed.includes(",")) {
+      return splitList(trimmed);
+    }
+    return trimmed.split("");
+  }
+
+  function readDefinitionFromForm() {
+    const states = splitList(statesEl.value);
+    if (!states.length) {
+      throw new Error("At least one state is required.");
+    }
+
+    const alphabet = parseAlphabet(alphabetEl.value);
+    const start = startEl.value.trim();
+    if (!start) {
+      throw new Error("Start state is required.");
+    }
+
+    const accepts = splitList(acceptsEl.value);
+    let transitions;
+    try {
+      transitions = JSON.parse(transitionsEl.value);
+    } catch (error) {
+      throw new Error("Transitions must be valid JSON.");
+    }
+
+    if (!Array.isArray(transitions) || !transitions.length) {
+      throw new Error("Transitions must be a non-empty JSON array.");
+    }
+
+    return {
+      states: states,
+      alphabet: alphabet,
+      transitions: transitions,
+      start: start,
+      accepts: accepts,
+    };
+  }
+
+  function setBuildStatus(message, tone) {
+    buildStatusEl.textContent = message;
+    buildStatusEl.className = "build-status";
+    if (tone) {
+      buildStatusEl.classList.add("build-status--" + tone);
+    }
+  }
+
+  function setResult(message, tone) {
+    resultEl.textContent = message;
+    resultEl.className = "result";
+    if (tone) {
+      resultEl.classList.add("result--" + tone);
+    }
+  }
+
+  function loadExample(key) {
+    const example = EXAMPLES[key];
+    if (!example) {
+      return;
+    }
+
+    statesEl.value = example.states.join(",");
+    alphabetEl.value = Array.isArray(example.alphabet)
+      ? example.alphabet.join(",")
+      : example.alphabet;
+    startEl.value = example.start;
+    acceptsEl.value = example.accepts.join(",");
+    transitionsEl.value = JSON.stringify(example.transitions, null, 2);
+    inputEl.value = example.defaultInput;
+  }
+
+  function buildFSA() {
+    if (!createFSA) {
+      setBuildStatus(
+        "fas-js bundle not loaded. Rebuild lib/bundle.js and refresh.",
+        "error"
+      );
+      return false;
+    }
+
+    try {
+      const definition = readDefinitionFromForm();
+      fsa = createFSA(
+        definition.states,
+        definition.alphabet,
+        definition.transitions,
+        definition.start,
+        definition.accepts
+      );
+      fsaDef = definition;
+      fsaTypeEl.textContent = fsa.getType();
+      stepSession = createStepSession(readInput());
+      setBuildStatus(
+        fsa.getType() + " built with " + definition.states.length + " states.",
+        "ok"
+      );
+      setResult("FSA ready. Enter an input string and press Simulate or Step.", "idle");
+      updateStepDisplay(stepSession);
+      renderGraph(formatState(stepSession.currentState));
+      return true;
+    } catch (error) {
+      fsa = null;
+      fsaDef = null;
+      fsaTypeEl.textContent = "—";
+      setBuildStatus("Build failed: " + error.message, "error");
+      setResult("Fix the FSA definition and press Build FSA again.", "error");
+      graphEl.innerHTML =
+        '<p class="graph-placeholder">Build an FSA to render its graph.</p>';
+      return false;
+    }
+  }
+
+  async function ensureGraphviz() {
+    if (graphvizReady) {
+      return;
+    }
+
+    if (typeof d3 === "undefined" || typeof d3.select !== "function") {
+      throw new Error("D3 failed to load.");
+    }
+
+    const wasm = globalThis["@hpcc-js/wasm"];
+    if (!wasm || !wasm.Graphviz || typeof wasm.Graphviz.load !== "function") {
+      throw new Error("Graphviz WASM failed to load.");
+    }
+
+    await wasm.Graphviz.load();
+    graphviz = d3.select(graphEl).graphviz().zoom(false);
+    graphvizReady = true;
+  }
 
   function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -50,45 +217,63 @@
       return dot;
     }
 
-    const escaped = escapeRegExp(stateName);
-    const pattern = new RegExp(
-      `(^|\\n)(\\s*)(${escaped})(\\s*\\[shape = doublecircle\\])?(;)?`,
-      "m"
-    );
+    const states = String(stateName)
+      .split(",")
+      .map(function (part) {
+        return part.trim();
+      })
+      .filter(Boolean);
 
-    return dot.replace(
-      pattern,
-      '$1$2$3 [style=filled, fillcolor="#fef08a"$4];'
-    );
+    let highlighted = dot;
+    states.forEach(function (state) {
+      const escaped = escapeRegExp(state);
+      const pattern = new RegExp(
+        "(^|\\n)(\\s*)(" + escaped + ")(\\s*\\[shape = doublecircle\\])?(;)?",
+        "m"
+      );
+      highlighted = highlighted.replace(
+        pattern,
+        '$1$2$3 [style=filled, fillcolor="#fef08a"$4];'
+      );
+    });
+
+    return highlighted;
   }
 
-  function renderGraph(highlightState) {
-    const dot = highlightStateInDot(fsa.generateDigraph(), highlightState);
-
-    if (!graphviz) {
-      graphviz = d3.select(graphEl).graphviz().zoom(false);
+  async function renderGraph(highlightState) {
+    if (!fsa) {
+      return;
     }
 
-    graphviz.renderDot(dot);
+    try {
+      await ensureGraphviz();
+      const dot = highlightStateInDot(fsa.generateDigraph(), highlightState);
+      graphEl.innerHTML = "";
+      await graphviz.renderDot(dot);
+    } catch (error) {
+      graphvizReady = false;
+      graphviz = null;
+      graphEl.innerHTML =
+        '<p class="graph-error">Graph render failed: ' + error.message + "</p>";
+    }
   }
 
   function formatState(state) {
-    return Array.isArray(state) ? state.join(", ") : state;
+    return Array.isArray(state) ? state.join(", ") : String(state);
   }
 
   function isAccepted(endState) {
-    if (Array.isArray(endState)) {
-      return endState.some((state) => EXAMPLE.accepts.includes(state));
+    if (!fsaDef) {
+      return false;
     }
-    return EXAMPLE.accepts.includes(endState);
-  }
 
-  function setResult(message, tone) {
-    resultEl.textContent = message;
-    resultEl.className = "result";
-    if (tone) {
-      resultEl.classList.add("result--" + tone);
+    if (Array.isArray(endState)) {
+      return endState.some(function (state) {
+        return fsaDef.accepts.includes(state);
+      });
     }
+
+    return fsaDef.accepts.includes(endState);
   }
 
   function updateStepDisplay(session) {
@@ -105,16 +290,28 @@
   function createStepSession(input) {
     return {
       input: input,
-      currentState: EXAMPLE.start,
+      currentState: fsaDef ? fsaDef.start : "—",
       position: 0,
     };
   }
 
   function readInput() {
-    return inputEl.value.trim();
+    return inputEl.value;
+  }
+
+  function requireFSA() {
+    if (!fsa || !fsaDef) {
+      setResult("Build an FSA before simulating.", "error");
+      return false;
+    }
+    return true;
   }
 
   function handleSimulate() {
+    if (!requireFSA()) {
+      return;
+    }
+
     const input = readInput();
 
     try {
@@ -139,6 +336,10 @@
   }
 
   function handleStep() {
+    if (!requireFSA()) {
+      return;
+    }
+
     const input = readInput();
 
     if (!stepSession || stepSession.input !== input) {
@@ -193,22 +394,26 @@
   }
 
   function handleReset() {
-    inputEl.value = "101";
-    stepSession = createStepSession(inputEl.value);
-    setResult("Enter an input string and press Simulate or Step.", "idle");
-    updateStepDisplay(stepSession);
+    loadExample(exampleSelectEl.value);
+    buildFSA();
   }
 
   function handleStepReset() {
+    if (!requireFSA()) {
+      return;
+    }
     stepSession = createStepSession(readInput());
     setResult("Step mode restarted from the start state.", "idle");
     updateStepDisplay(stepSession);
   }
 
-  function init() {
-    fsaTypeEl.textContent = fsa.getType();
-    stepSession = createStepSession(inputEl.value);
+  function bindEvents() {
+    exampleSelectEl.addEventListener("change", function () {
+      loadExample(exampleSelectEl.value);
+      buildFSA();
+    });
 
+    buildBtn.addEventListener("click", buildFSA);
     simulateBtn.addEventListener("click", handleSimulate);
     resetBtn.addEventListener("click", handleReset);
     stepBtn.addEventListener("click", handleStep);
@@ -219,9 +424,26 @@
         handleSimulate();
       }
     });
+  }
 
-    updateStepDisplay(stepSession);
-    setResult("Enter an input string and press Simulate or Step.", "idle");
+  function init() {
+    if (typeof fasJs === "undefined") {
+      setBuildStatus(
+        "fas-js bundle missing. Run npm run build to copy vendor/fas-js.bundle.js.",
+        "error"
+      );
+      setResult("Library bundle not loaded.", "error");
+      bindEvents();
+      return;
+    }
+
+    createFSA = fasJs.createFSA;
+    simulateFSA = fasJs.simulateFSA;
+    stepOnceFSA = fasJs.stepOnceFSA;
+
+    bindEvents();
+    loadExample(exampleSelectEl.value);
+    buildFSA();
   }
 
   init();

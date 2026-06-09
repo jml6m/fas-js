@@ -1,8 +1,8 @@
-import { simulateFSA, stepOnceFSA } from "../src/modules.js";
+import { simulateFSA, stepOnceFSA } from "../src/modules";
 import { DFA, NFA } from "../src/automata";
 import { State, Alphabet, Transition, NFATransition } from "../src/components";
-import { ErrorCode } from "../src/globals/errors.js";
-import { compare } from "../src/globals/globals.js";
+import { ErrorCode } from "../src/globals/errors";
+import { compare } from "../src/globals/globals";
 
 const chai = require("chai");
 const assert = chai.assert;

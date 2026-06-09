@@ -109,7 +109,7 @@ code {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 1fr) minmax(280px, 360px) minmax(0, 1.35fr);
   gap: 1.25rem;
 }
 
@@ -142,7 +142,9 @@ code {
   font-weight: 600;
 }
 
-.field input {
+.field input,
+.field select,
+.field textarea {
   width: 100%;
   padding: 0.8rem 0.95rem;
   border: 1px solid var(--border);
@@ -151,7 +153,17 @@ code {
   background: #f8fafc;
 }
 
-.field input:focus {
+.field textarea {
+  resize: vertical;
+  min-height: 10rem;
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
   outline: 2px solid rgba(37, 99, 235, 0.25);
   border-color: var(--primary);
   background: #fff;
@@ -267,6 +279,40 @@ code {
   color: var(--muted);
 }
 
+.build-status {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.build-status--ok {
+  color: var(--accept);
+  background: var(--accept-bg);
+  border-color: #86efac;
+}
+
+.build-status--error {
+  color: var(--error);
+  background: var(--error-bg);
+  border-color: #fdba74;
+}
+
+.graph-placeholder,
+.graph-error {
+  margin: 0;
+  padding: 1.25rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.graph-error {
+  color: var(--error);
+}
+
 .graph-panel {
   min-height: 520px;
   display: flex;
@@ -305,7 +351,7 @@ code {
   color: var(--primary);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .header,
   .layout {
     grid-template-columns: 1fr;

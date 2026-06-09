@@ -20,9 +20,14 @@ Add the latest version of `fas-js` to your package.json:
 npm install fas-js --save-dev
 ```
 
-Import the ES6 module:
+ESM import:
+```javascript
+import { createFSA, simulateFSA, stepOnceFSA } from "fas-js";
 ```
-var fas_js = require('fas-js');
+
+CommonJS:
+```javascript
+const { createFSA, simulateFSA, stepOnceFSA } = require("fas-js");
 ```
 
 Import into HTML file
