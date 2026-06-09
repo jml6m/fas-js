@@ -7,7 +7,7 @@ This folder contains two versions of the finite state automaton simulator UI.
 | Path | Description | URL |
 |------|-------------|-----|
 | `v1/` | Legacy redirect page pointing to the original [ObservableHQ notebook](https://observablehq.com/@jml6m/state-machine-simulator) | Local file only |
-| `v1.1/` | Self-hosted, vanilla JS demo using the `fas-js` browser bundle | https://jml6m.github.io/fas-js/demo/v1.1/ |
+| `v1.1/` | Self-hosted, vanilla JS demo using the `fas-js` browser bundle | https://jml6m.github.io/fas-js/v1.1/ |
 
 ### v1 — Observable (legacy)
 
@@ -52,6 +52,9 @@ The workflow:
 
 1. Runs `npm ci && npm run build`
 2. Copies `lib/bundle.js` to `demo/v1.1/vendor/fas-js.bundle.js`
-3. Publishes the `demo/v1.1/` directory to GitHub Pages
+3. Publishes the `demo/` directory to GitHub Pages
 
-Public URL: **https://jml6m.github.io/fas-js/demo/v1.1/**
+Public URLs:
+
+- v1.1 demo: **https://jml6m.github.io/fas-js/v1.1/**
+- v1 legacy redirect: **https://jml6m.github.io/fas-js/v1/**
