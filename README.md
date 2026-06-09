@@ -9,6 +9,8 @@
 
 Easily create and simulate state machines using this JS library. Import into your own server side or browser based JS application.
 
+> **Contributing / v1.1 prep:** Development happens on [`main-v1-1-prep`](https://github.com/jml6m/fas-js/tree/main-v1-1-prep). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/v1.1-prep/](docs/v1.1-prep/).
+
 ![FSA Example](img/fsa_example.png)
 ###### Visualization of an FSA
 
@@ -74,7 +76,7 @@ const dfa_tfunc = [
     { from: "q1", to: "q1", input: "0" }
 ];
 
-const nfa_tfunc = = [
+const nfa_tfunc = [
     { from: "q1", to: "q1", input: "0" },
     { from: "q1", to: "q1,q2", input: "1" },
     { from: "q2", to: "q3", input: "0" },
@@ -156,9 +158,15 @@ else
 ```
 
 ## Demo
-This library provides an engine that creates and simulates an FSA. The demo below provides a UI that utilizes this engine and visualizes the FSA as it's being processed. It's a great way to learn about FSAs and experiment with your own FSA creations! The UI and graph visualizations were built using [preact](https://github.com/developit/preact), [d3.js](https://github.com/d3/d3), and [d3-graphviz](https://github.com/magjac/d3-graphviz).
 
-[Demo on ObservableHQ](https://beta.observablehq.com/@jml6m/state-machine-simulator) (Learn more about ObservableHQ [here](https://beta.observablehq.com/collection/@observablehq/introduction))
+Interactive demos visualize FSAs as you simulate input strings.
+
+| Version | URL | Notes |
+|---------|-----|-------|
+| **v1.1** (prep) | [GitHub Pages demo](https://jml6m.github.io/fas-js/demo/v1.1/) | Self-hosted in this repo (`demo/v1.1/`); uses current `fasJs` bundle |
+| **v1** (legacy) | [ObservableHQ](https://observablehq.com/@jml6m/state-machine-simulator) | Original demo; kept for legacy reference |
+
+See [demo/README.md](demo/README.md) for local development and deployment details.
 
 ## License
 This library is distributed under the GPL 3.0 license found in the [LICENSE](https://github.com/jml6m/fas-js/blob/master/LICENSE) file.

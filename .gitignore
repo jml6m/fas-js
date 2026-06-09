@@ -1,4 +1,5 @@
 lib/*
 !lib/.gitkeep
+demo/v1.1/vendor/fas-js.bundle.js
 node_modules/
 coverage/
