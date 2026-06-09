@@ -1,6 +1,4 @@
-// @flow
-
-export const ErrorCode: { [string]: string } = Object.freeze({
+export const ErrorCode: Readonly<Record<string, string>> = Object.freeze({
   DUPLICATE_ALPHABET_VALS: "E-001",
   DUPLICATE_STATE_NAMES: "E-002",
   INVALID_STATE_NAME: "E-003",

@@ -1,10 +1,7 @@
-// @flow
-import chalk from "chalk";
-
-import { ErrorCode } from "../globals/errors.js";
+import { ErrorCode } from "../globals/errors";
 import { State, Alphabet, Transition } from "../components";
 import { DFA } from "../automata";
-import { getOrDefault } from "../globals/globals.js";
+import { getOrDefault } from "../globals/globals";
 
 export class DFAUtils {
   /*
@@ -17,16 +14,16 @@ export class DFAUtils {
     _tfunc: Set<Transition>,
     _alph: Alphabet
   ): Set<Transition> {
-    let newTFunc: Set<Transition> = new Set(); // Will contain only necessary transitions
+    const newTFunc: Set<Transition> = new Set(); // Will contain only necessary transitions
 
     for (const _t of _tfunc) {
       // Check for valid states
       if (!_states.has(_t.origin)) {
-        console.error(chalk.redBright("Origin state was invalid: %o"), JSON.stringify(_t.origin));
+        console.error("Origin state was invalid: %o", JSON.stringify(_t.origin));
         throw new Error(ErrorCode.ORIGIN_STATE_NOT_FOUND);
       }
       if (!_states.has(_t.dest)) {
-        console.error(chalk.redBright("Dest state was invalid: %o"), JSON.stringify(_t.dest));
+        console.error("Dest state was invalid: %o", JSON.stringify(_t.dest));
         throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
       }
 
@@ -49,9 +46,9 @@ export class DFAUtils {
     }
 
     if (_paths.size > 0) {
-      console.error(chalk.redBright("Not all FSA paths have a transition specified:"));
+      console.error("Not all FSA paths have a transition specified:");
       for (const [key, val] of _paths) {
-        console.error(chalk.redBright("State %s on input(s): %s"), key.name, [...val].join(" "));
+        console.error("State %s on input(s): %s", key.name, [...val].join(" "));
       }
       throw new Error(ErrorCode.MISSING_REQUIRED_TRANSITION);
     }
@@ -79,8 +76,8 @@ export class DFAUtils {
     _states: Set<State>,
     _start: State,
     _accepts: Set<State>
-  ): Array<string> {
-    let statesOrder: Array<string> = []; // Ordered state names for digraph
+  ): string[] {
+    const statesOrder: string[] = []; // Ordered state names for digraph
 
     // Map origin state names to dest state names
     _links = new Map();
@@ -94,14 +91,11 @@ export class DFAUtils {
     this.parseLinks(statesOrder, _start.name, _links);
 
     // Check for dead states and reduce FSA if necessary
-    let stateArr: Array<string> = [];
-    (Object.values([..._states]): any).map((state: State) => stateArr.push(state.name));
+    const stateArr: string[] = [];
+    (Object.values([..._states]) as State[]).map((state: State) => stateArr.push(state.name));
     const deadStates = stateArr.filter(x => !statesOrder.includes(x));
     if (deadStates.length > 0) {
-      console.warn(
-        chalk.yellowBright("Dead states detected, removing them and associated transitions: %O"),
-        deadStates
-      );
+      console.warn("Dead states detected, removing them and associated transitions: %O", deadStates);
       this.removeDeadStates(deadStates, _states, _accepts, _tfunc);
     }
 
@@ -110,7 +104,7 @@ export class DFAUtils {
 
   // Reduce FSA by removing dead states and associated transitions
   static removeDeadStates(
-    deadStates: Array<string>,
+    deadStates: string[],
     _states: Set<State>,
     _accepts: Set<State>,
     _tfunc: Set<Transition>
@@ -130,9 +124,9 @@ export class DFAUtils {
   }
 
   // Recursively parse graph while adding to an array in order, beginning with q0
-  static parseLinks(arr: Array<string>, name: string, _links: Map<string, Set<string>>) {
+  static parseLinks(arr: string[], name: string, _links: Map<string, Set<string>>) {
     arr.push(name);
-    const nameVal: string = getOrDefault(_links, name, "");
+    const nameVal = getOrDefault(_links, name, new Set<string>());
     for (const st of nameVal) {
       if (arr.indexOf(st) === -1) this.parseLinks(arr, st, _links);
     }
@@ -145,21 +139,27 @@ export class DFAUtils {
   }
 }
 
+export interface TransitionInput {
+  from: string;
+  to: string;
+  input: string;
+}
+
 // Global export method for creating DFA
 export const createDFA = (
   states: Map<string, State>,
   alphabet: Alphabet,
-  transitions: Array<Object>,
+  transitions: TransitionInput[],
   start: State,
   accepts: Set<State>
-): DFA => {
+): InstanceType<typeof DFA> => {
   // Convert transition array to Set<Transition>
-  let _tfunc: Set<Transition> = new Set();
+  const _tfunc: Set<Transition> = new Set();
   for (const tr of transitions) {
-    if (!tr["from"] || !tr["to"] || !tr["input"]) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
-    const fromVal: State = getOrDefault(states, tr["from"], null);
-    const toVal: State = getOrDefault(states, tr["to"], null);
-    _tfunc.add(new Transition(fromVal, toVal, tr["input"]));
+    if (!tr.from || !tr.to || !tr.input) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+    const fromVal: State = getOrDefault(states, tr.from, null as unknown as State);
+    const toVal: State = getOrDefault(states, tr.to, null as unknown as State);
+    _tfunc.add(new Transition(fromVal, toVal, tr.input));
   }
   return new DFA(new Set(states.values()), alphabet, _tfunc, start, accepts);
 };

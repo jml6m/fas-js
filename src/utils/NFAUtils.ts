@@ -1,10 +1,9 @@
-// @flow
-import chalk from "chalk";
-import { DFAUtils } from "./DFAUtils.js";
+import { DFAUtils } from "./DFAUtils";
 import { NFA } from "../automata";
 import { State, Transition, Alphabet, NFATransition } from "../components";
-import { ErrorCode } from "../globals/errors.js";
-import { getOrDefault } from "../globals/globals.js";
+import { ErrorCode } from "../globals/errors";
+import { getOrDefault } from "../globals/globals";
+import type { TransitionInput } from "./DFAUtils";
 
 export class NFAUtils extends DFAUtils {
   // NFA inheritly allows for ε (empty string) transition if specified
@@ -13,13 +12,13 @@ export class NFAUtils extends DFAUtils {
   }
 
   // Follow all ε transitions and add to `state` (origin states)
-  static populateEpsilons(_tfunc: Set<Transition>, state: Array<State>): Array<State> {
-    let cont: boolean = true; // continue
+  static populateEpsilons(_tfunc: Set<Transition>, state: State[]): State[] {
+    let cont = true; // continue
     while (cont) {
       cont = false;
 
       // Find all ε from origin set
-      const epsTransitions: Array<Transition> = Array.from(_tfunc).filter(obj => {
+      const epsTransitions: Transition[] = Array.from(_tfunc).filter(obj => {
         return state.includes(obj.origin) && obj.input === "";
       });
 
@@ -41,18 +40,18 @@ export class NFAUtils extends DFAUtils {
     _tfunc: Set<Transition>,
     _alph: Alphabet
   ): Set<Transition> {
-    let newTFunc: Set<Transition> = new Set(); // Will contain only necessary transitions
+    const newTFunc: Set<Transition> = new Set(); // Will contain only necessary transitions
 
     for (const _t of _tfunc) {
       let skip = false;
 
       // Check for valid states
       if (!_states.has(_t.origin)) {
-        console.error(chalk.redBright("Origin state was invalid: %o"), JSON.stringify(_t.origin));
+        console.error("Origin state was invalid: %o", JSON.stringify(_t.origin));
         throw new Error(ErrorCode.ORIGIN_STATE_NOT_FOUND);
       }
       if (!_states.has(_t.dest)) {
-        console.error(chalk.redBright("Dest state was invalid: %o"), JSON.stringify(_t.dest));
+        console.error("Dest state was invalid: %o", JSON.stringify(_t.dest));
         throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
       }
 
@@ -82,24 +81,24 @@ export class NFAUtils extends DFAUtils {
 export const createNFA = (
   states: Map<string, State>,
   alphabet: Alphabet,
-  transitions: Array<Object>,
+  transitions: TransitionInput[],
   start: State,
   accepts: Set<State>
-): NFA => {
+): InstanceType<typeof NFA> => {
   // Convert transition array to Set<NFATransition>
-  let _tfunc: Set<NFATransition> = new Set();
+  const _tfunc: Set<NFATransition> = new Set();
   for (const tr of transitions) {
-    if (!tr["from"] || !tr["to"] || (!tr["input"] && tr["input"] !== ""))
+    if (!tr.from || !tr.to || (!tr.input && tr.input !== ""))
       throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
-    const fromVal: State = getOrDefault(states, tr["from"], null);
-    const toVal: Array<string> = tr["to"].split(",");
+    const fromVal: State = getOrDefault(states, tr.from, null as unknown as State);
+    const toVal: string[] = tr.to.split(",");
 
-    let destStates: Array<State> = [];
+    const destStates: State[] = [];
     toVal.forEach(_dest => {
-      destStates.push(getOrDefault(states, _dest, null));
+      destStates.push(getOrDefault(states, _dest, null as unknown as State));
     });
 
-    _tfunc.add(new NFATransition(fromVal, destStates, tr["input"]));
+    _tfunc.add(new NFATransition(fromVal, destStates, tr.input));
   }
   return new NFA(new Set(states.values()), alphabet, _tfunc, start, accepts);
 };

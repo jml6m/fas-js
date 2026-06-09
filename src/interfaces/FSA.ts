@@ -1,4 +1,3 @@
-// @flow
 import { State, Alphabet, Transition } from "../components";
 
 export interface FSA {

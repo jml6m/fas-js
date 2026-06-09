@@ -1,5 +1,4 @@
-// @flow
-import { ErrorCode } from "../globals/errors.js";
+import { ErrorCode } from "../globals/errors";
 
 export class State {
   name: string;
