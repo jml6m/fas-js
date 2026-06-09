@@ -2,7 +2,14 @@ import { FSAUtils } from "../src/utils/FSAUtils";
 import { DFA, NFA } from "../src/automata";
 import { State, Alphabet, Transition, NFATransition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors";
-import { isSupersetOf, instanceOf, getOrDefault, count, duplicates } from "../src/globals/globals";
+import {
+  isSubsetOf,
+  isSupersetOf,
+  instanceOf,
+  getOrDefault,
+  count,
+  duplicates,
+} from "../src/globals/globals";
 
 const chai = require("chai");
 const assert = chai.assert;
@@ -73,10 +80,11 @@ describe("FSAUtils test", function() {
 
   describe("FSAUtils#receiveInputNFA()", function() {
     it("Should process NFA input", function() {
+      const expected = new Set([q1, q2]);
       const state = nfa_utils.receiveInput(nfa, "b", q1);
       const state2 = nfa_utils.receiveInput(nfa, "b", [q1, q2]);
-      assert(state.difference(new Set([q1, q2])).size === 0);
-      assert(state2.difference(new Set([q1, q2])).size === 0);
+      assert(isSubsetOf(state, expected) && isSupersetOf(state, expected));
+      assert(isSubsetOf(state2, expected) && isSupersetOf(state2, expected));
     });
 
     it("Should reject invalid input char", function() {
