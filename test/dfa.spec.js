@@ -4,9 +4,7 @@ import { ErrorCode } from "../src/globals/errors";
 import { instanceOf, isSubsetOf } from "../src/globals/globals";
 import { createFSA } from "../src/utils";
 
-const chai = require("chai");
-const assert = chai.assert;
-const expect = chai.expect;
+import { assert, expect } from "chai";
 
 describe("DFA Creation", function() {
   describe("DFA#constructor()", function() {

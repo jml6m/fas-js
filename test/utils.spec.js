@@ -11,9 +11,7 @@ import {
   duplicates,
 } from "../src/globals/globals";
 
-const chai = require("chai");
-const assert = chai.assert;
-const expect = chai.expect;
+import { assert, expect } from "chai";
 
 describe("FSAUtils test", function() {
   let q1, q2, q3;

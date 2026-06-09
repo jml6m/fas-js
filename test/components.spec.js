@@ -1,7 +1,6 @@
 import { State, Alphabet, Transition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors";
-var assert = require("chai").assert;
-var expect = require("chai").expect;
+import { assert, expect } from "chai";
 
 describe("State Creation", function() {
   describe("State#constructor()", function() {

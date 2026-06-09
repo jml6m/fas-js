@@ -4,9 +4,7 @@ import { State, Alphabet, Transition, NFATransition } from "../src/components";
 import { ErrorCode } from "../src/globals/errors";
 import { compare } from "../src/globals/globals";
 
-const chai = require("chai");
-const assert = chai.assert;
-const expect = chai.expect;
+import { assert, expect } from "chai";
 
 describe("DFA Simulations", function() {
   // Logging enabled on some tests for code coverage

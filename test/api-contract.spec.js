@@ -4,9 +4,7 @@
  */
 import { createFSA, simulateFSA, stepOnceFSA } from "../src/modules";
 
-const chai = require("chai");
-const assert = chai.assert;
-const expect = chai.expect;
+import { assert, expect } from "chai";
 
 describe("API contract: createFSA", function() {
   const states = ["q1", "q2"];

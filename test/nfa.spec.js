@@ -4,9 +4,7 @@ import { ErrorCode } from "../src/globals/errors";
 import { compare, instanceOf } from "../src/globals/globals";
 import { createFSA } from "../src/utils";
 
-const chai = require("chai");
-const assert = chai.assert;
-const expect = chai.expect;
+import { assert, expect } from "chai";
 
 describe("NFA Creation", function() {
   describe("NFA#constructor()", function() {
