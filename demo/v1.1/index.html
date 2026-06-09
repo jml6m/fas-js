@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FSA Simulator — fas-js v1.1</title>
+    <meta
+      name="description"
+      content="Interactive finite state automaton simulator powered by fas-js."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <div class="header__text">
+          <p class="eyebrow">fas-js demo</p>
+          <h1>Finite State Automaton Simulator</h1>
+          <p class="subtitle">
+            Explore a pre-loaded binary DFA that accepts strings ending in
+            <code>1</code>. Run a full simulation or step through the input one
+            symbol at a time.
+          </p>
+        </div>
+        <div class="header__meta">
+          <span class="badge" id="fsa-type">DFA</span>
+          <a
+            class="link"
+            href="https://github.com/jml6m/fas-js"
+            target="_blank"
+            rel="noopener noreferrer"
+            >View on GitHub</a
+          >
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel controls" aria-labelledby="controls-heading">
+          <h2 id="controls-heading">Simulation</h2>
+
+          <label class="field" for="input-string">
+            <span class="field__label">Input string</span>
+            <input
+              id="input-string"
+              type="text"
+              value="101"
+              placeholder="Enter symbols from alphabet 01"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </label>
+
+          <div class="button-row">
+            <button id="simulate-btn" type="button" class="btn btn--primary">
+              Simulate
+            </button>
+            <button id="reset-btn" type="button" class="btn btn--ghost">
+              Reset
+            </button>
+          </div>
+
+          <div class="mode-divider" role="separator" aria-hidden="true"></div>
+
+          <h3 class="section-title">Step-through mode</h3>
+          <p class="hint">
+            Process the input symbol by symbol. The graph highlights the current
+            state after each step.
+          </p>
+
+          <div class="button-row">
+            <button id="step-btn" type="button" class="btn">Step</button>
+            <button id="step-reset-btn" type="button" class="btn btn--ghost">
+              Restart steps
+            </button>
+          </div>
+
+          <dl class="status-grid">
+            <div>
+              <dt>Current state</dt>
+              <dd id="current-state">q1</dd>
+            </div>
+            <div>
+              <dt>Next symbol</dt>
+              <dd id="next-symbol">1</dd>
+            </div>
+            <div>
+              <dt>Position</dt>
+              <dd id="position">0 / 3</dd>
+            </div>
+          </dl>
+
+          <div id="result" class="result result--idle" role="status" aria-live="polite">
+            Enter an input string and press Simulate or Step.
+          </div>
+        </section>
+
+        <section class="panel graph-panel" aria-labelledby="graph-heading">
+          <h2 id="graph-heading">State machine graph</h2>
+          <div id="graph" class="graph" aria-label="FSA graph visualization"></div>
+          <p class="footnote">
+            Graph rendered from <code>fsa.generateDigraph()</code> using D3 and
+            d3-graphviz.
+          </p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>
+          Self-hosted demo for
+          <a href="https://github.com/jml6m/fas-js">fas-js</a>. Legacy Observable
+          notebook:
+          <a href="../v1/index.html">v1 redirect</a>.
+        </p>
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@hpcc-js/wasm@2.16.2/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-graphviz@5.6.0/build/d3-graphviz.min.js"></script>
+    <script src="./vendor/fas-js.bundle.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
