@@ -93,6 +93,9 @@
   let fsaDef = null;
   let graphviz = null;
   let graphvizReady = false;
+  let graphRenderGeneration = 0;
+  let graphRenderInFlight = null;
+  let resizeObserver = null;
   let stepSession = null;
 
   function normalizeAccepts(accepts) {
@@ -294,22 +297,105 @@
     return highlighted;
   }
 
+  function fitGraphToViewport() {
+    const svg = graphEl.querySelector("svg");
+    if (!svg) {
+      return;
+    }
+
+    const pad = 10;
+    let bbox;
+    try {
+      bbox = svg.getBBox();
+    } catch (error) {
+      return;
+    }
+
+    if (!bbox.width || !bbox.height) {
+      return;
+    }
+
+    const viewBox = [
+      bbox.x - pad,
+      bbox.y - pad,
+      bbox.width + pad * 2,
+      bbox.height + pad * 2,
+    ].join(" ");
+
+    svg.setAttribute("viewBox", viewBox);
+    svg.removeAttribute("width");
+    svg.removeAttribute("height");
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    svg.style.maxWidth = "100%";
+    svg.style.maxHeight = "100%";
+    svg.style.display = "block";
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  }
+
   async function renderGraph(highlightState) {
     if (!fsa) {
       return;
     }
 
-    try {
+    const generation = ++graphRenderGeneration;
+
+    if (graphRenderInFlight) {
+      try {
+        await graphRenderInFlight;
+      } catch (error) {
+        /* superseded render failed; continue */
+      }
+      if (generation !== graphRenderGeneration) {
+        return;
+      }
+    }
+
+    const renderTask = (async function () {
       await ensureGraphviz();
+      if (generation !== graphRenderGeneration) {
+        return;
+      }
+
       const dot = highlightStateInDot(fsa.generateDigraph(), highlightState);
-      graphEl.innerHTML = "";
       await graphviz.renderDot(dot);
+
+      if (generation !== graphRenderGeneration) {
+        return;
+      }
+
+      const placeholder = graphEl.querySelector(".graph-placeholder");
+      if (placeholder) {
+        placeholder.remove();
+      }
+
+      fitGraphToViewport();
+    })();
+
+    graphRenderInFlight = renderTask;
+
+    try {
+      await renderTask;
     } catch (error) {
+      if (generation !== graphRenderGeneration) {
+        return;
+      }
       graphvizReady = false;
       graphviz = null;
       graphEl.innerHTML =
         '<p class="graph-error">Graph render failed: ' + error.message + "</p>";
+    } finally {
+      if (graphRenderInFlight === renderTask) {
+        graphRenderInFlight = null;
+      }
     }
+  }
+
+  function scheduleGraphReflow() {
+    if (!fsa) {
+      return;
+    }
+    fitGraphToViewport();
   }
 
   function formatState(state) {
@@ -499,6 +585,16 @@
     bindEvents();
     loadExample(exampleSelectEl.value);
     buildFSA();
+
+    const viewport = document.getElementById("graph-viewport");
+    if (window.ResizeObserver && viewport) {
+      resizeObserver = new ResizeObserver(function () {
+        scheduleGraphReflow();
+      });
+      resizeObserver.observe(viewport);
+    }
+
+    window.addEventListener("resize", scheduleGraphReflow);
   }
 
   init();

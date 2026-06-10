@@ -52,13 +52,12 @@
             </select>
           </label>
 
-          <label class="field" for="fsa-definition">
+          <label class="field field--grow" for="fsa-definition">
             <span class="field__label"
               >Machine JSON (<code>createFSA</code> arguments)</span
             >
             <textarea
               id="fsa-definition"
-              rows="18"
               spellcheck="false"
               aria-describedby="fsa-format-hint"
             ></textarea>
@@ -147,8 +146,10 @@
 
         <section class="panel graph-panel" aria-labelledby="graph-heading">
           <h2 id="graph-heading">State machine graph</h2>
-          <div id="graph" class="graph" aria-label="FSA graph visualization">
-            <p class="graph-placeholder">Build an FSA to render its graph.</p>
+          <div class="graph-viewport" id="graph-viewport">
+            <div id="graph" class="graph" aria-label="FSA graph visualization">
+              <p class="graph-placeholder">Build an FSA to render its graph.</p>
+            </div>
           </div>
           <p class="footnote">
             Graph from <code>fsa.generateDigraph()</code> (D3 + Graphviz WASM).
