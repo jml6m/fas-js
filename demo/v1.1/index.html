@@ -17,9 +17,9 @@
           <p class="eyebrow">fas-js demo</p>
           <h1>Finite State Automaton Simulator</h1>
           <p class="subtitle">
-            Define a DFA or NFA, build it with <code>createFSA</code>, then run a
-            full simulation or step through an input string one symbol at a time.
-            The graph highlights the active state.
+            Paste a machine in <code>createFSA</code> format, build it, then
+            simulate or step through inputs. Copy definitions between this page
+            and your notes.
           </p>
         </div>
         <div class="header__meta">
@@ -36,91 +36,53 @@
 
       <main class="layout">
         <section class="panel editor-panel" aria-labelledby="editor-heading">
-          <h2 id="editor-heading">Define FSA</h2>
+          <h2 id="editor-heading">FSA definition</h2>
 
           <label class="field" for="example-select">
             <span class="field__label">Load example</span>
             <select id="example-select">
               <option value="dfaEndsIn1">DFA — strings ending in 1</option>
+              <option value="dfaSameSymbolEnds">
+                DFA — starts and ends with same symbol (a/b)
+              </option>
               <option value="nfaAccepts01or1">NFA — accepts 01 or 1</option>
+              <option value="nfaOneNearEnd">
+                NFA — 1 in 2nd or 3rd position from end
+              </option>
             </select>
           </label>
 
-          <label class="field" for="states-input">
-            <span class="field__label">States (Q)</span>
-            <input
-              id="states-input"
-              type="text"
-              value="q1,q2"
-              placeholder="q1,q2,q3"
-              autocomplete="off"
-              spellcheck="false"
-            />
-          </label>
-
-          <label class="field" for="alphabet-input">
-            <span class="field__label">Alphabet (Σ)</span>
-            <input
-              id="alphabet-input"
-              type="text"
-              value="01"
-              placeholder="01 or a,b"
-              autocomplete="off"
-              spellcheck="false"
-            />
-          </label>
-
-          <label class="field" for="start-input">
-            <span class="field__label">Start state (q0)</span>
-            <input
-              id="start-input"
-              type="text"
-              value="q1"
-              autocomplete="off"
-              spellcheck="false"
-            />
-          </label>
-
-          <label class="field" for="accepts-input">
-            <span class="field__label">Accept states (F)</span>
-            <input
-              id="accepts-input"
-              type="text"
-              value="q2"
-              placeholder="q2 or q1,q4"
-              autocomplete="off"
-              spellcheck="false"
-            />
-          </label>
-
-          <label class="field" for="transitions-input">
-            <span class="field__label">Transitions (δ) — JSON array</span>
+          <label class="field" for="fsa-definition">
+            <span class="field__label"
+              >Machine JSON (<code>createFSA</code> arguments)</span
+            >
             <textarea
-              id="transitions-input"
-              rows="8"
+              id="fsa-definition"
+              rows="18"
               spellcheck="false"
-            >[
-  { "from": "q1", "to": "q2", "input": "1" },
-  { "from": "q2", "to": "q1", "input": "0" },
-  { "from": "q2", "to": "q2", "input": "1" },
-  { "from": "q1", "to": "q1", "input": "0" }
-]</textarea>
+              aria-describedby="fsa-format-hint"
+            ></textarea>
           </label>
 
-          <p class="hint">
-            For NFAs use comma-separated destinations in <code>to</code> and
-            <code>""</code> for ε transitions. A complete DFA needs every
-            state × symbol pair.
+          <p id="fsa-format-hint" class="hint">
+            Object fields: <code>states</code>, <code>alphabet</code>,
+            <code>transitions</code>, <code>start</code>, <code>accepts</code>.
+            Optional <code>defaultInput</code> sets the simulation string.
+            NFAs: comma-separated <code>to</code> states;
+            <code>""</code> for ε.
           </p>
 
           <div class="button-row">
             <button id="build-btn" type="button" class="btn btn--primary">
               Build FSA
             </button>
+            <button id="copy-btn" type="button" class="btn btn--ghost">
+              Copy definition
+            </button>
           </div>
 
           <div id="build-status" class="build-status" role="status" aria-live="polite">
-            Press Build FSA to validate and load the machine.
+            Paste or load an example, then press Build FSA.
           </div>
         </section>
 
@@ -189,8 +151,7 @@
             <p class="graph-placeholder">Build an FSA to render its graph.</p>
           </div>
           <p class="footnote">
-            Graph rendered from <code>fsa.generateDigraph()</code> using D3,
-            d3-graphviz, and Graphviz WASM.
+            Graph from <code>fsa.generateDigraph()</code> (D3 + Graphviz WASM).
           </p>
         </section>
       </main>

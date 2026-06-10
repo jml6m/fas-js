@@ -22,8 +22,9 @@ The v1.1 demo is a static site with no npm build step of its own. It loads:
 
 Features:
 
-- Define a custom DFA or NFA (states, alphabet, transitions JSON, start, accepts)
-- Load built-in examples (DFA ending in `1`, NFA accepting `01` or `1`)
+- **Copy/paste editor** — one JSON object matching `createFSA` arguments (`states`, `alphabet`, `transitions`, `start`, `accepts`; optional `defaultInput`)
+- **Four presets** — 2 DFAs + 2 NFAs from the test suite / README
+- **Copy definition** button for scratchpad ↔ demo workflow
 - Build via `createFSA()` with validation feedback
 - Full simulation via `simulateFSA()`
 - Step-through mode via `stepOnceFSA()`

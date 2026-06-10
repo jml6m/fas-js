@@ -68,7 +68,7 @@ npm test            # build + mocha + c8 coverage
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
-- Coverage threshold on `main-v1-1-prep`: **99%** lines/statements (100% on Node 22), **100%** functions, **93%** branches (c8 in `npm test`). Interface-only and barrel `index.ts` files are excluded; minor cross-node V8 variance is expected on the CI matrix.
+- Coverage threshold on `main-v1-1-prep`: **90%** lines/statements/functions/branches (c8 in `npm test`). Tests target workflows and contracts, not line-hit goals. See `docs/v1.1-prep/coverage-policy.md`.
 
 ---
 

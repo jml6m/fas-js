@@ -17,6 +17,25 @@
       accepts: ["q2"],
       defaultInput: "101",
     },
+    dfaSameSymbolEnds: {
+      states: ["s", "q1", "q2", "r1", "r2"],
+      alphabet: "ab",
+      transitions: [
+        { from: "s", to: "q1", input: "a" },
+        { from: "s", to: "r1", input: "b" },
+        { from: "q1", to: "q1", input: "a" },
+        { from: "q1", to: "q2", input: "b" },
+        { from: "q2", to: "q1", input: "a" },
+        { from: "q2", to: "q2", input: "b" },
+        { from: "r1", to: "r2", input: "a" },
+        { from: "r1", to: "r1", input: "b" },
+        { from: "r2", to: "r2", input: "a" },
+        { from: "r2", to: "r1", input: "b" },
+      ],
+      start: "s",
+      accepts: ["q1", "r1"],
+      defaultInput: "bab",
+    },
     nfaAccepts01or1: {
       states: ["q1", "q2", "q3", "q4"],
       alphabet: "01",
@@ -31,15 +50,28 @@
       accepts: ["q3", "q4"],
       defaultInput: "01",
     },
+    nfaOneNearEnd: {
+      states: ["q1", "q2", "q3", "q4"],
+      alphabet: "01",
+      transitions: [
+        { from: "q1", to: "q1", input: "0" },
+        { from: "q1", to: "q1,q2", input: "1" },
+        { from: "q2", to: "q3", input: "0" },
+        { from: "q2", to: "q3", input: "1" },
+        { from: "q2", to: "q3", input: "" },
+        { from: "q3", to: "q4", input: "0" },
+        { from: "q3", to: "q4", input: "1" },
+      ],
+      start: "q1",
+      accepts: ["q4"],
+      defaultInput: "100",
+    },
   };
 
   const exampleSelectEl = document.getElementById("example-select");
-  const statesEl = document.getElementById("states-input");
-  const alphabetEl = document.getElementById("alphabet-input");
-  const startEl = document.getElementById("start-input");
-  const acceptsEl = document.getElementById("accepts-input");
-  const transitionsEl = document.getElementById("transitions-input");
+  const definitionEl = document.getElementById("fsa-definition");
   const buildBtn = document.getElementById("build-btn");
+  const copyBtn = document.getElementById("copy-btn");
   const buildStatusEl = document.getElementById("build-status");
 
   const inputEl = document.getElementById("input-string");
@@ -63,57 +95,67 @@
   let graphvizReady = false;
   let stepSession = null;
 
-  function splitList(value) {
-    return value
-      .split(/[,\s]+/)
-      .map(function (part) {
-        return part.trim();
-      })
-      .filter(Boolean);
+  function normalizeAccepts(accepts) {
+    if (typeof accepts === "string") {
+      return [accepts];
+    }
+    if (!Array.isArray(accepts)) {
+      throw new Error("accepts must be a string or string array.");
+    }
+    return accepts;
   }
 
-  function parseAlphabet(value) {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      throw new Error("Alphabet cannot be empty.");
-    }
-    if (trimmed.includes(",")) {
-      return splitList(trimmed);
-    }
-    return trimmed.split("");
-  }
-
-  function readDefinitionFromForm() {
-    const states = splitList(statesEl.value);
-    if (!states.length) {
-      throw new Error("At least one state is required.");
-    }
-
-    const alphabet = parseAlphabet(alphabetEl.value);
-    const start = startEl.value.trim();
-    if (!start) {
-      throw new Error("Start state is required.");
-    }
-
-    const accepts = splitList(acceptsEl.value);
-    let transitions;
+  function parseDefinition(text) {
+    let raw;
     try {
-      transitions = JSON.parse(transitionsEl.value);
+      raw = JSON.parse(text);
     } catch (error) {
-      throw new Error("Transitions must be valid JSON.");
+      throw new Error("Definition must be valid JSON.");
     }
 
-    if (!Array.isArray(transitions) || !transitions.length) {
-      throw new Error("Transitions must be a non-empty JSON array.");
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new Error("Definition must be a JSON object.");
+    }
+
+    const required = ["states", "alphabet", "transitions", "start", "accepts"];
+    for (const key of required) {
+      if (raw[key] === undefined || raw[key] === null) {
+        throw new Error('Missing required field "' + key + '".');
+      }
+    }
+
+    if (!Array.isArray(raw.states) || !raw.states.length) {
+      throw new Error("states must be a non-empty array.");
+    }
+
+    if (
+      typeof raw.alphabet !== "string" &&
+      !(Array.isArray(raw.alphabet) && raw.alphabet.length)
+    ) {
+      throw new Error("alphabet must be a string or non-empty string array.");
+    }
+
+    if (!Array.isArray(raw.transitions) || !raw.transitions.length) {
+      throw new Error("transitions must be a non-empty array.");
+    }
+
+    if (typeof raw.start !== "string" || !raw.start) {
+      throw new Error("start must be a non-empty string.");
     }
 
     return {
-      states: states,
-      alphabet: alphabet,
-      transitions: transitions,
-      start: start,
-      accepts: accepts,
+      states: raw.states,
+      alphabet: raw.alphabet,
+      transitions: raw.transitions,
+      start: raw.start,
+      accepts: normalizeAccepts(raw.accepts),
+      defaultInput:
+        typeof raw.defaultInput === "string" ? raw.defaultInput : "",
     };
+  }
+
+  function formatDefinition(definition) {
+    return JSON.stringify(definition, null, 2);
   }
 
   function setBuildStatus(message, tone) {
@@ -138,14 +180,8 @@
       return;
     }
 
-    statesEl.value = example.states.join(",");
-    alphabetEl.value = Array.isArray(example.alphabet)
-      ? example.alphabet.join(",")
-      : example.alphabet;
-    startEl.value = example.start;
-    acceptsEl.value = example.accepts.join(",");
-    transitionsEl.value = JSON.stringify(example.transitions, null, 2);
-    inputEl.value = example.defaultInput;
+    definitionEl.value = formatDefinition(example);
+    inputEl.value = example.defaultInput || "";
   }
 
   function buildFSA() {
@@ -158,7 +194,7 @@
     }
 
     try {
-      const definition = readDefinitionFromForm();
+      const definition = parseDefinition(definitionEl.value);
       fsa = createFSA(
         definition.states,
         definition.alphabet,
@@ -168,9 +204,12 @@
       );
       fsaDef = definition;
       fsaTypeEl.textContent = fsa.getType();
+      if (definition.defaultInput) {
+        inputEl.value = definition.defaultInput;
+      }
       stepSession = createStepSession(readInput());
       setBuildStatus(
-        fsa.getType() + " built with " + definition.states.length + " states.",
+        fsa.getType() + " built — " + definition.states.length + " states.",
         "ok"
       );
       setResult("FSA ready. Enter an input string and press Simulate or Step.", "idle");
@@ -182,10 +221,25 @@
       fsaDef = null;
       fsaTypeEl.textContent = "—";
       setBuildStatus("Build failed: " + error.message, "error");
-      setResult("Fix the FSA definition and press Build FSA again.", "error");
+      setResult("Fix the JSON definition and press Build FSA again.", "error");
       graphEl.innerHTML =
         '<p class="graph-placeholder">Build an FSA to render its graph.</p>';
       return false;
+    }
+  }
+
+  async function copyDefinition() {
+    const text = definitionEl.value;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        definitionEl.select();
+        document.execCommand("copy");
+      }
+      setBuildStatus("Definition copied to clipboard.", "ok");
+    } catch (error) {
+      setBuildStatus("Copy failed: " + error.message, "error");
     }
   }
 
@@ -414,6 +468,7 @@
     });
 
     buildBtn.addEventListener("click", buildFSA);
+    copyBtn.addEventListener("click", copyDefinition);
     simulateBtn.addEventListener("click", handleSimulate);
     resetBtn.addEventListener("click", handleReset);
     stepBtn.addEventListener("click", handleStep);

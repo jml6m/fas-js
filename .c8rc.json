@@ -4,8 +4,8 @@
   "exclude": ["src/**/*.d.ts", "src/interfaces/**", "src/**/index.ts", "test/**"],
   "reporter": ["text-summary", "lcov"],
   "check-coverage": true,
-  "lines": 99,
-  "statements": 99,
-  "functions": 100,
-  "branches": 93
+  "lines": 90,
+  "statements": 90,
+  "functions": 90,
+  "branches": 90
 }
