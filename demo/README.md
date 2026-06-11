@@ -25,10 +25,24 @@ Tabs:
 ```bash
 npm ci
 npm run build   # postbuild → demo/v1.5/vendor/fas-js.bundle.js
-npx --yes serve demo/v1.5
+npm run serve:demo
 ```
 
-Open http://localhost:3000 (or the port `serve` prints).
+Open http://localhost:3000/v1.5/ (override port with `DEMO_PORT=8080`).
+
+## Automated demo tests
+
+`npm test` includes `test/demo.spec.js`, which runs on every branch in CI:
+
+1. **Artifacts** — vendor bundle exists and exposes `fasJs` + `RegularLanguage`
+2. **HTTP smoke** — serves the full `demo/` tree locally and checks 200 responses
+3. **UI workflows** — jsdom loads `app.js`, stubs D3/Graphviz, and exercises FSA build, simulate, ∪/∘/\*, NFA→DFA
+
+Run demo tests only:
+
+```bash
+npm run test:demo
+```
 
 ## Deployment
 

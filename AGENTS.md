@@ -80,6 +80,7 @@ npm test            # typecheck + lint + build + mocha + c8 coverage
 - **Languages**: `src/languages/` — abstract `Language` base class; `RegularLanguage` extends it for FSA-backed regular languages. Future non-regular types extend `Language` directly, not `RegularLanguage`. Internal to npm; demo bundle (`src/demo-bundle.ts`) exports `RegularLanguage` for the v1.5 lab UI.
 - **Build output**: `lib/index.js` (ESM), `lib/index.cjs` (CJS), `lib/bundle.js` (IIFE global `fasJs`), `lib/index.d.ts`
 - **Tests**: `test/**/*.spec.js` — Mocha + Chai + tsx loader. See `docs/v1.1-prep/test-architecture.md`.
+- **Demo QA**: `test/demo.spec.js` (in `npm test`) — artifact + HTTP + jsdom UI checks; `npm run serve:demo` for local browser testing.
 
 Do not change the public API surface without bumping the major version (human decision).
 
