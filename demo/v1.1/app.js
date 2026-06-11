@@ -419,8 +419,11 @@
       }
       graphvizReady = false;
       graphviz = null;
-      graphEl.innerHTML =
-        '<p class="graph-error">Graph render failed: ' + error.message + "</p>";
+      graphEl.textContent = "";
+      const errorEl = document.createElement("p");
+      errorEl.className = "graph-error";
+      errorEl.textContent = "Graph render failed: " + error.message;
+      graphEl.appendChild(errorEl);
     } finally {
       if (graphRenderInFlight === renderTask) {
         graphRenderInFlight = null;
