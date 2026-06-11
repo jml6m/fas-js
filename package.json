@@ -28,6 +28,7 @@
     "prepublishOnly": "npm run build && npm test",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && cross-env NODE_OPTIONS=--import=tsx c8 mocha \"test/**/*.spec.js\"",
+    "audit:ci": "npm audit --audit-level=high",
     "git:reset": "git reset --hard HEAD && git clean -fd",
     "npm:reinstall": "node scripts/reinstall.js"
   },
