@@ -1,4 +1,4 @@
-import { RegularLanguage } from "./RegularLanguage";
+import { type RegularLanguage } from "./RegularLanguage";
 
 function enumerateWords(alphabet: string[], maxLength: number): string[] {
   if (alphabet.length === 0) {

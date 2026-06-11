@@ -168,7 +168,8 @@ Interactive demos visualize FSAs as you simulate input strings.
 
 | Version | URL | Notes |
 |---------|-----|-------|
-| **v1.1** (prep) | [GitHub Pages demo](https://jml6m.github.io/fas-js/v1.1/) | Self-hosted in this repo (`demo/v1.1/`); uses current `fasJs` bundle |
+| **v1.5** | [GitHub Pages demo](https://jml6m.github.io/fas-js/v1.5/) | FSA simulator + regular language lab (`demo/v1.5/`) |
+| **v1.1** | [Redirect](https://jml6m.github.io/fas-js/v1.1/) | Preserved URL → v1.5 |
 | **v1** (legacy) | [ObservableHQ](https://observablehq.com/@jml6m/state-machine-simulator) | Original demo; kept for legacy reference |
 
 See [demo/README.md](demo/README.md) for local development and deployment details.

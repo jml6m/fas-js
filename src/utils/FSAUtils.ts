@@ -1,8 +1,8 @@
 import { ErrorCode } from "../globals/errors";
 import { instanceOf, getOrDefault } from "../globals/globals";
-import { FSA } from "../interfaces/FSA";
-import { State, Transition, Alphabet } from "../components";
-import { DFA, NFA } from "../automata";
+import { type FSA } from "../interfaces/FSA";
+import { State, type Transition, Alphabet } from "../components";
+import { type DFA, NFA } from "../automata";
 import { DFAUtils, createDFA, type TransitionInput } from "./DFAUtils";
 import { NFAUtils, createNFA } from "./NFAUtils";
 
@@ -47,7 +47,7 @@ export const FSAUtils = (() => {
       path = path.concat(_addToPath);
     }
 
-    let resultArr: State[] = [];
+    const resultArr: State[] = [];
     if (path.length > 1) {
       for (const _s of path) resultArr.push(_s.dest);
     } else if (path.length === 1) {

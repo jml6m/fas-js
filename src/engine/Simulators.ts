@@ -1,4 +1,4 @@
-import { FSA } from "../interfaces/FSA";
+import { type FSA } from "../interfaces/FSA";
 import { State } from "../components/State";
 import { DFA, NFA } from "../automata";
 import { FSAUtils } from "../utils";

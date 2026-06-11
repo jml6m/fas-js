@@ -2,6 +2,7 @@
  * Regular language theory — definitions, operations, closure, NFA↔DFA.
  */
 import { createFSA } from "../src/modules";
+import { Language } from "../src/languages/Language";
 import { RegularLanguage } from "../src/languages/RegularLanguage";
 import { subsetConstruction } from "../src/languages/NFAtoDFA";
 import {
@@ -56,6 +57,13 @@ describe("Regular languages (#v1.5)", function() {
   });
 
   describe("Regular language classification", function() {
+    it("extends the Language base class", function() {
+      const lang = singleton("a");
+      assert.instanceOf(lang, Language);
+      assert.instanceOf(lang, RegularLanguage);
+      assert.equal(lang.getClassification(), "regular");
+    });
+
     it("treats FSA-backed languages as regular", function() {
       const lang = RegularLanguage.fromAutomaton(
         createFSA(
@@ -78,6 +86,13 @@ describe("Regular languages (#v1.5)", function() {
   });
 
   describe("Union", function() {
+    it("union with itself preserves membership", function() {
+      const lang = singleton("a");
+      const union = lang.union(lang);
+      assert.isTrue(union.contains("a"));
+      assert.isFalse(union.contains("b"));
+    });
+
     it("builds an automaton for L1 ∪ L2", function() {
       const left = singleton("a");
       const right = singleton("b");
@@ -169,6 +184,28 @@ describe("Regular languages (#v1.5)", function() {
       const lang = singleton("a");
       assert.isFalse(lang.contains("b"));
       assert.isFalse(lang.contains("ab"));
+    });
+
+    it("rethrows unexpected errors from simulateFSA", function() {
+      const lang = singleton("a");
+      expect(() => lang.contains(null)).to.throw(TypeError);
+    });
+
+    it("skips epsilon targets already in closure during subset construction", function() {
+      const lang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ["q1", "q2"],
+          "a",
+          [
+            { from: "q1", to: "q2", input: "" },
+            { from: "q1", to: "q2", input: "" },
+            { from: "q2", to: "q2", input: "a" },
+          ],
+          "q1",
+          ["q2"]
+        )
+      );
+      assert.isTrue(lang.toDFA().contains("a"));
     });
 
     it("exports automata for inspection", function() {

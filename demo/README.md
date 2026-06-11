@@ -1,61 +1,40 @@
 # fas-js Demo
 
-This folder contains two versions of the finite state automaton simulator UI.
+Static demos published under `demo/` on GitHub Pages.
 
 ## Versions
 
 | Path | Description | URL |
 |------|-------------|-----|
-| `v1/` | Legacy redirect page pointing to the original [ObservableHQ notebook](https://observablehq.com/@jml6m/state-machine-simulator) | Local file only |
-| `v1.1/` | Self-hosted, vanilla JS demo using the `fas-js` browser bundle | https://jml6m.github.io/fas-js/v1.1/ |
+| `v1/` | Legacy redirect to the [ObservableHQ notebook](https://observablehq.com/@jml6m/state-machine-simulator) | https://jml6m.github.io/fas-js/v1/ |
+| `v1.1/` | Redirect to v1.5 (preserves old links) | https://jml6m.github.io/fas-js/v1.1/ |
+| `v1.5/` | **Current** — FSA simulator + regular language lab (∪, concat, star, NFA→DFA) | https://jml6m.github.io/fas-js/v1.5/ |
 
-### v1 — Observable (legacy)
+### v1.5 — Self-hosted (current)
 
-The first public demo was published as an Observable notebook. The `v1/index.html` page explains that history and redirects visitors to the notebook.
+Loads `fasJs` from `./vendor/fas-js.bundle.js` (demo bundle built from `src/demo-bundle.ts`, includes `RegularLanguage` for the lab UI only). Graph rendering uses D3 + Graphviz WASM from CDN.
 
-### v1.1 — Self-hosted (current)
+Tabs:
 
-The v1.1 demo is a static site with no npm build step of its own. It loads:
-
-- `fasJs` from `./vendor/fas-js.bundle.js` (copied from `lib/bundle.js` during CI deploy)
-- [D3](https://d3js.org/), [@hpcc-js/wasm](https://github.com/hpcc-systems/hpcc-js-wasm), and [d3-graphviz](https://github.com/magjac/d3-graphviz) from CDN for graph rendering
-
-Features:
-
-- **Copy/paste editor** — one JSON object matching `createFSA` arguments (`states`, `alphabet`, `transitions`, `start`, `accepts`; optional `defaultInput`)
-- **Four presets** — 2 DFAs + 2 NFAs from the test suite / README
-- **Copy definition** button for scratchpad ↔ demo workflow
-- Build via `createFSA()` with validation feedback
-- Full simulation via `simulateFSA()`
-- Step-through mode via `stepOnceFSA()`
-- Graph visualization via `fsa.generateDigraph()` (Graphviz WASM + d3-graphviz)
+- **FSA** — JSON editor, simulate, step-through, graph
+- **∪ / ∘ / \*** — compose languages from presets, render resulting automaton
+- **NFA→DFA** — subset construction on NFA presets
 
 ## Local development
 
-The demo does not commit `vendor/fas-js.bundle.js`. Build the library and copy the bundle before opening the page locally:
-
 ```bash
 npm ci
-npm run build   # postbuild copies lib/bundle.js → demo/v1.1/vendor/fas-js.bundle.js
+npm run build   # postbuild → demo/v1.5/vendor/fas-js.bundle.js
+npx --yes serve demo/v1.5
 ```
 
-Then serve `demo/v1.1/` with any static file server, for example:
-
-```bash
-npx --yes serve demo/v1.1
-```
+Open http://localhost:3000 (or the port `serve` prints).
 
 ## Deployment
 
-GitHub Pages deployment is handled by [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) on pushes to `main-v1-1-prep` when `demo/**`, `src/**`, or `package.json` change.
+[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs on pushes to `master` / `main-v1-1-prep` when `demo/**`, `src/**`, or `package.json` change.
 
-The workflow:
+1. `npm ci && npm run build` (demo vendor copy is in `postbuild.mjs`)
+2. Publishes the full `demo/` tree to GitHub Pages
 
-1. Runs `npm ci && npm run build`
-2. Copies `lib/bundle.js` to `demo/v1.1/vendor/fas-js.bundle.js`
-3. Publishes the `demo/` directory to GitHub Pages
-
-Public URLs:
-
-- v1.1 demo: **https://jml6m.github.io/fas-js/v1.1/**
-- v1 legacy redirect: **https://jml6m.github.io/fas-js/v1/**
+Public URL: **https://jml6m.github.io/fas-js/v1.5/**

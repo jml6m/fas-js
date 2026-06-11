@@ -1,5 +1,5 @@
-import { State } from "../components/State";
-import { FSA } from "../interfaces/FSA";
+import { type State } from "../components/State";
+import { type FSA } from "../interfaces/FSA";
 import { NFA } from "../automata";
 import { instanceOf } from "../globals/globals";
 import type { TransitionInput } from "../utils/DFAUtils";

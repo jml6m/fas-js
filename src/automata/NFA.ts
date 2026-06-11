@@ -1,5 +1,5 @@
 import { DFA } from "./DFA";
-import { State, Alphabet, NFATransition, Transition } from "../components";
+import { type State, type Alphabet, type NFATransition, Transition } from "../components";
 
 export const NFA = (() => {
   class NFA extends DFA {

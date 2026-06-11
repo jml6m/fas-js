@@ -1,4 +1,4 @@
-import { FSA } from "../interfaces/FSA";
+import { type FSA } from "../interfaces/FSA";
 import type { TransitionInput } from "../utils/DFAUtils";
 
 export type FSADefinition = {

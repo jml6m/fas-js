@@ -1,5 +1,6 @@
 import type { TransitionInput } from "../utils/DFAUtils";
-import { cloneDefinitionWithPrefix, exportFSADefinition, FSADefinition, mergeAlphabets } from "./fsaHelpers";
+import { cloneDefinitionWithPrefix, mergeAlphabets } from "./fsaHelpers";
+import type { FSADefinition } from "./fsaHelpers";
 
 function unionDefinitions(left: FSADefinition, right: FSADefinition): FSADefinition {
   const leftClone = cloneDefinitionWithPrefix(left, "L1_");

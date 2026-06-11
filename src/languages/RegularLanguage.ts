@@ -1,5 +1,5 @@
-import { FSA } from "../interfaces/FSA";
-import { Language } from "../interfaces/Language";
+import { type FSA } from "../interfaces/FSA";
+import { Language } from "./Language";
 import { simulateFSA } from "../engine/Simulators";
 import { ErrorCode } from "../globals/errors";
 import { NFA } from "../automata";
@@ -12,11 +12,16 @@ import {
 import { LanguageOperations } from "./LanguageOperations";
 import { subsetConstruction } from "./NFAtoDFA";
 
-export class RegularLanguage implements Language {
+export class RegularLanguage extends Language {
   #automaton: FSA;
 
   constructor(automaton: FSA) {
+    super();
     this.#automaton = automaton;
+  }
+
+  getClassification(): string {
+    return "regular";
   }
 
   static fromAutomaton(automaton: FSA): RegularLanguage {

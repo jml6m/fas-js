@@ -1,5 +1,5 @@
-import { FSA } from "../interfaces/FSA";
-import { State, Alphabet, Transition } from "../components";
+import { type FSA } from "../interfaces/FSA";
+import { type State, type Alphabet, type Transition } from "../components";
 import { ErrorCode } from "../globals/errors";
 import { checkStateDuplicates, getOrDefault, isSubsetOf } from "../globals/globals";
 import { FSAUtils } from "../utils";

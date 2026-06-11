@@ -2,7 +2,7 @@ name: Deploy demo to GitHub Pages
 
 on:
   push:
-    branches: [main-v1-1-prep]
+    branches: [master, main-v1-1-prep]
     paths:
       - "demo/**"
       - "src/**"
@@ -32,11 +32,6 @@ jobs:
 
       - run: npm ci
       - run: npm run build
-
-      - name: Copy browser bundle into demo vendor folder
-        run: |
-          mkdir -p demo/v1.1/vendor
-          cp lib/bundle.js demo/v1.1/vendor/fas-js.bundle.js
 
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 
