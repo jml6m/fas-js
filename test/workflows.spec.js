@@ -209,3 +209,60 @@ describe("Step vs simulate equivalence", function () {
     }
   });
 });
+
+describe("NFA step-through workflows (#demo)", function () {
+  const nfaOneNearEnd = createFSA(
+    ["q1", "q2", "q3", "q4"],
+    "01",
+    [
+      { from: "q1", to: "q1", input: "0" },
+      { from: "q1", to: "q1,q2", input: "1" },
+      { from: "q2", to: "q3", input: "0" },
+      { from: "q2", to: "q3", input: "1" },
+      { from: "q2", to: "q3", input: "" },
+      { from: "q3", to: "q4", input: "0" },
+      { from: "q3", to: "q4", input: "1" },
+    ],
+    "q1",
+    ["q4"]
+  );
+
+  function sortStates(states) {
+    return [...states].sort();
+  }
+
+  it("stepOnceFSA traces superposition for input 100", function () {
+    assert.equal(nfaOneNearEnd.getType(), "NFA");
+
+    let state = stepOnceFSA("1", "q1", nfaOneNearEnd);
+    assert.deepEqual(sortStates(state), ["q1", "q2", "q3"]);
+
+    state = stepOnceFSA("0", state, nfaOneNearEnd);
+    assert.deepEqual(sortStates(state), ["q1", "q3", "q4"]);
+
+    state = stepOnceFSA("0", state, nfaOneNearEnd);
+    assert.deepEqual(sortStates(state), ["q1", "q4"]);
+
+    assert.isTrue(simulateFSA("100", nfaOneNearEnd));
+    assert.deepEqual(simulateFSA("100", nfaOneNearEnd, false, true), ["q4"]);
+  });
+
+  it("iterating stepOnceFSA agrees with simulateFSA acceptance", function () {
+    const words = ["", "1", "10", "100", "101", "000", "110"];
+
+    for (const word of words) {
+      let state = [nfaOneNearEnd.getStartState().name];
+
+      for (const symbol of word) {
+        state = stepOnceFSA(symbol, state, nfaOneNearEnd);
+      }
+
+      const steppedAccepted =
+        Array.isArray(state) &&
+        state.some(name => name === "q4");
+      const simulatedAccepted = simulateFSA(word, nfaOneNearEnd);
+
+      assert.equal(simulatedAccepted, steppedAccepted, `acceptance for "${word}"`);
+    }
+  });
+});

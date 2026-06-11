@@ -158,6 +158,13 @@
   let resizeObserver = null;
   let stepSession = null;
 
+  function resetGraphRenderer() {
+    graphvizReady = false;
+    graphviz = null;
+    graphRenderGeneration += 1;
+    graphRenderInFlight = null;
+  }
+
   function normalizeAccepts(accepts) {
     if (typeof accepts === "string") {
       return [accepts];
@@ -296,11 +303,12 @@
     if (editorPayload.defaultInput) {
       inputEl.value = editorPayload.defaultInput;
     }
+    resetGraphRenderer();
     stepSession = createStepSession(readInput());
     setBuildStatus(statusMessage, "ok");
     setResult("Machine ready — simulate or step.", "idle");
     updateStepDisplay(stepSession);
-    renderGraph(formatState(stepSession.currentState));
+    renderGraph(stepSession.currentState);
   }
 
   function switchMode(mode) {
@@ -450,8 +458,9 @@
         "ok"
       );
       setResult("FSA ready. Enter an input string and press Simulate or Step.", "idle");
+      resetGraphRenderer();
       updateStepDisplay(stepSession);
-      renderGraph(formatState(stepSession.currentState));
+      renderGraph(stepSession.currentState);
       return true;
     } catch (error) {
       fsa = null;
@@ -506,29 +515,53 @@
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  function highlightStateInDot(dot, stateName) {
-    if (!stateName) {
-      return dot;
+  function normalizeHighlightStates(state) {
+    if (!state || state === "—") {
+      return [];
     }
-
-    const states = String(stateName)
+    if (Array.isArray(state)) {
+      return state.slice().sort();
+    }
+    return String(state)
       .split(",")
       .map(function (part) {
         return part.trim();
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort();
+  }
+
+  function highlightStateInDot(dot, state) {
+    const states = normalizeHighlightStates(state);
+    if (!states.length) {
+      return dot;
+    }
 
     let highlighted = dot;
-    states.forEach(function (state) {
-      const escaped = escapeRegExp(state);
+    states.forEach(function (stateName) {
+      const escaped = escapeRegExp(stateName);
+      // Only match node declaration lines — never edge lines like "q1 -> q2".
       const pattern = new RegExp(
-        "(^|\\n)(\\s*)(" + escaped + ")(\\s*\\[shape = doublecircle\\])?(;)?",
-        "m"
+        "^(\\s*)(" +
+          escaped +
+          ")((?:\\s*\\[shape = doublecircle\\])?)\\s*;?\\s*$",
+        "gm"
       );
-      highlighted = highlighted.replace(
-        pattern,
-        '$1$2$3 [style=filled, fillcolor="#fef08a"$4];'
-      );
+      highlighted = highlighted.replace(pattern, function (
+        _match,
+        indent,
+        name,
+        acceptShape
+      ) {
+        if (acceptShape) {
+          return (
+            indent +
+            name +
+            ' [shape = doublecircle, style=filled, fillcolor="#fef08a"];'
+          );
+        }
+        return indent + name + ' [style=filled, fillcolor="#fef08a"];';
+      });
     });
 
     return highlighted;
@@ -551,58 +584,6 @@
     }
     const size = getGraphViewportSize();
     graphviz.width(size.width).height(size.height).fit(true);
-  }
-
-  function fitGraphToViewport(attempt) {
-    const svg = graphEl.querySelector("svg");
-    if (!svg) {
-      return;
-    }
-
-    const graphRoot = svg.querySelector("g");
-    if (!graphRoot && attempt < 4) {
-      requestAnimationFrame(function () {
-        fitGraphToViewport(attempt + 1);
-      });
-      return;
-    }
-
-    const pad = 10;
-    let bbox;
-    try {
-      bbox = graphRoot ? graphRoot.getBBox() : svg.getBBox();
-    } catch (error) {
-      return;
-    }
-
-    if (!bbox.width || !bbox.height) {
-      if (attempt < 4) {
-        requestAnimationFrame(function () {
-          fitGraphToViewport(attempt + 1);
-        });
-      }
-      return;
-    }
-
-    const viewBox = [
-      bbox.x - pad,
-      bbox.y - pad,
-      bbox.width + pad * 2,
-      bbox.height + pad * 2,
-    ].join(" ");
-
-    svg.setAttribute("viewBox", viewBox);
-    svg.removeAttribute("width");
-    svg.removeAttribute("height");
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-  }
-
-  function scheduleGraphFit() {
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        fitGraphToViewport(0);
-      });
-    });
   }
 
   async function renderGraph(highlightState) {
@@ -641,8 +622,6 @@
       if (placeholder) {
         placeholder.remove();
       }
-
-      scheduleGraphFit();
     })();
 
     graphRenderInFlight = renderTask;
@@ -653,8 +632,7 @@
       if (generation !== graphRenderGeneration) {
         return;
       }
-      graphvizReady = false;
-      graphviz = null;
+      resetGraphRenderer();
       graphEl.textContent = "";
       const errorEl = document.createElement("p");
       errorEl.className = "graph-error";
@@ -665,14 +643,6 @@
         graphRenderInFlight = null;
       }
     }
-  }
-
-  function scheduleGraphReflow() {
-    if (!fsa || !graphvizReady) {
-      return;
-    }
-    configureGraphvizDimensions();
-    scheduleGraphFit();
   }
 
   function formatState(state) {
@@ -701,13 +671,15 @@
     nextSymbolEl.textContent =
       position < input.length ? input.charAt(position) : "(none)";
     positionEl.textContent = position + " / " + input.length;
-    renderGraph(formatState(session.currentState));
+    renderGraph(session.currentState);
   }
 
   function createStepSession(input) {
+    const start = fsaDef ? fsaDef.start : "—";
     return {
       input: input,
-      currentState: fsaDef ? fsaDef.start : "—",
+      currentState:
+        fsa && fsa.getType() === "NFA" && start !== "—" ? [start] : start,
       position: 0,
     };
   }
@@ -902,12 +874,13 @@
     const viewport = document.getElementById("graph-viewport");
     if (window.ResizeObserver && viewport) {
       resizeObserver = new ResizeObserver(function () {
-        scheduleGraphReflow();
+        if (!graphvizReady) {
+          return;
+        }
+        configureGraphvizDimensions();
       });
       resizeObserver.observe(viewport);
     }
-
-    window.addEventListener("resize", scheduleGraphReflow);
   }
 
   init();
