@@ -9,7 +9,7 @@
 
 Easily create and simulate state machines using this JS library. Import into your own server side or browser based JS application.
 
-> **Contributing / v1.1 prep:** Development happens on [`main-v1-1-prep`](https://github.com/jml6m/fas-js/tree/main-v1-1-prep). See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/v1.1-prep/](docs/v1.1-prep/).
+> **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md). v1.4 modernized the toolchain (TypeScript, tsup, demo, tests) without API changes — see [docs/v1.1-prep/](docs/v1.1-prep/) for the prep history.
 
 ![FSA Example](img/fsa_example.png)
 ###### Visualization of an FSA
