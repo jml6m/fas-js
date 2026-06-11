@@ -1,13 +1,10 @@
-import Set from "core-js/features/set";
 import { DFA } from "../src/automata";
 import { State, Alphabet, Transition } from "../src/components";
-import { ErrorCode } from "../src/globals/errors.js";
-import { instanceOf } from "../src/globals/globals.js";
+import { ErrorCode } from "../src/globals/errors";
+import { instanceOf, isSubsetOf } from "../src/globals/globals";
 import { createFSA } from "../src/utils";
 
-const chai = require("chai");
-const assert = chai.assert;
-const expect = chai.expect;
+import { assert, expect } from "chai";
 
 describe("DFA Creation", function() {
   describe("DFA#constructor()", function() {
@@ -43,7 +40,7 @@ describe("DFA Creation", function() {
 
       assert(dfa.getStates() === states);
       assert(dfa.getAlphabet() === alphabet);
-      assert(dfa.getTFunc().isSubsetOf(transitions)); // tfunc can be reduced
+      assert(isSubsetOf(dfa.getTFunc(), transitions)); // tfunc can be reduced
       assert(dfa.getStartState() === q1);
       assert(dfa.getAcceptStates() === accepts);
       assert(dfa.getType() === "DFA");
@@ -123,11 +120,11 @@ describe("DFA Creation", function() {
     it("Should return valid class attributes with dead states removed", function() {
       const dfa = new DFA(states, alphabet, transitions, q1, accepts);
 
-      assert(dfa.getStates().isSubsetOf(states));
+      assert(isSubsetOf(dfa.getStates(), states));
       assert(dfa.getAlphabet() === alphabet);
-      assert(dfa.getTFunc().isSubsetOf(transitions)); // tfunc can be reduced
+      assert(isSubsetOf(dfa.getTFunc(), transitions)); // tfunc can be reduced
       assert(dfa.getStartState() === q1);
-      assert(dfa.getAcceptStates().isSubsetOf(accepts));
+      assert(isSubsetOf(dfa.getAcceptStates(), accepts));
     });
   });
 

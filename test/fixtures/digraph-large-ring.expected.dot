@@ -1,0 +1,103 @@
+digraph fsa {
+          q0
+	q1
+	q2
+	q3
+	q4
+	q5
+	q6
+	q7
+	q8 [shape = doublecircle];
+	q9
+	q10
+	q11
+	q12
+	q13
+	q14
+	q15
+	q16 [shape = doublecircle];
+	q17
+	q18
+	q19
+	q20
+	q21
+	q22
+	q23
+	q24 [shape = doublecircle];
+	q25
+	q26
+	q27
+	q28
+	q29
+	q30
+	q31
+          rankdir=LR;
+          node [shape = point ]; qi;
+          node [shape = circle];
+          qi -> q0;
+          q0 -> q1 [ label = "0" ];
+	q0 -> q31 [ label = "1" ];
+	q1 -> q2 [ label = "0" ];
+	q1 -> q0 [ label = "1" ];
+	q2 -> q3 [ label = "0" ];
+	q2 -> q1 [ label = "1" ];
+	q3 -> q4 [ label = "0" ];
+	q3 -> q2 [ label = "1" ];
+	q4 -> q5 [ label = "0" ];
+	q4 -> q3 [ label = "1" ];
+	q5 -> q6 [ label = "0" ];
+	q5 -> q4 [ label = "1" ];
+	q6 -> q7 [ label = "0" ];
+	q6 -> q5 [ label = "1" ];
+	q7 -> q8 [ label = "0" ];
+	q7 -> q6 [ label = "1" ];
+	q8 -> q9 [ label = "0" ];
+	q8 -> q7 [ label = "1" ];
+	q9 -> q10 [ label = "0" ];
+	q9 -> q8 [ label = "1" ];
+	q10 -> q11 [ label = "0" ];
+	q10 -> q9 [ label = "1" ];
+	q11 -> q12 [ label = "0" ];
+	q11 -> q10 [ label = "1" ];
+	q12 -> q13 [ label = "0" ];
+	q12 -> q11 [ label = "1" ];
+	q13 -> q14 [ label = "0" ];
+	q13 -> q12 [ label = "1" ];
+	q14 -> q15 [ label = "0" ];
+	q14 -> q13 [ label = "1" ];
+	q15 -> q16 [ label = "0" ];
+	q15 -> q14 [ label = "1" ];
+	q16 -> q17 [ label = "0" ];
+	q16 -> q15 [ label = "1" ];
+	q17 -> q18 [ label = "0" ];
+	q17 -> q16 [ label = "1" ];
+	q18 -> q19 [ label = "0" ];
+	q18 -> q17 [ label = "1" ];
+	q19 -> q20 [ label = "0" ];
+	q19 -> q18 [ label = "1" ];
+	q20 -> q21 [ label = "0" ];
+	q20 -> q19 [ label = "1" ];
+	q21 -> q22 [ label = "0" ];
+	q21 -> q20 [ label = "1" ];
+	q22 -> q23 [ label = "0" ];
+	q22 -> q21 [ label = "1" ];
+	q23 -> q24 [ label = "0" ];
+	q23 -> q22 [ label = "1" ];
+	q24 -> q25 [ label = "0" ];
+	q24 -> q23 [ label = "1" ];
+	q25 -> q26 [ label = "0" ];
+	q25 -> q24 [ label = "1" ];
+	q26 -> q27 [ label = "0" ];
+	q26 -> q25 [ label = "1" ];
+	q27 -> q28 [ label = "0" ];
+	q27 -> q26 [ label = "1" ];
+	q28 -> q29 [ label = "0" ];
+	q28 -> q27 [ label = "1" ];
+	q29 -> q30 [ label = "0" ];
+	q29 -> q28 [ label = "1" ];
+	q30 -> q31 [ label = "0" ];
+	q30 -> q29 [ label = "1" ];
+	q31 -> q0 [ label = "0" ];
+	q31 -> q30 [ label = "1" ];
+      }
+      
