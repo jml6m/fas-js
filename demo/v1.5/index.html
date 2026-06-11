@@ -158,16 +158,18 @@
             </button>
           </div>
 
-          <label class="field field--grow" for="fsa-definition">
-            <span class="field__label"
-              >Machine JSON (<code>createFSA</code>)</span
-            >
-            <textarea
-              id="fsa-definition"
-              spellcheck="false"
-              aria-describedby="fsa-format-hint"
-            ></textarea>
-          </label>
+          <div class="definition-shell">
+            <label class="field field--grow" for="fsa-definition">
+              <span class="field__label"
+                >Machine JSON (<code>createFSA</code>)</span
+              >
+              <textarea
+                id="fsa-definition"
+                spellcheck="false"
+                aria-describedby="fsa-format-hint"
+              ></textarea>
+            </label>
+          </div>
 
           <p id="fsa-format-hint" class="hint">
             Fields: <code>states</code>, <code>alphabet</code>,

@@ -495,7 +495,9 @@
     }
 
     await wasm.Graphviz.load();
-    graphviz = d3.select(graphEl).graphviz().zoom(false).grow(false);
+    graphviz = d3
+      .select(graphEl)
+      .graphviz({ zoom: false, growEnteringEdges: false, fit: true });
     configureGraphvizDimensions();
     graphvizReady = true;
   }

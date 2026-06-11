@@ -83,7 +83,7 @@ function createGraphvizStub() {
     zoom() {
       return chain;
     },
-    grow() {
+    growEnteringEdges() {
       return chain;
     },
     width() {
