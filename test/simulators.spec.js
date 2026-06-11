@@ -7,7 +7,6 @@ import { compare } from "../src/globals/globals";
 import { assert, expect } from "chai";
 
 describe("DFA Simulations", function() {
-  // Logging enabled on some tests for code coverage
   describe("Simulators#simulateFSA()", function() {
     describe("w ends in a 1", function() {
       let q1, q2;
@@ -33,7 +32,7 @@ describe("DFA Simulations", function() {
 
       it("Should not accept invalid w type", function() {
         // Type check clause tested here
-        expect(() => simulateFSA(null, dfa, true)).to.throw(TypeError);
+        expect(() => simulateFSA(null, dfa)).to.throw(TypeError);
         expect(() => simulateFSA(undefined, dfa)).to.throw(TypeError);
         expect(() => simulateFSA(0, dfa)).to.throw(TypeError);
         expect(() => simulateFSA(() => {}, dfa)).to.throw(TypeError);
@@ -41,15 +40,15 @@ describe("DFA Simulations", function() {
       });
 
       it("Should accept for 101/1/111/10101", function() {
-        assert(acceptsNames.indexOf(simulateFSA("101", dfa, true, true)) !== -1);
-        assert(acceptsNames.indexOf(simulateFSA("1", dfa, undefined, true)) !== -1); // undefined or false can be used if returnEndState param is passed in
+        assert(acceptsNames.indexOf(simulateFSA("101", dfa, false, true)) !== -1);
+        assert(acceptsNames.indexOf(simulateFSA("1", dfa, false, true)) !== -1);
         assert(simulateFSA("111", dfa));
         assert(simulateFSA("10101", dfa));
       });
 
       it("Should reject for empty/0/10/0110/xyz", function() {
         assert(!simulateFSA("", dfa));
-        assert(acceptsNames.indexOf(simulateFSA("0", dfa, true, true)) === -1);
+        assert(acceptsNames.indexOf(simulateFSA("0", dfa, false, true)) === -1);
         assert(!simulateFSA("0", dfa));
         assert(!simulateFSA("10", dfa));
         assert(!simulateFSA("0110", dfa));
@@ -57,7 +56,12 @@ describe("DFA Simulations", function() {
 
       it("Should only accept DFAs", function() {
         const test_nfa = new NFA(states, alphabet, new Set([new NFATransition(q1, [q1], "0")]), q1, accepts);
-        expect(() => simulateFSA(null, test_nfa, true)).to.throw(TypeError);
+        expect(() => simulateFSA(null, test_nfa)).to.throw(TypeError);
+      });
+
+      it("Should return the same outcome with logging enabled", function() {
+        assert.equal(simulateFSA("101", dfa), simulateFSA("101", dfa, true));
+        assert.equal(simulateFSA("0", dfa), simulateFSA("0", dfa, true));
       });
     });
 
@@ -95,7 +99,7 @@ describe("DFA Simulations", function() {
       it("Should accept for a/b/aa/bab/ababba", function() {
         assert(simulateFSA("a", dfa));
         assert(simulateFSA("b", dfa));
-        assert(simulateFSA(["a", "a"], dfa)); // Use array param for additional code coverage
+        assert(simulateFSA(["a", "a"], dfa));
         assert(simulateFSA("bab", dfa));
         assert(simulateFSA("ababba", dfa));
       });
@@ -109,7 +113,6 @@ describe("DFA Simulations", function() {
     });
   });
 
-  // Logging enabled on some tests for code coverage
   describe("Simulators#stepOnceFSA()", function() {
     describe("w ends in a 1", function() {
       let q1, q2;
@@ -142,20 +145,21 @@ describe("DFA Simulations", function() {
 
       it("Should not accept invalid w type", function() {
         // Type check clauses tested here
-        expect(() => stepOnceFSA(null, q1.name, dfa, true)).to.throw(TypeError);
+        expect(() => stepOnceFSA(null, q1.name, dfa)).to.throw(TypeError);
         expect(() => stepOnceFSA(undefined, q1.name, dfa)).to.throw(TypeError);
         expect(() => stepOnceFSA(0, q1.name, dfa)).to.throw(TypeError);
         expect(() => stepOnceFSA(() => {}, q1.name, dfa)).to.throw(TypeError);
 
-        expect(() => stepOnceFSA("0", null, dfa, true)).to.throw(TypeError);
+        expect(() => stepOnceFSA("0", null, dfa)).to.throw(TypeError);
         expect(() => stepOnceFSA("0", undefined, dfa)).to.throw(TypeError);
         expect(() => stepOnceFSA("0", 0, dfa)).to.throw(TypeError);
         expect(() => stepOnceFSA("0", () => {}, dfa)).to.throw(TypeError);
       });
 
       it("Should return valid states for valid transitions", function() {
-        assert(stepOnceFSA("0", q1.name, dfa, true) === q1.name);
+        assert(stepOnceFSA("0", q1.name, dfa) === q1.name);
         assert(stepOnceFSA("1", q1.name, dfa) === q2.name);
+        assert.equal(stepOnceFSA("1", q1.name, dfa), stepOnceFSA("1", q1.name, dfa, true));
       });
 
       it("Should throw exception for invalid state", function() {
@@ -166,7 +170,6 @@ describe("DFA Simulations", function() {
 });
 
 describe("NFA Simulations", function() {
-  // Logging enabled on some tests for code coverage
   describe("Simulators#simulateFSA()", function() {
     describe("w contains 1 in third or second position from the end", function() {
       let q1, q2, q3, q4;
@@ -197,7 +200,7 @@ describe("NFA Simulations", function() {
 
       it("Should not accept invalid w type", () => {
         // Type check clause tested here
-        expect(() => simulateFSA(null, nfa, true)).to.throw(TypeError);
+        expect(() => simulateFSA(null, nfa)).to.throw(TypeError);
         expect(() => simulateFSA(undefined, nfa)).to.throw(TypeError);
         expect(() => simulateFSA(0, nfa)).to.throw(TypeError);
         expect(() => simulateFSA(() => {}, nfa)).to.throw(TypeError);
@@ -205,16 +208,16 @@ describe("NFA Simulations", function() {
       });
 
       it("Should accept for 1111/100/0101/10", () => {
-        assert(compare(simulateFSA("1111", nfa, true, true), acceptsNames)); // Demo the NFA logging
+        assert(compare(simulateFSA("1111", nfa, false, true), acceptsNames));
         assert(compare(simulateFSA("100", nfa, false, true), acceptsNames));
-        assert(simulateFSA("0101", nfa, true));
+        assert(simulateFSA("0101", nfa));
         assert(simulateFSA("10", nfa));
       });
 
       it("Should reject for empty/0/00/1110000", () => {
-        assert(!compare(simulateFSA("", nfa, true, true), acceptsNames));
+        assert(!compare(simulateFSA("", nfa, false, true), acceptsNames));
         assert(!simulateFSA("0", nfa));
-        assert(!simulateFSA(["0", "0"], nfa)); // Use array param for additional code coverage
+        assert(!simulateFSA(["0", "0"], nfa));
         assert(!compare(simulateFSA("1110000", nfa, false, true), acceptsNames));
       });
 
@@ -226,7 +229,7 @@ describe("NFA Simulations", function() {
           q1,
           new Set([q1])
         );
-        expect(() => simulateFSA(null, test_dfa, true)).to.throw(TypeError);
+        expect(() => simulateFSA(null, test_dfa)).to.throw(TypeError);
       });
     });
 
@@ -262,7 +265,7 @@ describe("NFA Simulations", function() {
 
       it("Should accept valid inputs", () => {
         assert(simulateFSA("aa", nfa));
-        assert(simulateFSA("aaa", nfa, true));
+        assert(simulateFSA("aaa", nfa));
         assert(simulateFSA("aab", nfa));
         assert(simulateFSA("abbabbabbba", nfa));
         assert(simulateFSA("abbabbaaab", nfa));
@@ -342,7 +345,7 @@ describe("NFA Simulations", function() {
       });
 
       it("Should return valid states for valid transitions", function() {
-        assert(compare(stepOnceFSA("", q2.name, nfa, true), [q1.name, q2.name, q3.name]));
+        assert(compare(stepOnceFSA("", q2.name, nfa), [q1.name, q2.name, q3.name]));
         assert(compare(stepOnceFSA("0", [q1.name, q3.name], nfa), [q3.name, q4.name]));
       });
 

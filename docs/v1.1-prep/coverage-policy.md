@@ -29,6 +29,7 @@ Only for genuinely unreachable defensive code:
 
 ## Related work
 
+- [`test-architecture.md`](./test-architecture.md) — full test layout and principles (#239)
 - #238 — prune coverage-driven tests; align docs with enforced thresholds
 - #235 — validate `lib/` artifacts, not only `src/` via tsx
 - #240 — property-based / generated DFA checks

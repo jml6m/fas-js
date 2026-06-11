@@ -77,7 +77,7 @@ npm test            # build + mocha + c8 coverage
 - **Source**: `src/` — TypeScript modules
 - **Entry**: `src/modules.ts` exports public API (`simulateFSA`, `stepOnceFSA`, `createFSA`)
 - **Build output**: `lib/index.js` (ESM), `lib/index.cjs` (CJS), `lib/bundle.js` (IIFE global `fasJs`), `lib/index.d.ts`
-- **Tests**: `test/**/*.spec.js` — Mocha + Chai + tsx loader
+- **Tests**: `test/**/*.spec.js` — Mocha + Chai + tsx loader. See `docs/v1.1-prep/test-architecture.md`.
 
 Do not change the public API surface without bumping the major version (human decision).
 
@@ -88,7 +88,7 @@ Do not change the public API surface without bumping the major version (human de
 - Tests live in `test/` as `*.spec.js` files.
 - Run with `npm test` (builds first, then mocha with nyc coverage).
 - On `master`: maintain ≥90% line coverage.
-- On `main-v1-1-prep`: maintain **100%** line coverage; exceptions require a linked issue and inline documentation.
+- On `main-v1-1-prep`: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/test-architecture.md` and `docs/v1.1-prep/coverage-policy.md`.
 
 ---
 

@@ -261,7 +261,8 @@
     }
 
     await wasm.Graphviz.load();
-    graphviz = d3.select(graphEl).graphviz().zoom(false);
+    graphviz = d3.select(graphEl).graphviz().zoom(false).grow(false);
+    configureGraphvizDimensions();
     graphvizReady = true;
   }
 
@@ -297,21 +298,53 @@
     return highlighted;
   }
 
-  function fitGraphToViewport() {
+  function getGraphViewportSize() {
+    const viewport = document.getElementById("graph-viewport");
+    if (!viewport) {
+      return { width: graphEl.clientWidth || 400, height: graphEl.clientHeight || 300 };
+    }
+    return {
+      width: Math.max(viewport.clientWidth, 1),
+      height: Math.max(viewport.clientHeight, 1),
+    };
+  }
+
+  function configureGraphvizDimensions() {
+    if (!graphviz) {
+      return;
+    }
+    const size = getGraphViewportSize();
+    graphviz.width(size.width).height(size.height).fit(true);
+  }
+
+  function fitGraphToViewport(attempt) {
     const svg = graphEl.querySelector("svg");
     if (!svg) {
+      return;
+    }
+
+    const graphRoot = svg.querySelector("g");
+    if (!graphRoot && attempt < 4) {
+      requestAnimationFrame(function () {
+        fitGraphToViewport(attempt + 1);
+      });
       return;
     }
 
     const pad = 10;
     let bbox;
     try {
-      bbox = svg.getBBox();
+      bbox = graphRoot ? graphRoot.getBBox() : svg.getBBox();
     } catch (error) {
       return;
     }
 
     if (!bbox.width || !bbox.height) {
+      if (attempt < 4) {
+        requestAnimationFrame(function () {
+          fitGraphToViewport(attempt + 1);
+        });
+      }
       return;
     }
 
@@ -325,12 +358,15 @@
     svg.setAttribute("viewBox", viewBox);
     svg.removeAttribute("width");
     svg.removeAttribute("height");
-    svg.style.width = "100%";
-    svg.style.height = "100%";
-    svg.style.maxWidth = "100%";
-    svg.style.maxHeight = "100%";
-    svg.style.display = "block";
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  }
+
+  function scheduleGraphFit() {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        fitGraphToViewport(0);
+      });
+    });
   }
 
   async function renderGraph(highlightState) {
@@ -357,6 +393,7 @@
         return;
       }
 
+      configureGraphvizDimensions();
       const dot = highlightStateInDot(fsa.generateDigraph(), highlightState);
       await graphviz.renderDot(dot);
 
@@ -369,7 +406,7 @@
         placeholder.remove();
       }
 
-      fitGraphToViewport();
+      scheduleGraphFit();
     })();
 
     graphRenderInFlight = renderTask;
@@ -392,10 +429,11 @@
   }
 
   function scheduleGraphReflow() {
-    if (!fsa) {
+    if (!fsa || !graphvizReady) {
       return;
     }
-    fitGraphToViewport();
+    configureGraphvizDimensions();
+    scheduleGraphFit();
   }
 
   function formatState(state) {

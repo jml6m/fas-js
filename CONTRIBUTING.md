@@ -37,8 +37,8 @@ At v1.1 release time, `main-v1-1-prep` merges into `master`, which will be renam
 
 ### Coverage
 
-- **Current stable (`master`)**: 90% line coverage (enforced by nyc).
-- **v1.1 prep (`main-v1-1-prep`)**: target **100%** line coverage. Exceptions are allowed only for genuinely complex edge cases and must be documented in code (`// coverage:ignore-next-line` or equivalent) with a linked issue explaining why.
+- **Current stable (`master`)**: 90% line coverage.
+- **v1.1 prep (`main-v1-1-prep`)**: **90%** floor on lines, statements, functions, and branches (c8). Tests target workflows and contracts, not line-hit goals. See [`docs/v1.1-prep/coverage-policy.md`](docs/v1.1-prep/coverage-policy.md) and [`docs/v1.1-prep/test-architecture.md`](docs/v1.1-prep/test-architecture.md).
 
 ---
 
