@@ -33,9 +33,9 @@ export const getOrDefault = <K, V>(map: Map<K, V>, key: K, defaultValue: V): V =
   return val == null ? defaultValue : val;
 };
 
-type ConstructorLike = abstract new (...args: unknown[]) => object;
+type ConstructorLike<T extends object = object> = abstract new (...args: never[]) => T;
 
-export const instanceOf = (ctor: ConstructorLike, obj: object): boolean => {
+export const instanceOf = <T extends object>(ctor: ConstructorLike<T>, obj: object): obj is T => {
   return obj instanceof ctor || (Boolean(ctor.name) && ctor.name === obj.constructor.name);
 };
 
