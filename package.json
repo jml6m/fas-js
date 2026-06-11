@@ -27,7 +27,9 @@
     "clean": "node scripts/prebuild.mjs",
     "prepublishOnly": "npm run build && npm test",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build && cross-env NODE_OPTIONS=--import=tsx c8 mocha \"test/**/*.spec.js\""
+    "test": "npm run build && cross-env NODE_OPTIONS=--import=tsx c8 mocha \"test/**/*.spec.js\"",
+    "git:reset": "git reset --hard HEAD && git clean -fd",
+    "npm:reinstall": "node scripts/reinstall.js"
   },
   "author": "Joseph Lewkovich",
   "license": "GPL-3.0-or-later",
