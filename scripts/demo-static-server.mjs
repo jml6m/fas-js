@@ -64,6 +64,7 @@ export function startDemoStaticServer(demoRoot, options = {}) {
         baseUrl: `http://127.0.0.1:${address.port}`,
         close() {
           return new Promise((closeResolve, closeReject) => {
+            server.closeAllConnections();
             server.close(closeError => {
               if (closeError) closeReject(closeError);
               else closeResolve();
