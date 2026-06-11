@@ -4,13 +4,14 @@
  */
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { runInNewContext } from "node:vm";
 
 import { assert } from "chai";
 
-const root = resolve(import.meta.dirname, "..");
+const __dir = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dir, "..");
 const require = createRequire(import.meta.url);
 
 const STATES = ["q1", "q2"];
