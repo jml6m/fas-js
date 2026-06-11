@@ -1,0 +1,11 @@
+{
+  "all": true,
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.d.ts", "src/interfaces/**", "src/**/index.ts", "test/**"],
+  "reporter": ["text-summary", "lcov"],
+  "check-coverage": true,
+  "lines": 90,
+  "statements": 90,
+  "functions": 90,
+  "branches": 90
+}

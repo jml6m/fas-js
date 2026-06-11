@@ -1,12 +1,10 @@
 import { State, Alphabet, NFATransition, Transition } from "../src/components";
 import { NFA } from "../src/automata";
-import { ErrorCode } from "../src/globals/errors.js";
-import { compare, instanceOf } from "../src/globals/globals.js";
+import { ErrorCode } from "../src/globals/errors";
+import { compare, instanceOf } from "../src/globals/globals";
 import { createFSA } from "../src/utils";
 
-const chai = require("chai");
-const assert = chai.assert;
-const expect = chai.expect;
+import { assert, expect } from "chai";
 
 describe("NFA Creation", function() {
   describe("NFA#constructor()", function() {
