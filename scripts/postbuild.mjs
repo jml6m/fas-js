@@ -21,3 +21,17 @@ if (fs.existsSync(bundle)) {
   fs.mkdirSync(path.dirname(vendorBundle), { recursive: true });
   fs.copyFileSync(bundle, vendorBundle);
 }
+
+const demoBundleGlobal = "lib/demo-bundle.global.js";
+const demoBundle = "lib/demo-bundle.js";
+const demoVendorBundle = "demo/v1.1/vendor/fas-js.bundle.js";
+
+if (fs.existsSync(demoBundleGlobal)) {
+  if (fs.existsSync(demoBundle)) fs.rmSync(demoBundle);
+  fs.renameSync(demoBundleGlobal, demoBundle);
+}
+
+if (fs.existsSync(demoBundle)) {
+  fs.mkdirSync(path.dirname(demoVendorBundle), { recursive: true });
+  fs.copyFileSync(demoBundle, demoVendorBundle);
+}

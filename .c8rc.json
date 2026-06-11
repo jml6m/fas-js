@@ -1,7 +1,7 @@
 {
   "all": true,
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.d.ts", "src/interfaces/**", "src/**/index.ts", "test/**"],
+  "exclude": ["src/**/*.d.ts", "src/interfaces/**", "src/**/index.ts", "src/demo-bundle.ts", "test/**"],
   "reporter": ["text-summary", "lcov"],
   "check-coverage": true,
   "lines": 90,

@@ -122,6 +122,43 @@ code {
   text-decoration: underline;
 }
 
+.mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.mode-tab {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
+  padding: 0.32rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mode-tab.is-active {
+  background: var(--primary-soft);
+  border-color: #93c5fd;
+  color: #1e3a8a;
+}
+
+.mode-panel.is-hidden,
+.button-row.is-hidden {
+  display: none;
+}
+
+.lang-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
 .layout {
   flex: 1 1 auto;
   min-height: 0;
