@@ -21,12 +21,14 @@ export function startDemoStaticServer(demoRoot, options = {}) {
 
   const server = http.createServer((req, res) => {
     let urlPath = (req.url ?? "/").split("?")[0];
-    if (urlPath.endsWith("/")) {
+    urlPath = urlPath.replace(/^\/+/, "");
+    if (urlPath === "" || urlPath.endsWith("/")) {
       urlPath += "index.html";
     }
 
-    const filePath = path.normalize(path.join(root, urlPath));
-    if (!filePath.startsWith(root)) {
+    const filePath = path.resolve(root, urlPath);
+    const rootPrefix = root.endsWith(path.sep) ? root : root + path.sep;
+    if (!filePath.startsWith(rootPrefix)) {
       res.writeHead(403);
       res.end("Forbidden");
       return;

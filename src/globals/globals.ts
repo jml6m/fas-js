@@ -33,7 +33,7 @@ export const getOrDefault = <K, V>(map: Map<K, V>, key: K, defaultValue: V): V =
   return val == null ? defaultValue : val;
 };
 
-type ConstructorLike = abstract new (...args: never[]) => object;
+type ConstructorLike = abstract new (...args: unknown[]) => object;
 
 export const instanceOf = (ctor: ConstructorLike, obj: object): boolean => {
   return obj instanceof ctor || (Boolean(ctor.name) && ctor.name === obj.constructor.name);
