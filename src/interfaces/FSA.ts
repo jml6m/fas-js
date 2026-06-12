@@ -1,4 +1,4 @@
-import { State, Alphabet, Transition } from "../components";
+import { type State, type Alphabet, type Transition } from "../components";
 
 export interface FSA {
   // Getters

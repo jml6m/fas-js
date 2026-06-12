@@ -1,5 +1,5 @@
 import { ErrorCode } from "../globals/errors";
-import { State, Alphabet, Transition } from "../components";
+import { type State, type Alphabet, Transition } from "../components";
 import { DFA } from "../automata";
 import { getOrDefault } from "../globals/globals";
 

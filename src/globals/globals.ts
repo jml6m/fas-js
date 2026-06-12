@@ -1,4 +1,4 @@
-import { State } from "../components/State";
+import { type State } from "../components/State";
 
 // Count number of instances for each string in an array - returns key/val pairs
 export const count = (names: string[]): Record<string, number> =>
@@ -33,7 +33,9 @@ export const getOrDefault = <K, V>(map: Map<K, V>, key: K, defaultValue: V): V =
   return val == null ? defaultValue : val;
 };
 
-export const instanceOf = (ctor: Function, obj: object): boolean => {
+type ConstructorLike<T extends object = object> = abstract new (...args: never[]) => T;
+
+export const instanceOf = <T extends object>(ctor: ConstructorLike<T>, obj: object): obj is T => {
   return obj instanceof ctor || (Boolean(ctor.name) && ctor.name === obj.constructor.name);
 };
 

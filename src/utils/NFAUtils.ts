@@ -1,6 +1,6 @@
 import { DFAUtils } from "./DFAUtils";
 import { NFA } from "../automata";
-import { State, Transition, Alphabet, NFATransition } from "../components";
+import { type State, type Transition, type Alphabet, NFATransition } from "../components";
 import { ErrorCode } from "../globals/errors";
 import { getOrDefault } from "../globals/globals";
 import type { TransitionInput } from "./DFAUtils";
@@ -54,8 +54,6 @@ export class NFAUtils extends DFAUtils {
         console.error("Dest state was invalid: %o", JSON.stringify(_t.dest));
         throw new Error(ErrorCode.DEST_STATE_NOT_FOUND);
       }
-
-      const pathStateVals: Set<string> = getOrDefault(_paths, _t.origin, new Set());
 
       // Check for duplicate before adding
       for (const _checkT of newTFunc) {

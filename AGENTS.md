@@ -63,7 +63,8 @@ Use the issue templates in `.github/ISSUE_TEMPLATE/`. Blank issues are disabled.
 npm ci              # install
 npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/index.d.ts
 npm run typecheck   # TypeScript type check (no emit)
-npm test            # build + mocha + c8 coverage
+npm run lint        # ESLint on src/
+npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
@@ -76,8 +77,10 @@ npm test            # build + mocha + c8 coverage
 
 - **Source**: `src/` — TypeScript modules
 - **Entry**: `src/modules.ts` exports public API (`simulateFSA`, `stepOnceFSA`, `createFSA`)
+- **Languages**: `src/languages/` — abstract `Language` base class; `RegularLanguage` extends it for FSA-backed regular languages. Future non-regular types extend `Language` directly, not `RegularLanguage`. Internal to npm; demo bundle (`src/demo-bundle.ts`) exports `RegularLanguage` for the v1.5 lab UI.
 - **Build output**: `lib/index.js` (ESM), `lib/index.cjs` (CJS), `lib/bundle.js` (IIFE global `fasJs`), `lib/index.d.ts`
 - **Tests**: `test/**/*.spec.js` — Mocha + Chai + tsx loader. See `docs/v1.1-prep/test-architecture.md`.
+- **Demo QA**: `test/demo.spec.js` (in `npm test`) — artifact + HTTP + jsdom UI checks; `npm run serve:demo` for local browser testing.
 
 Do not change the public API surface without bumping the major version (human decision).
 

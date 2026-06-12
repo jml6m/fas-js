@@ -3,6 +3,64 @@
 (function () {
   "use strict";
 
+  const LANGUAGE_PRESETS = {
+    singletonA: {
+      label: "{a}",
+      states: ["q0", "q1", "dead"],
+      alphabet: "a",
+      transitions: [
+        { from: "q0", to: "q1", input: "a" },
+        { from: "q1", to: "dead", input: "a" },
+        { from: "dead", to: "dead", input: "a" },
+      ],
+      start: "q0",
+      accepts: ["q1"],
+      defaultInput: "a",
+    },
+    singletonB: {
+      label: "{b}",
+      states: ["q0", "q1", "dead"],
+      alphabet: "b",
+      transitions: [
+        { from: "q0", to: "q1", input: "b" },
+        { from: "q1", to: "dead", input: "b" },
+        { from: "dead", to: "dead", input: "b" },
+      ],
+      start: "q0",
+      accepts: ["q1"],
+      defaultInput: "b",
+    },
+    endsIn1: {
+      label: "ends in 1",
+      states: ["q1", "q2"],
+      alphabet: "01",
+      transitions: [
+        { from: "q1", to: "q2", input: "1" },
+        { from: "q2", to: "q1", input: "0" },
+        { from: "q2", to: "q2", input: "1" },
+        { from: "q1", to: "q1", input: "0" },
+      ],
+      start: "q1",
+      accepts: ["q2"],
+      defaultInput: "101",
+    },
+    nfa01or1: {
+      label: "01 or 1 (NFA)",
+      states: ["q1", "q2", "q3", "q4"],
+      alphabet: "01",
+      transitions: [
+        { from: "q1", to: "q2", input: "0" },
+        { from: "q2", to: "q3", input: "1" },
+        { from: "q1", to: "q4", input: "1" },
+        { from: "q3", to: "q3", input: "" },
+        { from: "q4", to: "q4", input: "" },
+      ],
+      start: "q1",
+      accepts: ["q3", "q4"],
+      defaultInput: "01",
+    },
+  };
+
   const EXAMPLES = {
     dfaEndsIn1: {
       states: ["q1", "q2"],
@@ -89,6 +147,8 @@
   let createFSA;
   let simulateFSA;
   let stepOnceFSA;
+  let RegularLanguage;
+  let currentMode = "fsa";
   let fsa = null;
   let fsaDef = null;
   let graphviz = null;
@@ -97,6 +157,13 @@
   let graphRenderInFlight = null;
   let resizeObserver = null;
   let stepSession = null;
+
+  function resetGraphRenderer() {
+    graphvizReady = false;
+    graphviz = null;
+    graphRenderGeneration += 1;
+    graphRenderInFlight = null;
+  }
 
   function normalizeAccepts(accepts) {
     if (typeof accepts === "string") {
@@ -187,6 +254,181 @@
     inputEl.value = example.defaultInput || "";
   }
 
+  function populateLanguageSelect(selectEl, includeNfaOnly) {
+    selectEl.innerHTML = "";
+    Object.keys(LANGUAGE_PRESETS).forEach(function (key) {
+      const preset = LANGUAGE_PRESETS[key];
+      if (includeNfaOnly === true && key.indexOf("nfa") !== 0 && preset.label.indexOf("NFA") === -1) {
+        return;
+      }
+      const option = document.createElement("option");
+      option.value = key;
+      option.textContent = preset.label;
+      selectEl.appendChild(option);
+    });
+  }
+
+  function languageFromPreset(key) {
+    const preset = LANGUAGE_PRESETS[key];
+    if (!preset || !RegularLanguage) {
+      throw new Error("Unknown language preset.");
+    }
+    const automaton = createFSA(
+      preset.states,
+      preset.alphabet,
+      preset.transitions,
+      preset.start,
+      preset.accepts
+    );
+    return RegularLanguage.fromAutomaton(automaton);
+  }
+
+  function editorPayloadFromLanguage(language, defaultInput) {
+    const definition = language.toDefinition();
+    return {
+      states: definition.states,
+      alphabet: definition.alphabet.join(""),
+      transitions: definition.transitions,
+      start: definition.start,
+      accepts: definition.accepts,
+      defaultInput: defaultInput || "",
+    };
+  }
+
+  function activateAutomaton(automaton, editorPayload, statusMessage) {
+    fsa = automaton;
+    fsaDef = editorPayload;
+    fsaTypeEl.textContent = fsa.getType();
+    definitionEl.value = formatDefinition(editorPayload);
+    if (editorPayload.defaultInput) {
+      inputEl.value = editorPayload.defaultInput;
+    }
+    resetGraphRenderer();
+    stepSession = createStepSession(readInput());
+    setBuildStatus(statusMessage, "ok");
+    setResult("Machine ready — simulate or step.", "idle");
+    updateStepDisplay(stepSession);
+    renderGraph(stepSession.currentState);
+  }
+
+  function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll(".mode-tab").forEach(function (tab) {
+      const active = tab.getAttribute("data-mode") === mode;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+    });
+
+    document.querySelectorAll(".mode-panel").forEach(function (panel) {
+      panel.classList.add("is-hidden");
+    });
+
+    const panel = document.getElementById(mode + "-mode");
+    if (panel) {
+      panel.classList.remove("is-hidden");
+    }
+
+    const fsaActions = document.getElementById("fsa-actions");
+    if (fsaActions) {
+      fsaActions.classList.toggle("is-hidden", mode !== "fsa");
+    }
+
+    const heading = document.getElementById("editor-heading");
+    if (heading) {
+      const titles = {
+        fsa: "FSA definition",
+        union: "Union (L₁ ∪ L₂)",
+        concat: "Concatenation (L₁L₂)",
+        star: "Kleene star (L*)",
+        nfa2dfa: "NFA → DFA",
+      };
+      heading.textContent = titles[mode] || "Definition";
+    }
+  }
+
+  function handleUnionBuild() {
+    if (!RegularLanguage) {
+      setBuildStatus("Language module unavailable. Run npm run build.", "error");
+      return;
+    }
+    try {
+      const left = languageFromPreset(document.getElementById("union-left").value);
+      const right = languageFromPreset(document.getElementById("union-right").value);
+      const result = left.union(right);
+      const payload = editorPayloadFromLanguage(result, "a");
+      activateAutomaton(
+        result.getAutomaton(),
+        payload,
+        "Built L₁ ∪ L₂ as " + result.getAutomaton().getType() + "."
+      );
+    } catch (error) {
+      setBuildStatus("Union failed: " + error.message, "error");
+    }
+  }
+
+  function handleConcatBuild() {
+    if (!RegularLanguage) {
+      setBuildStatus("Language module unavailable. Run npm run build.", "error");
+      return;
+    }
+    try {
+      const left = languageFromPreset(document.getElementById("concat-left").value);
+      const right = languageFromPreset(document.getElementById("concat-right").value);
+      const result = left.concat(right);
+      const payload = editorPayloadFromLanguage(result, "ab");
+      activateAutomaton(
+        result.getAutomaton(),
+        payload,
+        "Built L₁L₂ as " + result.getAutomaton().getType() + "."
+      );
+    } catch (error) {
+      setBuildStatus("Concat failed: " + error.message, "error");
+    }
+  }
+
+  function handleStarBuild() {
+    if (!RegularLanguage) {
+      setBuildStatus("Language module unavailable. Run npm run build.", "error");
+      return;
+    }
+    try {
+      const source = languageFromPreset(document.getElementById("star-source").value);
+      const result = source.kleeneStar();
+      const payload = editorPayloadFromLanguage(result, "aaa");
+      activateAutomaton(
+        result.getAutomaton(),
+        payload,
+        "Built L* as " + result.getAutomaton().getType() + "."
+      );
+    } catch (error) {
+      setBuildStatus("Star failed: " + error.message, "error");
+    }
+  }
+
+  function handleNfa2DfaBuild() {
+    if (!RegularLanguage) {
+      setBuildStatus("Language module unavailable. Run npm run build.", "error");
+      return;
+    }
+    try {
+      const source = languageFromPreset(document.getElementById("nfa2dfa-source").value);
+      if (source.getAutomaton().getType() !== "NFA") {
+        setBuildStatus("Pick an NFA preset for conversion.", "error");
+        return;
+      }
+      const result = source.toDFA();
+      const preset = LANGUAGE_PRESETS[document.getElementById("nfa2dfa-source").value];
+      const payload = editorPayloadFromLanguage(result, preset.defaultInput || "");
+      activateAutomaton(
+        result.getAutomaton(),
+        payload,
+        "Converted NFA to equivalent DFA."
+      );
+    } catch (error) {
+      setBuildStatus("Conversion failed: " + error.message, "error");
+    }
+  }
+
   function buildFSA() {
     if (!createFSA) {
       setBuildStatus(
@@ -216,8 +458,9 @@
         "ok"
       );
       setResult("FSA ready. Enter an input string and press Simulate or Step.", "idle");
+      resetGraphRenderer();
       updateStepDisplay(stepSession);
-      renderGraph(formatState(stepSession.currentState));
+      renderGraph(stepSession.currentState);
       return true;
     } catch (error) {
       fsa = null;
@@ -261,7 +504,9 @@
     }
 
     await wasm.Graphviz.load();
-    graphviz = d3.select(graphEl).graphviz().zoom(false).grow(false);
+    graphviz = d3
+      .select(graphEl)
+      .graphviz({ zoom: false, growEnteringEdges: false, fit: true });
     configureGraphvizDimensions();
     graphvizReady = true;
   }
@@ -270,29 +515,53 @@
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  function highlightStateInDot(dot, stateName) {
-    if (!stateName) {
-      return dot;
+  function normalizeHighlightStates(state) {
+    if (!state || state === "—") {
+      return [];
     }
-
-    const states = String(stateName)
+    if (Array.isArray(state)) {
+      return state.slice().sort();
+    }
+    return String(state)
       .split(",")
       .map(function (part) {
         return part.trim();
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort();
+  }
+
+  function highlightStateInDot(dot, state) {
+    const states = normalizeHighlightStates(state);
+    if (!states.length) {
+      return dot;
+    }
 
     let highlighted = dot;
-    states.forEach(function (state) {
-      const escaped = escapeRegExp(state);
+    states.forEach(function (stateName) {
+      const escaped = escapeRegExp(stateName);
+      // Only match node declaration lines — never edge lines like "q1 -> q2".
       const pattern = new RegExp(
-        "(^|\\n)(\\s*)(" + escaped + ")(\\s*\\[shape = doublecircle\\])?(;)?",
-        "m"
+        "^(\\s*)(" +
+          escaped +
+          ")((?:\\s*\\[shape = doublecircle\\])?)\\s*;?\\s*$",
+        "gm"
       );
-      highlighted = highlighted.replace(
-        pattern,
-        '$1$2$3 [style=filled, fillcolor="#fef08a"$4];'
-      );
+      highlighted = highlighted.replace(pattern, function (
+        _match,
+        indent,
+        name,
+        acceptShape
+      ) {
+        if (acceptShape) {
+          return (
+            indent +
+            name +
+            ' [shape = doublecircle, style=filled, fillcolor="#fef08a"];'
+          );
+        }
+        return indent + name + ' [style=filled, fillcolor="#fef08a"];';
+      });
     });
 
     return highlighted;
@@ -315,58 +584,6 @@
     }
     const size = getGraphViewportSize();
     graphviz.width(size.width).height(size.height).fit(true);
-  }
-
-  function fitGraphToViewport(attempt) {
-    const svg = graphEl.querySelector("svg");
-    if (!svg) {
-      return;
-    }
-
-    const graphRoot = svg.querySelector("g");
-    if (!graphRoot && attempt < 4) {
-      requestAnimationFrame(function () {
-        fitGraphToViewport(attempt + 1);
-      });
-      return;
-    }
-
-    const pad = 10;
-    let bbox;
-    try {
-      bbox = graphRoot ? graphRoot.getBBox() : svg.getBBox();
-    } catch (error) {
-      return;
-    }
-
-    if (!bbox.width || !bbox.height) {
-      if (attempt < 4) {
-        requestAnimationFrame(function () {
-          fitGraphToViewport(attempt + 1);
-        });
-      }
-      return;
-    }
-
-    const viewBox = [
-      bbox.x - pad,
-      bbox.y - pad,
-      bbox.width + pad * 2,
-      bbox.height + pad * 2,
-    ].join(" ");
-
-    svg.setAttribute("viewBox", viewBox);
-    svg.removeAttribute("width");
-    svg.removeAttribute("height");
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-  }
-
-  function scheduleGraphFit() {
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        fitGraphToViewport(0);
-      });
-    });
   }
 
   async function renderGraph(highlightState) {
@@ -405,8 +622,6 @@
       if (placeholder) {
         placeholder.remove();
       }
-
-      scheduleGraphFit();
     })();
 
     graphRenderInFlight = renderTask;
@@ -417,8 +632,7 @@
       if (generation !== graphRenderGeneration) {
         return;
       }
-      graphvizReady = false;
-      graphviz = null;
+      resetGraphRenderer();
       graphEl.textContent = "";
       const errorEl = document.createElement("p");
       errorEl.className = "graph-error";
@@ -429,14 +643,6 @@
         graphRenderInFlight = null;
       }
     }
-  }
-
-  function scheduleGraphReflow() {
-    if (!fsa || !graphvizReady) {
-      return;
-    }
-    configureGraphvizDimensions();
-    scheduleGraphFit();
   }
 
   function formatState(state) {
@@ -465,13 +671,15 @@
     nextSymbolEl.textContent =
       position < input.length ? input.charAt(position) : "(none)";
     positionEl.textContent = position + " / " + input.length;
-    renderGraph(formatState(session.currentState));
+    renderGraph(session.currentState);
   }
 
   function createStepSession(input) {
+    const start = fsaDef ? fsaDef.start : "—";
     return {
       input: input,
-      currentState: fsaDef ? fsaDef.start : "—",
+      currentState:
+        fsa && fsa.getType() === "NFA" && start !== "—" ? [start] : start,
       position: 0,
     };
   }
@@ -575,8 +783,20 @@
   }
 
   function handleReset() {
-    loadExample(exampleSelectEl.value);
-    buildFSA();
+    if (currentMode === "fsa") {
+      loadExample(exampleSelectEl.value);
+      buildFSA();
+      return;
+    }
+    if (currentMode === "union") {
+      handleUnionBuild();
+    } else if (currentMode === "concat") {
+      handleConcatBuild();
+    } else if (currentMode === "star") {
+      handleStarBuild();
+    } else if (currentMode === "nfa2dfa") {
+      handleNfa2DfaBuild();
+    }
   }
 
   function handleStepReset() {
@@ -601,6 +821,17 @@
     stepBtn.addEventListener("click", handleStep);
     stepResetBtn.addEventListener("click", handleStepReset);
 
+    document.querySelectorAll(".mode-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        switchMode(tab.getAttribute("data-mode"));
+      });
+    });
+
+    document.getElementById("union-build-btn").addEventListener("click", handleUnionBuild);
+    document.getElementById("concat-build-btn").addEventListener("click", handleConcatBuild);
+    document.getElementById("star-build-btn").addEventListener("click", handleStarBuild);
+    document.getElementById("nfa2dfa-build-btn").addEventListener("click", handleNfa2DfaBuild);
+
     inputEl.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
         handleSimulate();
@@ -622,20 +853,34 @@
     createFSA = fasJs.createFSA;
     simulateFSA = fasJs.simulateFSA;
     stepOnceFSA = fasJs.stepOnceFSA;
+    RegularLanguage = fasJs.RegularLanguage;
+
+    populateLanguageSelect(document.getElementById("union-left"));
+    populateLanguageSelect(document.getElementById("union-right"));
+    populateLanguageSelect(document.getElementById("concat-left"));
+    populateLanguageSelect(document.getElementById("concat-right"));
+    populateLanguageSelect(document.getElementById("star-source"));
+    populateLanguageSelect(document.getElementById("nfa2dfa-source"), true);
+    if (document.getElementById("union-right").options.length > 1) {
+      document.getElementById("union-right").selectedIndex = 1;
+      document.getElementById("concat-right").selectedIndex = 1;
+    }
 
     bindEvents();
+    switchMode("fsa");
     loadExample(exampleSelectEl.value);
     buildFSA();
 
     const viewport = document.getElementById("graph-viewport");
     if (window.ResizeObserver && viewport) {
       resizeObserver = new ResizeObserver(function () {
-        scheduleGraphReflow();
+        if (!graphvizReady) {
+          return;
+        }
+        configureGraphvizDimensions();
       });
       resizeObserver.observe(viewport);
     }
-
-    window.addEventListener("resize", scheduleGraphReflow);
   }
 
   init();

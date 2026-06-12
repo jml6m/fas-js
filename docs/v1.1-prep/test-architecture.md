@@ -15,6 +15,8 @@ Tests prove **workflows and contracts**, not line coverage for its own sake. Eve
 | `test/error-codes.spec.js` | Stable catalog for `E-001` … `E-013` — exact `error.message` strings (#237) |
 | `test/workflows.spec.js` | Generated complete DFAs; `simulateFSA` vs `stepOnceFSA` equivalence (#240) |
 | `test/digraph-cli.spec.js` | CLI-style golden DOT string for a large ring machine (#236) |
+| `test/languages.spec.js` | Regular language definitions, operations, closure, NFA↔DFA (v1.5) |
+| `test/demo.spec.js` | Demo build artifacts, static HTTP smoke, jsdom UI workflows (v1.5) |
 | `test/dfa.spec.js`, `test/nfa.spec.js` | Automaton construction and `createFSA` integration |
 | `test/simulators.spec.js` | Simulation edge cases and type guards |
 | `test/components.spec.js`, `test/utils.spec.js` | Component and utility unit tests |
@@ -35,7 +37,8 @@ npm test   # build (tsup) → c8 coverage → mocha test/**/*.spec.js
 2. **Error stability** — thrown messages are part of the contract; one catalog test per code (#237).
 3. **Workflow-first** — prefer generated machines and end-to-end simulate/step paths over isolated line hits (#240).
 4. **No coverage hacks** — do not add tests whose only purpose is `logging: true` or similar (#238).
-5. **Digraph** — golden **DOT strings** in Node tests; browser graph rendering is manual/demo QA, not image snapshots (#236).
+5. **Digraph** — golden **DOT strings** in Node tests; graph pixels are not snapshotted (#236).
+6. **Demo** — `test/demo.spec.js` verifies post-build vendor bundle, serves `demo/` over HTTP, and exercises v1.5 UI flows in jsdom (graph libs stubbed). Run `npm run serve:demo` for manual browser QA.
 
 ## Related issues
 
