@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,3 +27,13 @@ try {
   console.error("❌ Install failed:", error.message);
   process.exit(1);
 }
+
+console.log("\n▶ Running audit gate...");
+const isWin = process.platform === "win32";
+const audit = spawn(isWin ? "npm.cmd" : "npm", ["run", "audit:ci"], {
+  stdio: "inherit",
+  cwd: rootDir,
+});
+audit.on("close", (code) => {
+  process.exit(code ?? 0);
+});
