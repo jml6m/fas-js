@@ -46,7 +46,7 @@ npm run test:demo
 
 ## Deployment
 
-[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs on pushes to `master` / `main-v1-1-prep` when `demo/**`, `src/**`, or `package.json` change.
+[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs on pushes to `master` / `main-v2-workspace` when `demo/**`, `src/**`, or `package.json` change.
 
 1. `npm ci && npm run build` (demo vendor copy is in `postbuild.mjs`)
 2. Publishes the full `demo/` tree to GitHub Pages

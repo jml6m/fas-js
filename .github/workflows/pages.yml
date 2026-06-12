@@ -2,7 +2,7 @@ name: Deploy demo to GitHub Pages
 
 on:
   push:
-    branches: [master, main-v1-1-prep]
+    branches: [master, main-v2-workspace]
     paths:
       - "demo/**"
       - "src/**"

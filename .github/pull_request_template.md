@@ -18,14 +18,14 @@
 
 - [ ] `npm ci`
 - [ ] `npm test`
-- [ ] `npm run flow check` (if Flow sources changed)
+- [ ] `npm run serve:demo` (if demo changed)
 - [ ] Manual smoke test (if user-facing)
 
 ## Checklist
 
-- [ ] PR targets `main-v1-1-prep` (not `master`, unless an approved stable hotfix)
+- [ ] PR targets `main-v2-workspace` (not `master`, unless an approved stable hotfix)
 - [ ] Changes are focused and minimal
 - [ ] Tests added or updated for new/changed behavior
-- [ ] Coverage maintained (100% on `main-v1-1-prep`; documented exceptions only)
+- [ ] Coverage maintained (90% lines/statements/functions/branches)
 - [ ] No version bump in `package.json`
 - [ ] `AGENTS.md` / `README.md` updated if workflow or public API changed

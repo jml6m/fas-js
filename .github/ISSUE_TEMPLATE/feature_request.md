@@ -36,6 +36,6 @@ Describe new functions, parameters, or return types. If extending existing API:
 ## Testing checklist
 
 - [ ] Unit tests added or updated
-- [ ] Coverage maintained (100% on `main-v1-1-prep`, 90% on `master`)
+- [ ] Coverage maintained (90% lines/statements/functions/branches)
 - [ ] `npm test` passes locally
 - [ ] README updated if user-facing
