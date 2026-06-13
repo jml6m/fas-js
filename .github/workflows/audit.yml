@@ -17,6 +17,8 @@ jobs:
           node-version: 20
           cache: npm
       # --ignore-scripts: install the dependency tree for auditing without
-      # running postinstall/native builds/husky. Hard-fails on critical/high.
+      # running postinstall/native builds/husky. The gate hard-fails on
+      # critical/high in PRODUCTION deps (dev-only advisories are reported but
+      # not gated); since CI is set, offline/registry errors fail rather than skip.
       - run: npm ci --ignore-scripts
       - run: npm run audit:ci

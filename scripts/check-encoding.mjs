@@ -22,7 +22,8 @@ const BINARY_EXT = new Set([
   'ppm', 'pgm', 'pbm', 'dds', 'glb', 'gltf', 'ktx',
 ]);
 
-// Windows script types are conventionally CRLF (and sometimes BOM); allow it.
+// Windows script types are conventionally CRLF and sometimes carry a UTF-8 BOM;
+// both are allowed for these extensions. (UTF-16 BOMs are still rejected here.)
 const CRLF_OK = new Set(['ps1', 'bat', 'cmd']);
 
 // tab, LF, CR are legitimate; everything else < 0x20 is a stray control char.
@@ -35,8 +36,12 @@ const ALLOWED_CTRL = new Set([0x09, 0x0a, 0x0d]);
 let repoRoot;
 try {
   repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
-} catch {
-  console.error('✖ Encoding check: not inside a git work tree (git rev-parse --show-toplevel failed).');
+} catch (err) {
+  if (err.code === 'ENOENT') {
+    console.error('✖ Encoding check: `git` was not found on PATH.');
+  } else {
+    console.error('✖ Encoding check: not inside a git work tree (git rev-parse --show-toplevel failed).');
+  }
   process.exit(1);
 }
 process.chdir(repoRoot);
@@ -109,7 +114,10 @@ for (const file of trackedFiles()) {
 if (problems.length) {
   console.error(`✖ Encoding check failed (${problems.length} file(s)):`);
   for (const p of problems) console.error(`  - ${p}`);
-  console.error('\nText files must be UTF-8 (no BOM), LF line endings, no stray control characters.');
+  console.error(
+    '\nText files must be UTF-8 (no BOM) with LF line endings and no stray control characters. ' +
+      '(Windows scripts — .ps1/.bat/.cmd — may use CRLF and a UTF-8 BOM.)'
+  );
   process.exit(1);
 }
 

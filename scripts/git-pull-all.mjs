@@ -14,7 +14,12 @@ if (branch === 'HEAD') {
 }
 
 console.log('▶ Fetching all remotes (prune branches + tags)...');
-git(['fetch', '--all', '--prune', '--prune-tags', '--tags']);
+try {
+  git(['fetch', '--all', '--prune', '--prune-tags', '--tags']);
+} catch {
+  console.error('✖ git fetch failed — see git output above (missing git, auth, or a bad remote).');
+  process.exit(1);
+}
 
 console.log(`▶ Fast-forwarding ${branch}...`);
 try {

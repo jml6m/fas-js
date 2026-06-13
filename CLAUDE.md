@@ -26,7 +26,7 @@ Task-specific protocols live in **[.grok/rules/](./.grok/rules/)** and apply to 
 | `npm test` | Full gate: typecheck → lint → build → mocha + c8 coverage (90% threshold). |
 | `npm run lint` | ESLint on `src/` + encoding gate. |
 | `npm run lint:encoding` | Fails on non-UTF-8 / BOM / CRLF / control chars in tracked files. |
-| `npm run audit:ci` | Fails only on critical/high advisories (moderate/low ignored). |
+| `npm run audit:ci` | Hard-fails on critical/high in **production** deps (dev-only + moderate/low reported, not gated). Separate from `lint`; also run by `npm:reinstall` and CI. |
 | `npm run build` | tsup → `lib/`. |
 | `npm run typecheck` | TypeScript type check (no emit). |
 | `npm run npm:reinstall` | Clean reinstall, then the audit gate. |

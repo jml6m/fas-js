@@ -34,6 +34,10 @@ const audit = spawn(isWin ? "npm.cmd" : "npm", ["run", "audit:ci"], {
   stdio: "inherit",
   cwd: rootDir,
 });
+audit.on("error", (err) => {
+  console.error(`❌ Audit gate could not start: ${err.message}`);
+  process.exit(1);
+});
 audit.on("close", (code, signal) => {
   if (signal) {
     console.error(`❌ Audit gate killed by signal: ${signal}`);

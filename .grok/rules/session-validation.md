@@ -9,7 +9,7 @@ Run in order. Stop and fix failures before handing work back.
 | Step | Command | When required |
 |------|---------|---------------|
 | 1. Encoding | `npm run lint:encoding` | **Always** — no BOM / CRLF / non-UTF-8 / control chars. |
-| 2. Audit | `npm run audit:ci` | **Always** — zero critical/high advisories. |
+| 2. Audit | `npm run audit:ci` | **Always** — zero critical/high in production deps (dev-only reported, not gated). |
 | 3. Tests | `npm test` | **Always** — typecheck + lint + build + mocha + c8 coverage passes. |
 
 `npm run lint` covers ESLint + encoding only (steps 1 and 3 partially). `npm run audit:ci` is a **separate** gate — it is not part of `lint`; also run by `npm:reinstall` and the audit workflow.
