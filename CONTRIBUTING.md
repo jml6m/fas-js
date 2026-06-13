@@ -58,6 +58,10 @@ Use the GitHub issue templates — blank issues are disabled.
 2. Create the parent epic and paste those numbers into the task list.
 3. Use relationship keywords: `Blocked by #123`, `Depends on #123`, `Relates to #123`.
 
+### Release tracking — use Milestones, not labels
+
+Track which release an issue is scoped for with a GitHub **Milestone** (e.g. `v1.1`), never a label. Do **not** create or apply release-scoping labels such as `v1.1-prep`, `*-prep`, or `*-required` — that label was retired and its issues moved onto the `v1.1` milestone. Milestones intentionally carry **no due date** right now; they exist only to group the work that belongs to a release. Nothing in CI blocks a release-scoping label (enforcing that would mean brittle label-name regex), so this is a convention everyone follows: assign the milestone, don't invent a label.
+
 ---
 
 ## Versioning and releases
