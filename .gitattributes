@@ -1,0 +1,40 @@
+# Normalize line endings on commit and let git auto-detect text vs binary.
+* text=auto eol=lf
+
+# Lockfiles: collapse in PR diffs and exclude from language stats (still text).
+package-lock.json linguist-generated=true
+yarn.lock         linguist-generated=true
+pnpm-lock.yaml    linguist-generated=true
+
+# Explicit text types — UTF-8 + LF, enforced by scripts/check-encoding.mjs.
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.cjs  text eol=lf
+*.ts   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.scss text eol=lf
+*.svg  text eol=lf
+
+# Windows scripts keep CRLF.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets — never normalize.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.node  binary
+*.wasm  binary
