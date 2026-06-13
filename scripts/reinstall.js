@@ -34,6 +34,10 @@ const audit = spawn(isWin ? "npm.cmd" : "npm", ["run", "audit:ci"], {
   stdio: "inherit",
   cwd: rootDir,
 });
-audit.on("close", (code) => {
-  process.exit(code ?? 0);
+audit.on("close", (code, signal) => {
+  if (signal) {
+    console.error(`❌ Audit gate killed by signal: ${signal}`);
+    process.exit(1);
+  }
+  process.exit(typeof code === "number" ? code : 1);
 });

@@ -12,7 +12,7 @@ Run in order. Stop and fix failures before handing work back.
 | 2. Audit | `npm run audit:ci` | **Always** — zero critical/high advisories. |
 | 3. Tests | `npm test` | **Always** — typecheck + lint + build + mocha + c8 coverage passes. |
 
-`npm run lint` runs steps 1–2 together (ESLint + encoding).
+`npm run lint` covers ESLint + encoding only (steps 1 and 3 partially). `npm run audit:ci` is a **separate** gate — it is not part of `lint`; also run by `npm:reinstall` and the audit workflow.
 
 ## Reporting policy
 

@@ -62,7 +62,7 @@ Use the issue templates in `.github/ISSUE_TEMPLATE/`. Blank issues are disabled.
 npm ci              # install
 npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/index.d.ts
 npm run typecheck   # TypeScript type check (no emit)
-npm run lint        # ESLint on src/
+npm run lint        # ESLint on src/ + encoding gate (lint:encoding)
 npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
 

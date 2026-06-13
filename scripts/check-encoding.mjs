@@ -28,6 +28,19 @@ const CRLF_OK = new Set(['ps1', 'bat', 'cmd']);
 // tab, LF, CR are legitimate; everything else < 0x20 is a stray control char.
 const ALLOWED_CTRL = new Set([0x09, 0x0a, 0x0d]);
 
+// Operate from the repo root so `git ls-files` paths resolve regardless of the
+// directory the script was launched from. Fail loudly if there's no work tree
+// (otherwise reads would silently fail and the gate could "pass" scanning zero
+// files).
+let repoRoot;
+try {
+  repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
+} catch {
+  console.error('✖ Encoding check: not inside a git work tree (git rev-parse --show-toplevel failed).');
+  process.exit(1);
+}
+process.chdir(repoRoot);
+
 function trackedFiles() {
   const out = execFileSync('git', ['ls-files', '-z'], { encoding: 'buffer' });
   return out.toString('utf8').split('\0').filter(Boolean);
@@ -52,7 +65,9 @@ for (const file of trackedFiles()) {
   let buf;
   try {
     buf = readFileSync(file);
-  } catch {
+  } catch (err) {
+    // A tracked file we can't read is a real problem, not something to skip past.
+    problems.push(`${file}: unreadable (${err.code || err.message})`);
     continue;
   }
   scanned++;
@@ -69,19 +84,26 @@ for (const file of trackedFiles()) {
   }
   if (!isValidUtf8(buf)) issues.push('invalid UTF-8 byte sequence');
 
+  let lineEndingFlagged = false;
+  let controlFlagged = false;
   for (let i = 0; i < buf.length; i++) {
     const b = buf[i];
     if (b === 0x0d) {
-      if (!allowCrlf) issues.push(buf[i + 1] === 0x0a ? 'CRLF line endings' : 'lone CR (0x0D)');
+      // Record a line-ending problem at most once per file (CRLF files would
+      // otherwise push thousands of identical entries).
+      if (!allowCrlf && !lineEndingFlagged) {
+        issues.push(buf[i + 1] === 0x0a ? 'CRLF line endings' : 'lone CR (0x0D)');
+        lineEndingFlagged = true;
+      }
       continue;
     }
-    if ((b < 0x20 && !ALLOWED_CTRL.has(b)) || b === 0x7f) {
+    if (!controlFlagged && ((b < 0x20 && !ALLOWED_CTRL.has(b)) || b === 0x7f)) {
       issues.push(`control char 0x${b.toString(16).padStart(2, '0')}`);
-      break;
+      controlFlagged = true;
     }
   }
 
-  if (issues.length) problems.push(`${file}: ${[...new Set(issues)].join(', ')}`);
+  if (issues.length) problems.push(`${file}: ${issues.join(', ')}`);
 }
 
 if (problems.length) {

@@ -36,8 +36,8 @@ Task-specific protocols live in **[.grok/rules/](./.grok/rules/)** and apply to 
 
 ## Conventions
 
-Follow the author's standing coding conventions: comments only where they earn their place (no changelog-style "updated/refactored" comments); targeted edits over full-file rewrites; never use `alert()` in frontend JS; check for existing SCSS variables before hardcoding. Include a one-line `git commit -m "..."` when delivering a changeset.
+Follow the author's standing coding conventions: comments only where they earn their place (no changelog-style "updated/refactored" comments); targeted edits over full-file rewrites; never use `alert()` in frontend JS; check for existing SCSS variables before hardcoding. For commit/push guidance, defer to AGENTS.md's protocol — do not commit or push unless it directs you to.
 
 ## Before handing work back
 
-Run `npm test` and `npm run lint`; report pass/fail explicitly per `.grok/rules/session-validation.md`. Do not claim a check passed unless it actually ran.
+Run `npm test`, `npm run lint`, and `npm run audit:ci`; report pass/fail explicitly per `.grok/rules/session-validation.md`. Do not claim a check passed unless it actually ran.

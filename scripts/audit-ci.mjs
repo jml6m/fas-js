@@ -1,28 +1,36 @@
 #!/usr/bin/env node
 // Audit gate with a deliberate policy: fail ONLY on critical/high advisories.
-// Moderate and low are reported but never break the build. Registry/offline
-// errors are a warning, not a failure, so the gate is safe in CI and offline.
+// Moderate and low are reported but never break the build. A genuine offline /
+// registry error is a warning (exit 0), but a missing npm binary (ENOENT) is a
+// hard failure so a broken environment can't masquerade as "no vulnerabilities".
 //
-// To address findings: `npm audit` for detail, then `npm audit fix` or bump the
-// offending dependency.
+// To address findings: run `npm audit` for detail, then update/bump the
+// offending dependency. (Note: some repos prohibit `npm audit fix` because it
+// rewrites the lockfile unpredictably — prefer targeted dependency bumps.)
 import { execFile } from 'node:child_process';
 
 const isWin = process.platform === 'win32';
 
 function npmAuditJson() {
   return new Promise((resolve) => {
-    // npm audit exits non-zero when vulns exist; capture stdout regardless.
+    // npm audit exits non-zero when vulns exist; capture stdout/stderr regardless.
     // shell:true on Windows so the npm.cmd shim spawns (Node blocks bare .cmd).
-    execFile('npm', ['audit', '--json'], { maxBuffer: 64 * 1024 * 1024, shell: isWin }, (_err, stdout) => {
-      resolve(stdout || '');
+    execFile('npm', ['audit', '--json'], { maxBuffer: 64 * 1024 * 1024, shell: isWin }, (err, stdout, stderr) => {
+      resolve({ err, out: stdout || '', errOut: stderr || '' });
     });
   });
 }
 
-const raw = await npmAuditJson();
+const { err, out, errOut } = await npmAuditJson();
+
+if (err && err.code === 'ENOENT') {
+  console.error('✖ Could not run the audit gate: `npm` was not found on PATH.');
+  process.exit(1);
+}
+
 let data;
 try {
-  data = JSON.parse(raw);
+  data = JSON.parse(out || errOut);
 } catch {
   console.warn('⚠ npm audit produced no parseable output (offline or registry error). Skipping audit gate.');
   process.exit(0);
@@ -47,7 +55,7 @@ console.log(
 if (critical + high > 0) {
   console.error(
     `✖ ${critical + high} critical/high advisory(ies) must be addressed. ` +
-      'Run `npm audit` for detail, then `npm audit fix` or update the offending dependency.'
+      'Run `npm audit` for detail, then update/bump the offending dependency.'
   );
   process.exit(1);
 }
