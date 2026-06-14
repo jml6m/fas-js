@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { startDemoStaticServer } from "./demo-static-server.mjs";
 
 const demoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "demo");
-const preferredPort = Number(process.env.DEMO_PORT ?? 3000);
+const preferredPort = Number(process.env.DEMO_PORT ?? 3200);
 
 const { port, baseUrl, close } = await startDemoStaticServer(demoRoot, {
   port: preferredPort,
