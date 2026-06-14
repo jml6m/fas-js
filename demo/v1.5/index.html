@@ -17,8 +17,8 @@
           <p class="eyebrow">fas-js demo</p>
           <h1>Finite State Automaton Simulator</h1>
           <p class="subtitle">
-            Pick a prebuilt DFA or NFA, enter an input string, then simulate or
-            step. Custom machines live under <strong>Advanced</strong>.
+            Choose an example, simulate or step through input, and watch the graph
+            update. Pick <strong>Custom machine</strong> to edit JSON.
           </p>
         </div>
         <div class="header__meta">
@@ -45,6 +45,7 @@
             <option value="nfaOneNearEnd">
               NFA — 1 in 2nd or 3rd position from end
             </option>
+            <option value="custom">Custom machine (JSON)</option>
           </select>
         </label>
         <p id="build-status" class="build-status" role="status" aria-live="polite">
@@ -53,11 +54,49 @@
       </section>
 
       <main class="workspace">
-        <section class="panel graph-panel" aria-labelledby="graph-heading">
-          <h2 id="graph-heading">State machine graph</h2>
+        <section
+          class="panel machine-panel"
+          id="machine-panel"
+          aria-labelledby="machine-heading"
+        >
+          <h2 id="machine-heading">Machine</h2>
           <div class="graph-viewport" id="graph-viewport">
             <div id="graph" class="graph" aria-label="FSA graph visualization">
               <p class="graph-placeholder">Select an example to render its graph.</p>
+            </div>
+          </div>
+
+          <div
+            class="custom-panel is-hidden"
+            id="custom-panel"
+            aria-hidden="true"
+            hidden
+          >
+            <p class="hint hint--compact">
+              JSON fields: <code>states</code>, <code>alphabet</code>,
+              <code>transitions</code>, <code>start</code>, <code>accepts</code>.
+              Optional <code>defaultInput</code>. NFAs: comma-separated
+              <code>to</code>; <code>""</code> for ε.
+            </p>
+
+            <label class="field field--editor" for="fsa-definition">
+              <span class="field__label">Machine JSON</span>
+              <div class="definition-shell">
+                <textarea
+                  id="fsa-definition"
+                  spellcheck="false"
+                  disabled
+                ></textarea>
+              </div>
+            </label>
+
+            <div class="button-row">
+              <button id="build-btn" type="button" class="btn btn--primary" disabled>
+                Build FSA
+              </button>
+              <button id="copy-btn" type="button" class="btn btn--ghost" disabled>
+                Copy definition
+              </button>
             </div>
           </div>
         </section>
@@ -121,45 +160,10 @@
         </section>
       </main>
 
-      <details class="advanced" id="advanced-panel">
-        <summary class="advanced__summary">Advanced — custom machine (JSON)</summary>
-        <div class="advanced__body">
-          <p class="hint">
-            Paste a JSON object with <code>states</code>, <code>alphabet</code>,
-            <code>transitions</code>, <code>start</code>, and
-            <code>accepts</code>. Optional <code>defaultInput</code> sets the
-            simulation string. NFAs use comma-separated <code>to</code> states;
-            <code>""</code> for ε.
-          </p>
-
-          <label class="field field--editor" for="fsa-definition">
-            <span class="field__label">Machine JSON</span>
-            <div class="definition-shell">
-              <textarea
-                id="fsa-definition"
-                spellcheck="false"
-                aria-describedby="fsa-format-hint"
-              ></textarea>
-            </div>
-          </label>
-
-          <div class="button-row">
-            <button id="build-btn" type="button" class="btn btn--primary">
-              Build FSA
-            </button>
-            <button id="copy-btn" type="button" class="btn btn--ghost">
-              Copy definition
-            </button>
-          </div>
-        </div>
-      </details>
-
       <footer class="footer">
         <p>
-          Self-hosted demo for
-          <a href="https://github.com/jml6m/fas-js">fas-js</a>. Legacy Observable
-          notebook:
-          <a href="../v1/index.html">v1</a>.
+          <a href="https://github.com/jml6m/fas-js">fas-js</a> ·
+          <a href="../v1/index.html">v1 legacy</a>
         </p>
       </footer>
     </div>

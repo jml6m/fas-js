@@ -3,6 +3,8 @@
 (function () {
   "use strict";
 
+  const CUSTOM_KEY = "custom";
+
   const EXAMPLES = {
     dfaEndsIn1: {
       states: ["q1", "q2"],
@@ -85,6 +87,8 @@
   const resultEl = document.getElementById("result");
   const fsaTypeEl = document.getElementById("fsa-type");
   const graphEl = document.getElementById("graph");
+  const machinePanelEl = document.getElementById("machine-panel");
+  const customPanelEl = document.getElementById("custom-panel");
 
   let createFSA;
   let simulateFSA;
@@ -178,7 +182,33 @@
     }
   }
 
+  function isCustomMode() {
+    return exampleSelectEl.value === CUSTOM_KEY;
+  }
+
+  function setCustomMode(enabled) {
+    if (machinePanelEl) {
+      machinePanelEl.classList.toggle("machine-panel--custom", enabled);
+    }
+    if (customPanelEl) {
+      customPanelEl.classList.toggle("is-hidden", !enabled);
+      customPanelEl.hidden = !enabled;
+      customPanelEl.setAttribute("aria-hidden", enabled ? "false" : "true");
+    }
+    definitionEl.disabled = !enabled;
+    buildBtn.disabled = !enabled;
+    copyBtn.disabled = !enabled;
+  }
+
   function loadExample(key) {
+    if (key === CUSTOM_KEY) {
+      if (!definitionEl.value.trim()) {
+        definitionEl.value = formatDefinition(EXAMPLES.dfaEndsIn1);
+      }
+      inputEl.value = "";
+      return;
+    }
+
     const example = EXAMPLES[key];
     if (!example) {
       return;
@@ -186,6 +216,30 @@
 
     definitionEl.value = formatDefinition(example);
     inputEl.value = example.defaultInput || "";
+  }
+
+  function handleExampleChange() {
+    const key = exampleSelectEl.value;
+    setCustomMode(key === CUSTOM_KEY);
+
+    if (key === CUSTOM_KEY) {
+      loadExample(key);
+      fsa = null;
+      fsaDef = null;
+      fsaTypeEl.textContent = "—";
+      resetGraphRenderer();
+      stepSession = null;
+      currentStateEl.textContent = "—";
+      nextSymbolEl.textContent = "—";
+      positionEl.textContent = "0 / 0";
+      setBuildStatus("Edit the JSON below, then press Build FSA.", "idle");
+      setResult("Build a custom machine to simulate or step.", "idle");
+      scheduleGraphReflow();
+      return;
+    }
+
+    loadExample(key);
+    buildFSA();
   }
 
   function resetGraphRenderer() {
@@ -271,11 +325,10 @@
     }
 
     await wasm.Graphviz.load();
-    graphviz = d3
-      .select(graphEl)
-      .graphviz({ zoom: false, growEnteringEdges: false })
-      .zoom(false)
-      .grow(false);
+    graphviz = d3.select(graphEl).graphviz({
+      zoom: false,
+      growEnteringEdges: false,
+    });
     configureGraphvizDimensions();
     graphvizReady = true;
   }
@@ -593,10 +646,7 @@
   }
 
   function bindEvents() {
-    exampleSelectEl.addEventListener("change", function () {
-      loadExample(exampleSelectEl.value);
-      buildFSA();
-    });
+    exampleSelectEl.addEventListener("change", handleExampleChange);
 
     buildBtn.addEventListener("click", buildFSA);
     copyBtn.addEventListener("click", copyDefinition);
@@ -628,8 +678,8 @@
     stepOnceFSA = fasJs.stepOnceFSA;
 
     bindEvents();
-    loadExample(exampleSelectEl.value);
-    buildFSA();
+    setCustomMode(isCustomMode());
+    handleExampleChange();
 
     const viewport = document.getElementById("graph-viewport");
     if (window.ResizeObserver && viewport) {

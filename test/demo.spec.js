@@ -34,7 +34,8 @@ const REQUIRED_DOM_IDS = [
   "step-btn",
   "build-status",
   "result",
-  "advanced-panel",
+  "custom-panel",
+  "machine-panel",
   "graph-viewport",
 ];
 
@@ -259,8 +260,32 @@ describe("demo fidelity", function() {
       assert.include(result.textContent, "Processed");
     });
 
+    it("hides custom JSON editor until Custom machine is selected", function() {
+      const window = loadDemoAppDom();
+      const customPanel = window.document.getElementById("custom-panel");
+      assert.isTrue(customPanel.classList.contains("is-hidden"));
+      assert.isTrue(customPanel.hidden);
+      assert.isTrue(window.document.getElementById("fsa-definition").disabled);
+    });
+
+    it("enables custom JSON editor when Custom machine is selected", function() {
+      const window = loadDemoAppDom();
+      const select = window.document.getElementById("example-select");
+      select.value = "custom";
+      select.dispatchEvent(new window.Event("change"));
+
+      const customPanel = window.document.getElementById("custom-panel");
+      assert.isFalse(customPanel.classList.contains("is-hidden"));
+      assert.isFalse(customPanel.hidden);
+      assert.isFalse(window.document.getElementById("fsa-definition").disabled);
+      assert.isFalse(window.document.getElementById("build-btn").disabled);
+    });
+
     it("surfaces JSON parse errors for invalid definitions", function() {
       const window = loadDemoAppDom();
+      const select = window.document.getElementById("example-select");
+      select.value = "custom";
+      select.dispatchEvent(new window.Event("change"));
       window.document.getElementById("fsa-definition").value = "{not-json";
       click(window, "build-btn");
       assert.include(

@@ -8,17 +8,17 @@ Static demos published under `demo/` on GitHub Pages.
 |------|-------------|-----|
 | `v1/` | Legacy redirect to the [ObservableHQ notebook](https://observablehq.com/@jml6m/state-machine-simulator) | https://jml6m.github.io/fas-js/v1/ |
 | `v1.1/` | Redirect to v1.5 (preserves old links) | https://jml6m.github.io/fas-js/v1.1/ |
-| `v1.5/` | **Current** — FSA simulator + regular language lab (∪, concat, star, NFA→DFA) | https://jml6m.github.io/fas-js/v1.5/ |
+| `v1.5/` | **Current** — DFA/NFA simulator with prebuilt examples + optional custom JSON | https://jml6m.github.io/fas-js/v1.5/ |
 
-### v1.5 — Self-hosted (current)
+### v1.5+ — Self-hosted (current)
 
-Loads `fasJs` from `./vendor/fas-js.bundle.js` (demo bundle built from `src/demo-bundle.ts`, includes `RegularLanguage` for the lab UI only). Graph rendering uses D3 + Graphviz WASM from CDN.
+Loads `fasJs` from `./vendor/fas-js.bundle.js` (public FSA API only). Graph rendering uses D3 + Graphviz WASM from CDN.
 
-Tabs:
+- **Prebuilt examples** — four DFA/NFA machines; auto-build on select
+- **Simulation** — full run or step-through with graph highlight
+- **Custom machine** — select from the dropdown to edit JSON in the same panel as the graph
 
-- **FSA** — JSON editor, simulate, step-through, graph
-- **∪ / ∘ / \*** — compose languages from presets, render resulting automaton
-- **NFA→DFA** — subset construction on NFA presets
+Regular-language operations (∪, concat, star, NFA→DFA) are tested in Node (`test/languages.spec.js`), not in the browser demo.
 
 ## Local development
 
@@ -28,15 +28,19 @@ npm run build   # postbuild → demo/v1.5/vendor/fas-js.bundle.js
 npm run serve:demo
 ```
 
-Open http://localhost:3000/v1.5/ (override port with `DEMO_PORT=8080`).
+Open http://127.0.0.1:3000/v1.5/ (override port with `DEMO_PORT=8080`).
+
+Use `npm run serve:demo` — not `npx serve`.
 
 ## Automated demo tests
 
-`npm test` includes `test/demo.spec.js`, which runs on every branch in CI:
+`npm test` includes demo specs on every branch:
 
-1. **Artifacts** — vendor bundle exists and exposes `fasJs` + `RegularLanguage`
-2. **HTTP smoke** — serves the full `demo/` tree locally and checks 200 responses
-3. **UI workflows** — jsdom loads `app.js`, stubs D3/Graphviz, and exercises FSA build, simulate, ∪/∘/\*, NFA→DFA
+| File | What it checks |
+|------|----------------|
+| `test/demo.spec.js` | Vendor bundle, HTTP smoke, jsdom UI workflows |
+| `test/demo-layout.spec.js` | HTML/CSS layout contracts (no browser) |
+| `test/demo-highlight.spec.js` | DOT highlight targets nodes only |
 
 Run demo tests only:
 
@@ -46,9 +50,6 @@ npm run test:demo
 
 ## Deployment
 
-[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs on pushes to `master` / `main-v1-1-prep` when `demo/**`, `src/**`, or `package.json` change.
-
-1. `npm ci && npm run build` (demo vendor copy is in `postbuild.mjs`)
-2. Publishes the full `demo/` tree to GitHub Pages
+[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs on pushes to `master` when `demo/**`, `src/**`, or `package.json` change.
 
 Public URL: **https://jml6m.github.io/fas-js/v1.5/**

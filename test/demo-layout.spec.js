@@ -14,11 +14,13 @@ const css = readFileSync(join(DEMO, "styles.css"), "utf8");
 const appJs = readFileSync(join(DEMO, "app.js"), "utf8");
 
 describe("demo layout contracts", function () {
-  it("uses example-first flow with collapsible advanced JSON", function () {
+  it("uses example-first flow with custom mode in the machine panel", function () {
     assert.include(html, 'id="example-select"');
-    assert.include(html, 'id="advanced-panel"');
-    assert.include(html, "<details");
+    assert.include(html, 'value="custom"');
+    assert.include(html, 'id="custom-panel"');
+    assert.include(html, 'id="machine-panel"');
     assert.include(html, 'id="fsa-definition"');
+    assert.notInclude(html, "<details");
     assert.notInclude(html, "language-tab");
     assert.notInclude(html, "Regular Language");
     assert.notInclude(html, "tab-union");
@@ -26,7 +28,7 @@ describe("demo layout contracts", function () {
 
   it("places simulation and graph in a dedicated workspace", function () {
     assert.include(html, "workspace");
-    assert.include(html, "graph-panel");
+    assert.include(html, "machine-panel");
     assert.include(html, "sim-panel");
     assert.include(html, 'id="simulate-btn"');
     assert.include(html, 'id="step-btn"');
@@ -42,10 +44,10 @@ describe("demo layout contracts", function () {
   it("uses stable sizing without button press transforms", function () {
     assert.notMatch(css, /\.btn:active\s*\{[^}]*transform/);
     assert.match(css, /minmax\(0,\s*1fr\)/);
-    assert.match(css, /--graph-height:\s*clamp\(/);
+    assert.match(css, /height:\s*100dvh/);
   });
 
-  it("scopes JSON editor scroll to the advanced panel shell", function () {
+  it("scopes JSON editor scroll to the custom panel shell", function () {
     assert.include(html, "definition-shell");
     assert.match(css, /\.definition-shell[\s\S]*overflow:\s*auto/);
   });
@@ -53,6 +55,7 @@ describe("demo layout contracts", function () {
   it("configures graphviz for fit without manual viewBox jumping", function () {
     assert.include(appJs, "growEnteringEdges: false");
     assert.include(appJs, ".fit(true)");
+    assert.notInclude(appJs, ".grow(");
     assert.notInclude(appJs, "fitGraphToViewport");
     assert.notInclude(appJs, "scheduleGraphFit");
   });
