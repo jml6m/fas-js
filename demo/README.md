@@ -41,6 +41,7 @@ Use `npm run serve:demo` — not `npx serve`.
 | `test/demo.spec.js` | Vendor bundle, HTTP smoke, jsdom UI workflows |
 | `test/demo-layout.spec.js` | HTML/CSS layout contracts (no browser) |
 | `test/demo-highlight.spec.js` | DOT highlight targets nodes only |
+| `test/demo-presets-golden.spec.js` | Golden accept/reject table for all four UI presets |
 
 Run demo tests only:
 
