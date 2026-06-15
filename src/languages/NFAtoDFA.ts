@@ -5,6 +5,7 @@ import { instanceOf } from "../globals/globals";
 import type { TransitionInput } from "../utils/DFAUtils";
 import { languageAlphabetSymbols } from "./fsaHelpers";
 
+// ε-closure E(R): states reachable from R via zero or more ε-transitions.
 function epsilonClosure(states: State[], fsa: FSA): State[] {
   const closure = new Map<string, State>();
   const stack: State[] = [];
@@ -29,6 +30,7 @@ function epsilonClosure(states: State[], fsa: FSA): State[] {
   return [...closure.values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
+// ⋃_{r∈R} δ(r, a) before applying E(·).
 function move(states: State[], symbol: string, fsa: FSA): State[] {
   const moved = new Map<string, State>();
 
@@ -47,6 +49,11 @@ function stateSetKey(states: State[]): string {
   return states.map(state => state.name).join(",");
 }
 
+/**
+ * @fas-correctness THEOREM-IMPLEMENTED
+ * @fas-spec Powerset (subset) construction with ε-closure — every NFA has an equivalent DFA.
+ */
+/* @coverage-caveat: c8 100% here means fixture NFA instances were exercised — not Σ* proof */
 export function subsetConstruction(nfa: FSA): {
   states: string[];
   alphabet: string[];

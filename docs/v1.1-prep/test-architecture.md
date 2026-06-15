@@ -15,7 +15,7 @@ Tests prove **workflows and contracts**, not line coverage for its own sake. Eve
 | `test/error-codes.spec.js` | Stable catalog for `E-001` … `E-013` — exact `error.message` strings (#237) |
 | `test/workflows.spec.js` | Generated complete DFAs; `simulateFSA` vs `stepOnceFSA` equivalence (#240) |
 | `test/digraph-cli.spec.js` | CLI-style golden DOT string for a large ring machine (#236) |
-| `test/languages.spec.js` | Regular language definitions, operations, closure, NFA↔DFA (v1.5) |
+| `test/languages.spec.js` | Regular language definitions, operations, closure, NFA↔DFA (v1.5); `@theorem-implemented-test` golden fixtures for subset construction (see `docs/function-annotation-protocol.md`) |
 | `test/demo.spec.js` | Demo build artifacts, static HTTP smoke, jsdom UI workflows (v1.5) |
 | `test/dfa.spec.js`, `test/nfa.spec.js` | Automaton construction and `createFSA` integration |
 | `test/simulators.spec.js` | Simulation edge cases and type guards |

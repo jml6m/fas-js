@@ -93,6 +93,28 @@ Do not change the public API surface without bumping the major version (human de
 - On `master`: maintain ≥90% line coverage.
 - On `main-v1-1-prep`: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/test-architecture.md` and `docs/v1.1-prep/coverage-policy.md`.
 
+### Function annotations (foundational math only)
+
+Minimal labels in [`docs/function-annotation-protocol.md`](docs/function-annotation-protocol.md). Grep: `@fas-correctness`, `@theorem-implemented-test`, `@coverage-caveat`.
+
+| Source `src/` | Test `test/` |
+|---------------|--------------|
+| `@fas-correctness DEFINITIONAL` | `@theorem-implemented-test` required |
+| `@fas-correctness THEOREM-IMPLEMENTED` | `@theorem-implemented-test` via golden fixtures |
+
+Do **not** annotate every helper or edge-case function. Use normal comments for “how it works” when needed.
+
+### ⛔ Prohibited testing shortcuts (agents & contributors)
+
+**Never** treat any of the following as proof that a theorem-backed `src/` function is correct:
+
+- Line/branch **coverage %** alone (“all lines hit once”) — see `@coverage-caveat` on `THEOREM-IMPLEMENTED` functions
+- Arbitrary `maxLength` word enumeration or bounded equivalence oracles (removed; do not reintroduce in `src/` or as theorem proof)
+- Equivalence helpers in **`src/`**
+- Renaming spot-checks as “equivalent”, “iff”, or “proved”
+
+**Required** for `subsetConstruction` / `toDFA()`: golden DFA fixtures in `test/fixtures/subset-construction.expected.json` with `@theorem-implemented-test` in `test/languages.spec.js`.
+
 ---
 
 ## 🔄 CI / CD

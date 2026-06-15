@@ -72,7 +72,7 @@ const alph_array = ["0", "1", "up", "down", "*"];
 
 Input array for DFAs must contain a transition for each alphabet symbol on each origin state. Thus, the size of δ = size of Σ x size of Q. Σ cannot contain an empty string as a symbol for DFAs.
 
-For NFAs, the `to` field can contain one or more destination states, comma separated, no spaces between state names. The `input` field can be `""`, indicating an ε (empty) transition.
+For NFAs, the `to` field can contain one or more destination states, comma separated, no spaces between state names. The `input` field can be `""`, indicating an ε (empty) transition. In JSON and simulation, always use `""` for ε; graph labels may display ε (U+03B5). Pass multi-symbol alphabets as a string array (e.g. `["0", "1", "up", "down"]`) so each entry is one symbol — including UTF-8 characters.
 ```javascript
 const dfa_tfunc = [
     { from: "q1", to: "q2", input: "1" },

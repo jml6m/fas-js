@@ -28,6 +28,10 @@ export class RegularLanguage extends Language {
     return new RegularLanguage(automaton);
   }
 
+  /**
+   * @fas-correctness DEFINITIONAL
+   * @fas-spec L(M) = { w | M accepts w }
+   */
   contains(word: string): boolean {
     try {
       return Boolean(simulateFSA(word, this.#automaton));
@@ -66,6 +70,11 @@ export class RegularLanguage extends Language {
     return RegularLanguage.fromAutomaton(buildFromDefinition(definition));
   }
 
+  /**
+   * @fas-correctness THEOREM-IMPLEMENTED
+   * @fas-spec Powerset construction — delegates to subsetConstruction (NFA only).
+   */
+  /* @coverage-caveat: c8 100% here means fixture NFA instances were exercised — not Σ* proof */
   toDFA(): RegularLanguage {
     if (!instanceOf(NFA, this.#automaton)) {
       return this;

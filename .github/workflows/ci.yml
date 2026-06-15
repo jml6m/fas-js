@@ -16,6 +16,9 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
     permissions:
       contents: read
       id-token: write
