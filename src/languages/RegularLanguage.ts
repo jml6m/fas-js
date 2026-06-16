@@ -71,15 +71,26 @@ export class RegularLanguage extends Language {
   }
 
   /**
+   * Convert this language's automaton to an equivalent DFA.
+   *
+   * Theorem (Sipser, Thm 1.39): every NFA has an equivalent DFA. The actual
+   * powerset construction lives in `subsetConstruction` (see NFAtoDFA.ts);
+   * this method is only the RegularLanguage-level entry point for it.
+   *
    * @fas-correctness THEOREM-IMPLEMENTED
    * @fas-spec Powerset construction — delegates to subsetConstruction (NFA only).
    */
   /* @coverage-caveat: c8 100% here means fixture NFA instances were exercised — not Σ* proof */
   toDFA(): RegularLanguage {
+    // A DFA (or any non-NFA automaton) is already deterministic, so it is its
+    // own equivalent DFA — return unchanged. This also makes toDFA() idempotent:
+    // toDFA().toDFA() === toDFA().
     if (!instanceOf(NFA, this.#automaton)) {
       return this;
     }
 
+    // NFA case: build the equivalent DFA definition via the subset construction,
+    // then re-hydrate it into a RegularLanguage backed by the new DFA.
     const definition = subsetConstruction(this.#automaton);
     return RegularLanguage.fromAutomaton(buildFromDefinition(definition));
   }
