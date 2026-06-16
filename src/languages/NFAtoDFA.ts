@@ -71,7 +71,7 @@ function subsetWitness(members: State[]): readonly string[] {
  * @fas-correctness THEOREM-IMPLEMENTED
  * @fas-spec Powerset (subset) construction with ε-closure (Sipser Thm. 1.19).
  */
-/* @coverage-caveat: c8 100% here means fixture NFA instances were exercised — not Σ* proof */
+/* @coverage-caveat: c8 line hits here mean fixture NFA instances were exercised — not Σ* verification */
 export function subsetConstruction(nfa: FSA): SubsetConstructionResult {
   if (!instanceOf(NFA, nfa)) {
     throw new TypeError("subsetConstruction requires an NFA");

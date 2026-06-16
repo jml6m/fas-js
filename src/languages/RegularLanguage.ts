@@ -74,7 +74,7 @@ export class RegularLanguage extends Language {
    * @fas-correctness THEOREM-IMPLEMENTED
    * @fas-spec Powerset construction — delegates to subsetConstruction (NFA only).
    */
-  /* @coverage-caveat: c8 100% here means fixture NFA instances were exercised — not Σ* proof */
+  /* @coverage-caveat: c8 line hits here mean fixture NFA instances were exercised — not Σ* verification */
   toDFA(): RegularLanguage {
     if (!instanceOf(NFA, this.#automaton)) {
       return this;

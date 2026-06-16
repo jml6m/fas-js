@@ -1,5 +1,5 @@
 /**
- * Emit a stderr warning so CI/coverage consumers do not treat c8 100% as Σ* proof.
+ * Emit a stderr warning so CI/coverage consumers do not treat c8 metrics as Σ* verification.
  */
 export function emitTheoremCoverageCaveat(scope) {
   process.stderr.write(
