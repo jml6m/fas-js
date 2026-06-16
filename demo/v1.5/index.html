@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FSA Simulator — fas-js v1.5</title>
+    <title>FSA Simulator — fas-js v1.6</title>
     <meta
       name="description"
-      content="Define, simulate, and visualize finite state automata and regular languages with fas-js."
+      content="Select a DFA or NFA example, simulate or step through inputs, and visualize the state machine graph."
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -15,10 +15,10 @@
       <header class="header">
         <div class="header__text">
           <p class="eyebrow">fas-js demo</p>
-          <h1>FSA &amp; Regular Language Lab</h1>
+          <h1>Finite State Automaton Simulator</h1>
           <p class="subtitle">
-            Build machines, compose languages (∪, concat, star), convert NFA→DFA,
-            then simulate on the same graph view.
+            Choose an example, simulate or step through input, and watch the graph
+            update. Pick <strong>Custom machine</strong> to edit JSON.
           </p>
         </div>
         <div class="header__meta">
@@ -33,174 +33,84 @@
         </div>
       </header>
 
-      <nav class="mode-tabs" role="tablist" aria-label="Exercise mode">
-        <button
-          type="button"
-          class="mode-tab is-active"
-          role="tab"
-          aria-selected="true"
-          data-mode="fsa"
-          id="tab-fsa"
-        >
-          FSA
-        </button>
-        <button
-          type="button"
-          class="mode-tab"
-          role="tab"
-          aria-selected="false"
-          data-mode="union"
-          id="tab-union"
-        >
-          ∪ Union
-        </button>
-        <button
-          type="button"
-          class="mode-tab"
-          role="tab"
-          aria-selected="false"
-          data-mode="concat"
-          id="tab-concat"
-        >
-          ∘ Concat
-        </button>
-        <button
-          type="button"
-          class="mode-tab"
-          role="tab"
-          aria-selected="false"
-          data-mode="star"
-          id="tab-star"
-        >
-          * Star
-        </button>
-        <button
-          type="button"
-          class="mode-tab"
-          role="tab"
-          aria-selected="false"
-          data-mode="nfa2dfa"
-          id="tab-nfa2dfa"
-        >
-          NFA→DFA
-        </button>
-      </nav>
+      <section class="toolbar" aria-label="Example selection">
+        <label class="field field--toolbar" for="example-select">
+          <span class="field__label">Example machine</span>
+          <select id="example-select">
+            <option value="dfaEndsIn1">DFA — strings ending in 1</option>
+            <option value="dfaSameSymbolEnds">
+              DFA — starts and ends with same symbol (a/b)
+            </option>
+            <option value="nfaAccepts01or1">NFA — accepts 01 or 1</option>
+            <option value="nfaOneNearEnd">
+              NFA — 1 in 2nd or 3rd position from end
+            </option>
+            <option value="custom">Custom machine (JSON)</option>
+          </select>
+        </label>
+        <p id="build-status" class="build-status" role="status" aria-live="polite">
+          Choose an example to load a machine.
+        </p>
+      </section>
 
-      <main class="layout">
-        <section class="panel editor-panel" aria-labelledby="editor-heading">
-          <h2 id="editor-heading">Definition</h2>
-
-          <div id="fsa-mode" class="mode-panel">
-            <label class="field" for="example-select">
-              <span class="field__label">Example</span>
-              <select id="example-select">
-                <option value="dfaEndsIn1">DFA — ends in 1</option>
-                <option value="dfaSameSymbolEnds">DFA — same start/end symbol</option>
-                <option value="nfaAccepts01or1">NFA — 01 or 1</option>
-                <option value="nfaOneNearEnd">NFA — 1 near end</option>
-              </select>
-            </label>
-          </div>
-
-          <div id="union-mode" class="mode-panel is-hidden">
-            <div class="lang-pair">
-              <label class="field" for="union-left">
-                <span class="field__label">L₁</span>
-                <select id="union-left"></select>
-              </label>
-              <label class="field" for="union-right">
-                <span class="field__label">L₂</span>
-                <select id="union-right"></select>
-              </label>
+      <main class="workspace">
+        <section
+          class="panel machine-panel"
+          id="machine-panel"
+          aria-labelledby="machine-heading"
+        >
+          <h2 id="machine-heading">Machine</h2>
+          <div class="graph-viewport" id="graph-viewport">
+            <div id="graph" class="graph" aria-label="FSA graph visualization">
+              <p class="graph-placeholder">Select an example to render its graph.</p>
             </div>
-            <p class="hint">Build L₁ ∪ L₂ — strings accepted by either machine.</p>
-            <button id="union-build-btn" type="button" class="btn btn--primary">
-              Build union
-            </button>
           </div>
 
-          <div id="concat-mode" class="mode-panel is-hidden">
-            <div class="lang-pair">
-              <label class="field" for="concat-left">
-                <span class="field__label">L₁</span>
-                <select id="concat-left"></select>
-              </label>
-              <label class="field" for="concat-right">
-                <span class="field__label">L₂</span>
-                <select id="concat-right"></select>
-              </label>
+          <div
+            class="custom-panel is-hidden"
+            id="custom-panel"
+            aria-hidden="true"
+            hidden
+          >
+            <p class="hint hint--compact">
+              JSON fields: <code>states</code>, <code>alphabet</code>,
+              <code>transitions</code>, <code>start</code>, <code>accepts</code>.
+            Optional <code>defaultInput</code>. NFAs: comma-separated
+            <code>to</code>; use <code>""</code> for an empty (epsilon) transition.
+            </p>
+
+            <label class="field field--editor" for="fsa-definition">
+              <span class="field__label">Machine JSON</span>
+              <div class="definition-shell">
+                <textarea
+                  id="fsa-definition"
+                  spellcheck="false"
+                  disabled
+                ></textarea>
+              </div>
+            </label>
+
+            <div class="button-row">
+              <button id="build-btn" type="button" class="btn btn--primary" disabled>
+                Build FSA
+              </button>
+              <button id="copy-btn" type="button" class="btn btn--ghost" disabled>
+                Copy definition
+              </button>
             </div>
-            <p class="hint">Build L₁L₂ — L₁ then L₂.</p>
-            <button id="concat-build-btn" type="button" class="btn btn--primary">
-              Build concat
-            </button>
-          </div>
-
-          <div id="star-mode" class="mode-panel is-hidden">
-            <label class="field" for="star-source">
-              <span class="field__label">L</span>
-              <select id="star-source"></select>
-            </label>
-            <p class="hint">Build L* — zero or more repetitions of L.</p>
-            <button id="star-build-btn" type="button" class="btn btn--primary">
-              Build star
-            </button>
-          </div>
-
-          <div id="nfa2dfa-mode" class="mode-panel is-hidden">
-            <label class="field" for="nfa2dfa-source">
-              <span class="field__label">NFA</span>
-              <select id="nfa2dfa-source"></select>
-            </label>
-            <p class="hint">Subset construction — equivalent DFA.</p>
-            <button id="nfa2dfa-build-btn" type="button" class="btn btn--primary">
-              Convert to DFA
-            </button>
-          </div>
-
-          <div class="definition-shell">
-            <label class="field field--grow" for="fsa-definition">
-              <span class="field__label"
-                >Machine JSON (<code>createFSA</code>)</span
-              >
-              <textarea
-                id="fsa-definition"
-                spellcheck="false"
-                aria-describedby="fsa-format-hint"
-              ></textarea>
-            </label>
-          </div>
-
-          <p id="fsa-format-hint" class="hint">
-            Fields: <code>states</code>, <code>alphabet</code>,
-            <code>transitions</code>, <code>start</code>, <code>accepts</code>.
-            NFAs: comma <code>to</code> or <code>""</code> for ε.
-          </p>
-
-          <div id="fsa-actions" class="button-row">
-            <button id="build-btn" type="button" class="btn btn--primary">
-              Build FSA
-            </button>
-            <button id="copy-btn" type="button" class="btn btn--ghost">
-              Copy
-            </button>
-          </div>
-
-          <div id="build-status" class="build-status" role="status" aria-live="polite">
-            Pick a tab, compose or edit, then build.
           </div>
         </section>
 
-        <section class="panel controls" aria-labelledby="controls-heading">
-          <h2 id="controls-heading">Simulation</h2>
+        <section class="panel sim-panel" aria-labelledby="sim-heading">
+          <h2 id="sim-heading">Simulation</h2>
 
           <label class="field" for="input-string">
-            <span class="field__label">Input</span>
+            <span class="field__label">Input string</span>
             <input
               id="input-string"
               type="text"
               value="101"
-              placeholder="Alphabet symbols"
+              placeholder="Symbols from the alphabet"
               autocomplete="off"
               spellcheck="false"
             />
@@ -211,55 +121,49 @@
               Simulate
             </button>
             <button id="reset-btn" type="button" class="btn btn--ghost">
-              Reset
+              Reset input
             </button>
           </div>
 
           <div class="mode-divider" role="separator" aria-hidden="true"></div>
 
-          <h3 class="section-title">Step mode</h3>
+          <h3 class="section-title">Step-through</h3>
+          <p class="hint hint--compact">
+            Consume one symbol at a time. The graph highlights active states.
+          </p>
 
           <div class="button-row">
             <button id="step-btn" type="button" class="btn">Step</button>
             <button id="step-reset-btn" type="button" class="btn btn--ghost">
-              Restart
+              Restart steps
             </button>
           </div>
 
           <dl class="status-grid">
             <div>
-              <dt>State</dt>
+              <dt>Current state</dt>
               <dd id="current-state">—</dd>
             </div>
             <div>
-              <dt>Next</dt>
+              <dt>Next symbol</dt>
               <dd id="next-symbol">—</dd>
             </div>
             <div>
-              <dt>Pos</dt>
+              <dt>Position</dt>
               <dd id="position">0 / 0</dd>
             </div>
           </dl>
 
           <div id="result" class="result result--idle" role="status" aria-live="polite">
-            Build a machine, then simulate.
-          </div>
-        </section>
-
-        <section class="panel graph-panel" aria-labelledby="graph-heading">
-          <h2 id="graph-heading">Graph</h2>
-          <div class="graph-viewport" id="graph-viewport">
-            <div id="graph" class="graph" aria-label="FSA graph visualization">
-              <p class="graph-placeholder">Build a machine to render its graph.</p>
-            </div>
+            Load an example, then simulate or step through an input string.
           </div>
         </section>
       </main>
 
       <footer class="footer">
         <p>
-          <a href="https://github.com/jml6m/fas-js">fas-js</a> v1.5 demo ·
-          <a href="../v1/index.html">v1 notebook</a>
+          <a href="https://github.com/jml6m/fas-js">fas-js</a> ·
+          <a href="../v1/index.html">v1 legacy</a>
         </p>
       </footer>
     </div>

@@ -1,18 +1,38 @@
 /**
- * Regular language theory — definitions, operations, closure, NFA↔DFA.
+ * Regular language theory — definitions, operations, closure.
+ *
+ * Reviewer guide: docs/languages-testing.md
  */
-import { createFSA } from "../src/modules";
+import { createFSA, simulateFSA } from "../src/modules";
+import { ErrorCode } from "../src/globals/errors";
 import { Language } from "../src/languages/Language";
 import { RegularLanguage } from "../src/languages/RegularLanguage";
 import { subsetConstruction } from "../src/languages/NFAtoDFA";
+import { dfaLanguagesEqual } from "./helpers/dfaLanguageEqual.js";
 import {
-  languagesEquivalent,
-  membershipMatchesOperationalConcat,
-  membershipMatchesOperationalStar,
-  membershipMatchesOperationalUnion,
-} from "../src/languages/LanguageEquivalence";
+  assertAcceptanceSmoke,
+  assertSubsetStructuralWitness,
+} from "./helpers/subsetWitnessAssertions.js";
+import { emitTheoremCoverageCaveat } from "./helpers/theoremCoverageCaveat.js";
+import {
+  assertConcatMembership,
+  assertStarMembership,
+  assertUnionMembership,
+} from "./helpers/membershipAssertions.js";
 
 import { assert, expect } from "chai";
+
+/** Mirrors RegularLanguage.contains — simulateFSA, with E-009 mapped to false. */
+function acceptanceViaSimulator(word, fsa) {
+  try {
+    return Boolean(simulateFSA(word, fsa));
+  } catch (error) {
+    if (error instanceof Error && error.message === ErrorCode.INVALID_INPUT_CHAR) {
+      return false;
+    }
+    throw error;
+  }
+}
 
 function singleton(symbol) {
   return RegularLanguage.fromAutomaton(
@@ -46,13 +66,22 @@ function endsIn(symbol) {
 }
 
 describe("Regular languages (#v1.5)", function() {
+  before(function() {
+    emitTheoremCoverageCaveat("test/languages.spec.js");
+  });
+
   describe("Definition: L(M) = { w | M accepts w }", function() {
-    it("contains matches simulateFSA acceptance", function() {
+    // @theorem-implemented-test — DEFINITIONAL contains ↔ simulateFSA
+    it("contains(w) agrees with simulateFSA(M, w)", function() {
       const lang = singleton("a");
-      assert.isTrue(lang.contains("a"));
-      assert.isFalse(lang.contains(""));
-      assert.isFalse(lang.contains("b"));
-      assert.isFalse(lang.contains("aa"));
+      const fsa = lang.getAutomaton();
+      for (const word of ["a", "", "b", "aa"]) {
+        assert.equal(
+          lang.contains(word),
+          acceptanceViaSimulator(word, fsa),
+          `membership for "${word}"`
+        );
+      }
     });
   });
 
@@ -64,7 +93,7 @@ describe("Regular languages (#v1.5)", function() {
       assert.equal(lang.getClassification(), "regular");
     });
 
-    it("treats FSA-backed languages as regular", function() {
+    it("getClassification() is regular for automaton-backed languages", function() {
       const lang = RegularLanguage.fromAutomaton(
         createFSA(
           ["q1", "q2"],
@@ -80,8 +109,36 @@ describe("Regular languages (#v1.5)", function() {
         )
       );
 
+      assert.equal(lang.getClassification(), "regular");
       assert.deepEqual(lang.getAlphabetSymbols(), ["0", "1"]);
       assert.isTrue(lang.contains("101"));
+    });
+
+    it("treats UTF-8 alphabet symbols as atomic in contains()", function() {
+      const lang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ["q0", "q1", "q2", "dead"],
+          ["α", "β"],
+          [
+            { from: "q0", to: "q1", input: "α" },
+            { from: "q0", to: "dead", input: "β" },
+            { from: "q1", to: "q2", input: "β" },
+            { from: "q1", to: "dead", input: "α" },
+            { from: "q2", to: "dead", input: "α" },
+            { from: "q2", to: "dead", input: "β" },
+            { from: "dead", to: "dead", input: "α" },
+            { from: "dead", to: "dead", input: "β" },
+          ],
+          "q0",
+          ["q1", "q2"]
+        )
+      );
+
+      assert.deepEqual(lang.getAlphabetSymbols(), ["α", "β"]);
+      assert.isTrue(lang.contains("α"));
+      assert.isTrue(lang.contains("αβ"));
+      assert.isFalse(lang.contains("β"));
+      assert.isFalse(lang.contains("αα"));
     });
   });
 
@@ -108,13 +165,14 @@ describe("Regular languages (#v1.5)", function() {
       const left = singleton("0");
       const right = endsIn("1");
       const union = left.union(right);
+      const words = ["", "0", "1", "00", "01", "10", "11", "001", "101"];
 
-      assert.isTrue(membershipMatchesOperationalUnion(left, right, union, 4));
+      assertUnionMembership(left, right, union, words);
     });
   });
 
   describe("Concatenation", function() {
-    it("builds an automaton for L1L2", function() {
+    it("builds an automaton for L1 ∘ L2", function() {
       const left = singleton("a");
       const right = singleton("b");
       const concat = left.concat(right);
@@ -129,8 +187,86 @@ describe("Regular languages (#v1.5)", function() {
       const left = singleton("a");
       const right = singleton("b");
       const concat = left.concat(right);
+      const words = ["", "a", "b", "ab", "ba", "aab", "abb"];
 
-      assert.isTrue(membershipMatchesOperationalConcat(left, right, concat, 3));
+      assertConcatMembership(left, right, concat, words);
+    });
+  });
+
+  describe("Subset construction (toDFA)", function() {
+    // @theorem-implemented-test — structural witness (L1–L4) + acceptance smoke
+    it("witness and smoke: 01-or-1 NFA", function() {
+      const nfaLang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ["q1", "q2", "q3", "q4"],
+          "01",
+          [
+            { from: "q1", to: "q2", input: "0" },
+            { from: "q2", to: "q3", input: "1" },
+            { from: "q1", to: "q4", input: "1" },
+            { from: "q3", to: "q3", input: "" },
+            { from: "q4", to: "q4", input: "" },
+          ],
+          "q1",
+          ["q3", "q4"]
+        )
+      );
+      const nfa = nfaLang.getAutomaton();
+
+      assertSubsetStructuralWitness(nfa, subsetConstruction(nfa));
+      assertAcceptanceSmoke(nfaLang, ["", "0", "1", "01", "10"]);
+    });
+
+    it("witness and smoke: multi-destination NFA", function() {
+      const nfaLang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ["q1", "q2"],
+          "ab",
+          [
+            { from: "q1", to: "q1,q2", input: "a" },
+            { from: "q2", to: "q2", input: "b" },
+          ],
+          "q1",
+          ["q2"]
+        )
+      );
+      const nfa = nfaLang.getAutomaton();
+
+      assertSubsetStructuralWitness(nfa, subsetConstruction(nfa));
+      assertAcceptanceSmoke(nfaLang, ["a", "b", "ab"]);
+    });
+
+    it("witness and smoke: sparse NFA uses dead state", function() {
+      const nfaLang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ["q1", "q2"],
+          "a",
+          [
+            { from: "q1", to: "q2", input: "a" },
+            { from: "q2", to: "q2", input: "" },
+          ],
+          "q1",
+          ["q2"]
+        )
+      );
+      const nfa = nfaLang.getAutomaton();
+      const result = subsetConstruction(nfa);
+
+      assertSubsetStructuralWitness(nfa, result);
+      assert.include(result.definition.states, "dead");
+      assertAcceptanceSmoke(nfaLang, ["a", "b"]);
+    });
+
+    it("returns the same DFA when toDFA is applied twice", function() {
+      const dfaLang = singleton("a");
+      const once = dfaLang.toDFA().toDefinition();
+      const twice = dfaLang.toDFA().toDFA().toDefinition();
+      assert.deepEqual(once, twice);
+    });
+
+    it("rejects subset construction on a DFA", function() {
+      const dfa = singleton("a").getAutomaton();
+      expect(() => subsetConstruction(dfa)).to.throw(TypeError);
     });
   });
 
@@ -150,32 +286,9 @@ describe("Regular languages (#v1.5)", function() {
     it("is closed under star (operational check)", function() {
       const source = singleton("a");
       const star = source.kleeneStar();
+      const words = ["", "a", "aa", "aaa", "b", "ab", "aba"];
 
-      assert.isTrue(membershipMatchesOperationalStar(source, star, 4));
-    });
-  });
-
-  describe("NFA to DFA equivalence", function() {
-    it("converts an NFA to an equivalent DFA", function() {
-      const nfaLang = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2", "q3", "q4"],
-          "01",
-          [
-            { from: "q1", to: "q2", input: "0" },
-            { from: "q2", to: "q3", input: "1" },
-            { from: "q1", to: "q4", input: "1" },
-            { from: "q3", to: "q3", input: "" },
-            { from: "q4", to: "q4", input: "" },
-          ],
-          "q1",
-          ["q3", "q4"]
-        )
-      );
-
-      const dfaLang = nfaLang.toDFA();
-      assert.equal(dfaLang.getAutomaton().getType(), "DFA");
-      assert.isTrue(languagesEquivalent(nfaLang, dfaLang, 5));
+      assertStarMembership(source, star, words);
     });
   });
 
@@ -191,23 +304,6 @@ describe("Regular languages (#v1.5)", function() {
       expect(() => lang.contains(null)).to.throw(TypeError);
     });
 
-    it("skips epsilon targets already in closure during subset construction", function() {
-      const lang = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2"],
-          "a",
-          [
-            { from: "q1", to: "q2", input: "" },
-            { from: "q1", to: "q2", input: "" },
-            { from: "q2", to: "q2", input: "a" },
-          ],
-          "q1",
-          ["q2"]
-        )
-      );
-      assert.isTrue(lang.toDFA().contains("a"));
-    });
-
     it("exports automata for inspection", function() {
       const lang = singleton("a");
       const definition = lang.toDefinition();
@@ -215,63 +311,22 @@ describe("Regular languages (#v1.5)", function() {
       assert.deepEqual(definition.accepts, ["q1"]);
     });
 
-    it("returns the same DFA when toDFA is applied twice", function() {
-      const dfaLang = singleton("a");
-      assert.isTrue(languagesEquivalent(dfaLang, dfaLang.toDFA(), 3));
-    });
-
-    it("detects non-equivalent languages", function() {
+    it("detects non-equivalent languages via complete DFA distinguishability", function() {
       const left = singleton("a");
       const right = singleton("b");
-      assert.isFalse(languagesEquivalent(left, right, 3));
-    });
 
-    it("rejects subset construction on a DFA", function() {
-      const dfa = singleton("a").getAutomaton();
-      expect(() => subsetConstruction(dfa)).to.throw(TypeError);
-    });
-
-    it("uses a dead state when the NFA lacks a transition", function() {
-      const sparse = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2"],
-          "a",
-          [
-            { from: "q1", to: "q2", input: "a" },
-            { from: "q2", to: "q2", input: "" },
-          ],
-          "q1",
-          ["q2"]
-        )
-      );
-      const dfa = sparse.toDFA();
-      assert.isTrue(dfa.contains("a"));
-      assert.isFalse(dfa.contains("aa"));
+      assert.isFalse(dfaLanguagesEqual(left.getAutomaton(), right.getAutomaton()));
+      assert.isTrue(left.contains("a"));
+      assert.isFalse(right.contains("a"));
     });
 
     it("preserves equivalence after Kleene star", function() {
       const source = endsIn("1");
       const star = source.kleeneStar();
-      assert.isTrue(star.contains(""));
-      assert.isTrue(membershipMatchesOperationalStar(source, star, 3));
-    });
+      const words = ["", "1", "01", "101", "0", "10"];
 
-    it("reuses subset states when symbols converge", function() {
-      const lang = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2"],
-          "01",
-          [
-            { from: "q1", to: "q1", input: "0" },
-            { from: "q1", to: "q2", input: "1" },
-            { from: "q2", to: "q2", input: "0" },
-            { from: "q2", to: "q2", input: "1" },
-          ],
-          "q1",
-          ["q2"]
-        )
-      );
-      assert.isTrue(languagesEquivalent(lang, lang.toDFA(), 4));
+      assert.isTrue(star.contains(""));
+      assertStarMembership(source, star, words);
     });
 
     it("groups multi-destination transitions when exporting", function() {
@@ -287,26 +342,6 @@ describe("Regular languages (#v1.5)", function() {
       const definition = lang.toDefinition();
       const grouped = definition.transitions.find(entry => entry.from === "q1");
       assert.include(grouped.to, ",");
-    });
-  });
-
-  describe("Regular iff NFA recognizes", function() {
-    it("matches NFA and DFA representatives of the same language", function() {
-      const nfaLang = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2"],
-          "ab",
-          [
-            { from: "q1", to: "q1,q2", input: "a" },
-            { from: "q2", to: "q2", input: "b" },
-          ],
-          "q1",
-          ["q2"]
-        )
-      );
-
-      const dfaLang = nfaLang.toDFA();
-      assert.isTrue(languagesEquivalent(nfaLang, dfaLang, 4));
     });
   });
 });

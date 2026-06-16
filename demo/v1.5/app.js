@@ -3,63 +3,7 @@
 (function () {
   "use strict";
 
-  const LANGUAGE_PRESETS = {
-    singletonA: {
-      label: "{a}",
-      states: ["q0", "q1", "dead"],
-      alphabet: "a",
-      transitions: [
-        { from: "q0", to: "q1", input: "a" },
-        { from: "q1", to: "dead", input: "a" },
-        { from: "dead", to: "dead", input: "a" },
-      ],
-      start: "q0",
-      accepts: ["q1"],
-      defaultInput: "a",
-    },
-    singletonB: {
-      label: "{b}",
-      states: ["q0", "q1", "dead"],
-      alphabet: "b",
-      transitions: [
-        { from: "q0", to: "q1", input: "b" },
-        { from: "q1", to: "dead", input: "b" },
-        { from: "dead", to: "dead", input: "b" },
-      ],
-      start: "q0",
-      accepts: ["q1"],
-      defaultInput: "b",
-    },
-    endsIn1: {
-      label: "ends in 1",
-      states: ["q1", "q2"],
-      alphabet: "01",
-      transitions: [
-        { from: "q1", to: "q2", input: "1" },
-        { from: "q2", to: "q1", input: "0" },
-        { from: "q2", to: "q2", input: "1" },
-        { from: "q1", to: "q1", input: "0" },
-      ],
-      start: "q1",
-      accepts: ["q2"],
-      defaultInput: "101",
-    },
-    nfa01or1: {
-      label: "01 or 1 (NFA)",
-      states: ["q1", "q2", "q3", "q4"],
-      alphabet: "01",
-      transitions: [
-        { from: "q1", to: "q2", input: "0" },
-        { from: "q2", to: "q3", input: "1" },
-        { from: "q1", to: "q4", input: "1" },
-        { from: "q3", to: "q3", input: "" },
-        { from: "q4", to: "q4", input: "" },
-      ],
-      start: "q1",
-      accepts: ["q3", "q4"],
-      defaultInput: "01",
-    },
-  };
+  const CUSTOM_KEY = "custom";
 
   const EXAMPLES = {
     dfaEndsIn1: {
@@ -143,12 +87,12 @@
   const resultEl = document.getElementById("result");
   const fsaTypeEl = document.getElementById("fsa-type");
   const graphEl = document.getElementById("graph");
+  const machinePanelEl = document.getElementById("machine-panel");
+  const customPanelEl = document.getElementById("custom-panel");
 
   let createFSA;
   let simulateFSA;
   let stepOnceFSA;
-  let RegularLanguage;
-  let currentMode = "fsa";
   let fsa = null;
   let fsaDef = null;
   let graphviz = null;
@@ -156,14 +100,8 @@
   let graphRenderGeneration = 0;
   let graphRenderInFlight = null;
   let resizeObserver = null;
+  let resizeTimer = null;
   let stepSession = null;
-
-  function resetGraphRenderer() {
-    graphvizReady = false;
-    graphviz = null;
-    graphRenderGeneration += 1;
-    graphRenderInFlight = null;
-  }
 
   function normalizeAccepts(accepts) {
     if (typeof accepts === "string") {
@@ -244,7 +182,33 @@
     }
   }
 
+  function isCustomMode() {
+    return exampleSelectEl.value === CUSTOM_KEY;
+  }
+
+  function setCustomMode(enabled) {
+    if (machinePanelEl) {
+      machinePanelEl.classList.toggle("machine-panel--custom", enabled);
+    }
+    if (customPanelEl) {
+      customPanelEl.classList.toggle("is-hidden", !enabled);
+      customPanelEl.hidden = !enabled;
+      customPanelEl.setAttribute("aria-hidden", enabled ? "false" : "true");
+    }
+    definitionEl.disabled = !enabled;
+    buildBtn.disabled = !enabled;
+    copyBtn.disabled = !enabled;
+  }
+
   function loadExample(key) {
+    if (key === CUSTOM_KEY) {
+      if (!definitionEl.value.trim()) {
+        definitionEl.value = formatDefinition(EXAMPLES.dfaEndsIn1);
+      }
+      inputEl.value = "";
+      return;
+    }
+
     const example = EXAMPLES[key];
     if (!example) {
       return;
@@ -254,179 +218,37 @@
     inputEl.value = example.defaultInput || "";
   }
 
-  function populateLanguageSelect(selectEl, includeNfaOnly) {
-    selectEl.innerHTML = "";
-    Object.keys(LANGUAGE_PRESETS).forEach(function (key) {
-      const preset = LANGUAGE_PRESETS[key];
-      if (includeNfaOnly === true && key.indexOf("nfa") !== 0 && preset.label.indexOf("NFA") === -1) {
-        return;
-      }
-      const option = document.createElement("option");
-      option.value = key;
-      option.textContent = preset.label;
-      selectEl.appendChild(option);
-    });
-  }
+  function handleExampleChange() {
+    const key = exampleSelectEl.value;
+    setCustomMode(key === CUSTOM_KEY);
 
-  function languageFromPreset(key) {
-    const preset = LANGUAGE_PRESETS[key];
-    if (!preset || !RegularLanguage) {
-      throw new Error("Unknown language preset.");
-    }
-    const automaton = createFSA(
-      preset.states,
-      preset.alphabet,
-      preset.transitions,
-      preset.start,
-      preset.accepts
-    );
-    return RegularLanguage.fromAutomaton(automaton);
-  }
-
-  function editorPayloadFromLanguage(language, defaultInput) {
-    const definition = language.toDefinition();
-    return {
-      states: definition.states,
-      alphabet: definition.alphabet.join(""),
-      transitions: definition.transitions,
-      start: definition.start,
-      accepts: definition.accepts,
-      defaultInput: defaultInput || "",
-    };
-  }
-
-  function activateAutomaton(automaton, editorPayload, statusMessage) {
-    fsa = automaton;
-    fsaDef = editorPayload;
-    fsaTypeEl.textContent = fsa.getType();
-    definitionEl.value = formatDefinition(editorPayload);
-    if (editorPayload.defaultInput) {
-      inputEl.value = editorPayload.defaultInput;
-    }
-    resetGraphRenderer();
-    stepSession = createStepSession(readInput());
-    setBuildStatus(statusMessage, "ok");
-    setResult("Machine ready — simulate or step.", "idle");
-    updateStepDisplay(stepSession);
-    renderGraph(stepSession.currentState);
-  }
-
-  function switchMode(mode) {
-    currentMode = mode;
-    document.querySelectorAll(".mode-tab").forEach(function (tab) {
-      const active = tab.getAttribute("data-mode") === mode;
-      tab.classList.toggle("is-active", active);
-      tab.setAttribute("aria-selected", active ? "true" : "false");
-    });
-
-    document.querySelectorAll(".mode-panel").forEach(function (panel) {
-      panel.classList.add("is-hidden");
-    });
-
-    const panel = document.getElementById(mode + "-mode");
-    if (panel) {
-      panel.classList.remove("is-hidden");
-    }
-
-    const fsaActions = document.getElementById("fsa-actions");
-    if (fsaActions) {
-      fsaActions.classList.toggle("is-hidden", mode !== "fsa");
-    }
-
-    const heading = document.getElementById("editor-heading");
-    if (heading) {
-      const titles = {
-        fsa: "FSA definition",
-        union: "Union (L₁ ∪ L₂)",
-        concat: "Concatenation (L₁L₂)",
-        star: "Kleene star (L*)",
-        nfa2dfa: "NFA → DFA",
-      };
-      heading.textContent = titles[mode] || "Definition";
-    }
-  }
-
-  function handleUnionBuild() {
-    if (!RegularLanguage) {
-      setBuildStatus("Language module unavailable. Run npm run build.", "error");
+    if (key === CUSTOM_KEY) {
+      loadExample(key);
+      fsa = null;
+      fsaDef = null;
+      fsaTypeEl.textContent = "—";
+      resetGraphRenderer();
+      stepSession = null;
+      currentStateEl.textContent = "—";
+      nextSymbolEl.textContent = "—";
+      positionEl.textContent = "0 / 0";
+      setBuildStatus("Edit the JSON below, then press Build FSA.", "idle");
+      setResult("Build a custom machine to simulate or step.", "idle");
+      scheduleGraphReflow();
       return;
     }
-    try {
-      const left = languageFromPreset(document.getElementById("union-left").value);
-      const right = languageFromPreset(document.getElementById("union-right").value);
-      const result = left.union(right);
-      const payload = editorPayloadFromLanguage(result, "a");
-      activateAutomaton(
-        result.getAutomaton(),
-        payload,
-        "Built L₁ ∪ L₂ as " + result.getAutomaton().getType() + "."
-      );
-    } catch (error) {
-      setBuildStatus("Union failed: " + error.message, "error");
-    }
+
+    loadExample(key);
+    buildFSA();
   }
 
-  function handleConcatBuild() {
-    if (!RegularLanguage) {
-      setBuildStatus("Language module unavailable. Run npm run build.", "error");
-      return;
-    }
-    try {
-      const left = languageFromPreset(document.getElementById("concat-left").value);
-      const right = languageFromPreset(document.getElementById("concat-right").value);
-      const result = left.concat(right);
-      const payload = editorPayloadFromLanguage(result, "ab");
-      activateAutomaton(
-        result.getAutomaton(),
-        payload,
-        "Built L₁L₂ as " + result.getAutomaton().getType() + "."
-      );
-    } catch (error) {
-      setBuildStatus("Concat failed: " + error.message, "error");
-    }
-  }
-
-  function handleStarBuild() {
-    if (!RegularLanguage) {
-      setBuildStatus("Language module unavailable. Run npm run build.", "error");
-      return;
-    }
-    try {
-      const source = languageFromPreset(document.getElementById("star-source").value);
-      const result = source.kleeneStar();
-      const payload = editorPayloadFromLanguage(result, "aaa");
-      activateAutomaton(
-        result.getAutomaton(),
-        payload,
-        "Built L* as " + result.getAutomaton().getType() + "."
-      );
-    } catch (error) {
-      setBuildStatus("Star failed: " + error.message, "error");
-    }
-  }
-
-  function handleNfa2DfaBuild() {
-    if (!RegularLanguage) {
-      setBuildStatus("Language module unavailable. Run npm run build.", "error");
-      return;
-    }
-    try {
-      const source = languageFromPreset(document.getElementById("nfa2dfa-source").value);
-      if (source.getAutomaton().getType() !== "NFA") {
-        setBuildStatus("Pick an NFA preset for conversion.", "error");
-        return;
-      }
-      const result = source.toDFA();
-      const preset = LANGUAGE_PRESETS[document.getElementById("nfa2dfa-source").value];
-      const payload = editorPayloadFromLanguage(result, preset.defaultInput || "");
-      activateAutomaton(
-        result.getAutomaton(),
-        payload,
-        "Converted NFA to equivalent DFA."
-      );
-    } catch (error) {
-      setBuildStatus("Conversion failed: " + error.message, "error");
-    }
+  function resetGraphRenderer() {
+    graphRenderGeneration += 1;
+    graphvizReady = false;
+    graphviz = null;
+    graphRenderInFlight = null;
+    graphEl.innerHTML =
+      '<p class="graph-placeholder">Select an example to render its graph.</p>';
   }
 
   function buildFSA() {
@@ -452,24 +274,23 @@
       if (definition.defaultInput) {
         inputEl.value = definition.defaultInput;
       }
+      resetGraphRenderer();
       stepSession = createStepSession(readInput());
       setBuildStatus(
-        fsa.getType() + " built — " + definition.states.length + " states.",
+        fsa.getType() + " ready — " + definition.states.length + " states.",
         "ok"
       );
-      setResult("FSA ready. Enter an input string and press Simulate or Step.", "idle");
-      resetGraphRenderer();
+      setResult("Enter an input string and press Simulate or Step.", "idle");
       updateStepDisplay(stepSession);
-      renderGraph(stepSession.currentState);
+      renderGraph(formatState(stepSession.currentState));
       return true;
     } catch (error) {
       fsa = null;
       fsaDef = null;
       fsaTypeEl.textContent = "—";
+      resetGraphRenderer();
       setBuildStatus("Build failed: " + error.message, "error");
       setResult("Fix the JSON definition and press Build FSA again.", "error");
-      graphEl.innerHTML =
-        '<p class="graph-placeholder">Build an FSA to render its graph.</p>';
       return false;
     }
   }
@@ -504,9 +325,10 @@
     }
 
     await wasm.Graphviz.load();
-    graphviz = d3
-      .select(graphEl)
-      .graphviz({ zoom: false, growEnteringEdges: false, fit: true });
+    graphviz = d3.select(graphEl).graphviz({
+      zoom: false,
+      growEnteringEdges: false,
+    });
     configureGraphvizDimensions();
     graphvizReady = true;
   }
@@ -515,62 +337,75 @@
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  function normalizeHighlightStates(state) {
-    if (!state || state === "—") {
-      return [];
+  function highlightStateInDot(dot, stateName) {
+    if (!stateName) {
+      return dot;
     }
-    if (Array.isArray(state)) {
-      return state.slice().sort();
-    }
-    return String(state)
+
+    const states = String(stateName)
       .split(",")
       .map(function (part) {
         return part.trim();
       })
-      .filter(Boolean)
-      .sort();
-  }
+      .filter(Boolean);
 
-  function highlightStateInDot(dot, state) {
-    const states = normalizeHighlightStates(state);
-    if (!states.length) {
-      return dot;
-    }
+    return dot
+      .split("\n")
+      .map(function (line) {
+        if (line.indexOf("->") !== -1) {
+          return line;
+        }
 
-    let highlighted = dot;
-    states.forEach(function (stateName) {
-      const escaped = escapeRegExp(stateName);
-      // Only match node declaration lines — never edge lines like "q1 -> q2".
-      const pattern = new RegExp(
-        "^(\\s*)(" +
-          escaped +
-          ")((?:\\s*\\[shape = doublecircle\\])?)\\s*;?\\s*$",
-        "gm"
-      );
-      highlighted = highlighted.replace(pattern, function (
-        _match,
-        indent,
-        name,
-        acceptShape
-      ) {
-        if (acceptShape) {
-          return (
-            indent +
-            name +
-            ' [shape = doublecircle, style=filled, fillcolor="#fef08a"];'
+        const trimmed = line.trim();
+        if (
+          !trimmed ||
+          trimmed === "{" ||
+          trimmed === "}" ||
+          trimmed.indexOf("digraph") === 0
+        ) {
+          return line;
+        }
+
+        for (let i = 0; i < states.length; i += 1) {
+          const state = states[i];
+          const escaped = escapeRegExp(state);
+          const nodePattern = new RegExp(
+            "^\\s*" + escaped + "(\\s*\\[shape = doublecircle\\])?(\\s*;)?\\s*$"
+          );
+
+          if (!nodePattern.test(line)) {
+            continue;
+          }
+
+          if (line.indexOf("fillcolor") !== -1) {
+            return line;
+          }
+
+          if (line.indexOf("[shape") !== -1) {
+            return line.replace(
+              "[shape",
+              '[style=filled, fillcolor="#fef08a", shape'
+            );
+          }
+
+          return line.replace(
+            new RegExp("^(\\s*)(" + escaped + ")\\s*$"),
+            '$1$2 [style=filled, fillcolor="#fef08a"]'
           );
         }
-        return indent + name + ' [style=filled, fillcolor="#fef08a"];';
-      });
-    });
 
-    return highlighted;
+        return line;
+      })
+      .join("\n");
   }
 
   function getGraphViewportSize() {
     const viewport = document.getElementById("graph-viewport");
     if (!viewport) {
-      return { width: graphEl.clientWidth || 400, height: graphEl.clientHeight || 300 };
+      return {
+        width: graphEl.clientWidth || 400,
+        height: graphEl.clientHeight || 300,
+      };
     }
     return {
       width: Math.max(viewport.clientWidth, 1),
@@ -632,17 +467,28 @@
       if (generation !== graphRenderGeneration) {
         return;
       }
-      resetGraphRenderer();
-      graphEl.textContent = "";
-      const errorEl = document.createElement("p");
-      errorEl.className = "graph-error";
-      errorEl.textContent = "Graph render failed: " + error.message;
-      graphEl.appendChild(errorEl);
+      graphvizReady = false;
+      graphviz = null;
+      graphEl.innerHTML =
+        '<p class="graph-error">Graph render failed: ' + error.message + "</p>";
     } finally {
       if (graphRenderInFlight === renderTask) {
         graphRenderInFlight = null;
       }
     }
+  }
+
+  function scheduleGraphReflow() {
+    if (!fsa || !graphvizReady) {
+      return;
+    }
+    if (resizeTimer) {
+      clearTimeout(resizeTimer);
+    }
+    resizeTimer = setTimeout(function () {
+      resizeTimer = null;
+      configureGraphvizDimensions();
+    }, 120);
   }
 
   function formatState(state) {
@@ -671,15 +517,13 @@
     nextSymbolEl.textContent =
       position < input.length ? input.charAt(position) : "(none)";
     positionEl.textContent = position + " / " + input.length;
-    renderGraph(session.currentState);
+    renderGraph(formatState(session.currentState));
   }
 
   function createStepSession(input) {
-    const start = fsaDef ? fsaDef.start : "—";
     return {
       input: input,
-      currentState:
-        fsa && fsa.getType() === "NFA" && start !== "—" ? [start] : start,
+      currentState: fsaDef ? fsaDef.start : "—",
       position: 0,
     };
   }
@@ -690,7 +534,7 @@
 
   function requireFSA() {
     if (!fsa || !fsaDef) {
-      setResult("Build an FSA before simulating.", "error");
+      setResult("Load or build an FSA before simulating.", "error");
       return false;
     }
     return true;
@@ -783,20 +627,13 @@
   }
 
   function handleReset() {
-    if (currentMode === "fsa") {
-      loadExample(exampleSelectEl.value);
-      buildFSA();
+    if (!fsaDef) {
       return;
     }
-    if (currentMode === "union") {
-      handleUnionBuild();
-    } else if (currentMode === "concat") {
-      handleConcatBuild();
-    } else if (currentMode === "star") {
-      handleStarBuild();
-    } else if (currentMode === "nfa2dfa") {
-      handleNfa2DfaBuild();
-    }
+    inputEl.value = fsaDef.defaultInput || "";
+    stepSession = createStepSession(readInput());
+    setResult("Input reset. Simulate or step through the string.", "idle");
+    updateStepDisplay(stepSession);
   }
 
   function handleStepReset() {
@@ -809,10 +646,7 @@
   }
 
   function bindEvents() {
-    exampleSelectEl.addEventListener("change", function () {
-      loadExample(exampleSelectEl.value);
-      buildFSA();
-    });
+    exampleSelectEl.addEventListener("change", handleExampleChange);
 
     buildBtn.addEventListener("click", buildFSA);
     copyBtn.addEventListener("click", copyDefinition);
@@ -820,17 +654,6 @@
     resetBtn.addEventListener("click", handleReset);
     stepBtn.addEventListener("click", handleStep);
     stepResetBtn.addEventListener("click", handleStepReset);
-
-    document.querySelectorAll(".mode-tab").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        switchMode(tab.getAttribute("data-mode"));
-      });
-    });
-
-    document.getElementById("union-build-btn").addEventListener("click", handleUnionBuild);
-    document.getElementById("concat-build-btn").addEventListener("click", handleConcatBuild);
-    document.getElementById("star-build-btn").addEventListener("click", handleStarBuild);
-    document.getElementById("nfa2dfa-build-btn").addEventListener("click", handleNfa2DfaBuild);
 
     inputEl.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
@@ -853,34 +676,20 @@
     createFSA = fasJs.createFSA;
     simulateFSA = fasJs.simulateFSA;
     stepOnceFSA = fasJs.stepOnceFSA;
-    RegularLanguage = fasJs.RegularLanguage;
-
-    populateLanguageSelect(document.getElementById("union-left"));
-    populateLanguageSelect(document.getElementById("union-right"));
-    populateLanguageSelect(document.getElementById("concat-left"));
-    populateLanguageSelect(document.getElementById("concat-right"));
-    populateLanguageSelect(document.getElementById("star-source"));
-    populateLanguageSelect(document.getElementById("nfa2dfa-source"), true);
-    if (document.getElementById("union-right").options.length > 1) {
-      document.getElementById("union-right").selectedIndex = 1;
-      document.getElementById("concat-right").selectedIndex = 1;
-    }
 
     bindEvents();
-    switchMode("fsa");
-    loadExample(exampleSelectEl.value);
-    buildFSA();
+    setCustomMode(isCustomMode());
+    handleExampleChange();
 
     const viewport = document.getElementById("graph-viewport");
     if (window.ResizeObserver && viewport) {
       resizeObserver = new ResizeObserver(function () {
-        if (!graphvizReady) {
-          return;
-        }
-        configureGraphvizDimensions();
+        scheduleGraphReflow();
       });
       resizeObserver.observe(viewport);
     }
+
+    window.addEventListener("resize", scheduleGraphReflow);
   }
 
   init();

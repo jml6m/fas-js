@@ -9,7 +9,7 @@
 
 Easily create and simulate state machines using this JS library. Import into your own server side or browser based JS application.
 
-> **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md). v1.4 modernized the toolchain (TypeScript, tsup, demo, tests) without API changes — see [docs/v1.1-prep/](docs/v1.1-prep/) for the prep history.
+> **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ![FSA Example](img/fsa_example.png)
 ###### Visualization of an FSA
@@ -72,7 +72,7 @@ const alph_array = ["0", "1", "up", "down", "*"];
 
 Input array for DFAs must contain a transition for each alphabet symbol on each origin state. Thus, the size of δ = size of Σ x size of Q. Σ cannot contain an empty string as a symbol for DFAs.
 
-For NFAs, the `to` field can contain one or more destination states, comma separated, no spaces between state names. The `input` field can be `""`, indicating an ε (empty) transition.
+For NFAs, the `to` field can contain one or more destination states, comma separated, no spaces between state names. The `input` field can be `""`, indicating an ε (empty) transition. In JSON and simulation, always use `""` for ε; graph labels may display ε (U+03B5). Pass multi-symbol alphabets as a string array (e.g. `["0", "1", "up", "down"]`) so each entry is one symbol — including UTF-8 characters.
 ```javascript
 const dfa_tfunc = [
     { from: "q1", to: "q2", input: "1" },
@@ -168,9 +168,11 @@ Interactive demos visualize FSAs as you simulate input strings.
 
 | Version | URL | Notes |
 |---------|-----|-------|
-| **v1.5** | [GitHub Pages demo](https://jml6m.github.io/fas-js/v1.5/) | FSA simulator + regular language lab (`demo/v1.5/`) |
+| **v1.5+** | [GitHub Pages demo](https://jml6m.github.io/fas-js/v1.5/) | DFA/NFA simulator — prebuilt examples, simulate/step, graph (`demo/v1.5/`) |
 | **v1.1** | [Redirect](https://jml6m.github.io/fas-js/v1.1/) | Preserved URL → v1.5 |
-| **v1** (legacy) | [ObservableHQ](https://observablehq.com/@jml6m/state-machine-simulator) | Original demo; kept for legacy reference |
+| **v1** (legacy) | [ObservableHQ](https://observablehq.com/@jml6m/state-machine-simulator) | Original notebook |
+
+Local: `npm run build && npm run serve:demo` → http://127.0.0.1:3000/v1.5/
 
 See [demo/README.md](demo/README.md) for local development and deployment details.
 

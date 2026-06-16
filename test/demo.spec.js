@@ -8,9 +8,10 @@ import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
 
 import { JSDOM } from "jsdom";
-import { assert, expect } from "chai";
+import { assert } from "chai";
 
 import { startDemoStaticServer } from "../scripts/demo-static-server.mjs";
+import { assertPublicApiSurface } from "./helpers/publicApiContract.js";
 
 const __dir = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dir, "..");
@@ -29,17 +30,14 @@ const REQUIRED_DOM_IDS = [
   "example-select",
   "fsa-definition",
   "build-btn",
+  "copy-btn",
   "simulate-btn",
+  "step-btn",
   "build-status",
   "result",
-  "tab-union",
-  "union-build-btn",
-  "tab-concat",
-  "concat-build-btn",
-  "tab-star",
-  "star-build-btn",
-  "tab-nfa2dfa",
-  "nfa2dfa-build-btn",
+  "custom-panel",
+  "machine-panel",
+  "graph-viewport",
 ];
 
 function loadDemoBundleApi() {
@@ -51,10 +49,7 @@ function loadDemoBundleApi() {
 }
 
 function exerciseDemoBundle(api) {
-  assert.isFunction(api.createFSA);
-  assert.isFunction(api.simulateFSA);
-  assert.isFunction(api.stepOnceFSA);
-  assert.isFunction(api.RegularLanguage?.fromAutomaton);
+  assertPublicApiSurface(api, "demo vendor fasJs");
 
   const fsa = api.createFSA(
     ["q1", "q2"],
@@ -71,11 +66,6 @@ function exerciseDemoBundle(api) {
 
   assert.equal(fsa.getType(), "DFA");
   assert.isTrue(api.simulateFSA("101", fsa));
-
-  const lang = api.RegularLanguage.fromAutomaton(fsa);
-  const star = lang.kleeneStar();
-  assert.isTrue(star.contains(""));
-  assert.isTrue(star.contains("101"));
 }
 
 function createGraphvizStub() {
@@ -83,7 +73,7 @@ function createGraphvizStub() {
     zoom() {
       return chain;
     },
-    growEnteringEdges() {
+    grow() {
       return chain;
     },
     width() {
@@ -164,7 +154,7 @@ describe("demo fidelity", function() {
       assert.isAbove(stats.length, 1000);
     });
 
-    it("demo bundle exposes public API plus RegularLanguage", function() {
+    it("demo bundle exposes public FSA API only", function() {
       exerciseDemoBundle(loadDemoBundleApi());
     });
 
@@ -179,13 +169,13 @@ describe("demo fidelity", function() {
       assert.include(html, "vendor/fas-js.bundle.js");
       assert.include(html, "app.js");
       assert.include(html, "styles.css");
-      assert.include(html, "fas-js v1.5");
+      assert.include(html, "Finite State Automaton Simulator");
     });
 
     it("v1.1 redirect preserves old URL and points at v1.5", function() {
       const html = readFileSync(resolve(demoRoot, "v1.1/index.html"), "utf8");
-      assert.include(html, '../v1.5/index.html');
-      assert.include(html, "regular language lab");
+      assert.include(html, "../v1.5/");
+      assert.include(html, "DFA/NFA simulator");
       assert.notInclude(html, "id=\"build-btn\"");
     });
   });
@@ -211,16 +201,25 @@ describe("demo fidelity", function() {
       return body;
     }
 
-    it("serves v1.5 index, app, styles, and vendor bundle", async function() {
-      await expectOk("/v1.5/index.html", "Regular Language Lab");
-      await expectOk("/v1.5/app.js", "LANGUAGE_PRESETS");
-      await expectOk("/v1.5/styles.css", ".app");
+    it("serves v1.5 with or without trailing slash", async function() {
+      await expectOk("/v1.5/", "Finite State Automaton Simulator");
+      await expectOk("/v1.5", "Finite State Automaton Simulator");
+      await expectOk("/v1.5/index.html", "Finite State Automaton Simulator");
+    });
+
+    it("serves v1.5 app, styles, and vendor bundle", async function() {
+      await expectOk("/v1.5/app.js", "EXAMPLES");
+      await expectOk("/v1.5/styles.css", ".workspace");
       const bundle = await expectOk("/v1.5/vendor/fas-js.bundle.js");
       assert.include(bundle, "fasJs");
     });
 
+    it("serves demo root redirect to v1.5", async function() {
+      await expectOk("/", "v1.5/");
+    });
+
     it("serves v1.1 redirect page", async function() {
-      await expectOk("/v1.1/", "../v1.5/index.html");
+      await expectOk("/v1.1/", "../v1.5/");
     });
 
     it("returns 404 for missing demo paths", async function() {
@@ -252,40 +251,39 @@ describe("demo fidelity", function() {
       assert.include(result.textContent, "Accepted");
     });
 
-    it("builds union, concat, star, and NFA→DFA from language presets", function() {
+    it("steps through the default example", function() {
       const window = loadDemoAppDom();
+      click(window, "step-btn");
+      const result = window.document.getElementById("result");
+      assert.include(result.textContent, "Processed");
+    });
 
-      click(window, "tab-union");
-      click(window, "union-build-btn");
-      assert.include(
-        window.document.getElementById("build-status").className,
-        "build-status--ok"
-      );
+    it("hides custom JSON editor until Custom machine is selected", function() {
+      const window = loadDemoAppDom();
+      const customPanel = window.document.getElementById("custom-panel");
+      assert.isTrue(customPanel.classList.contains("is-hidden"));
+      assert.isTrue(customPanel.hidden);
+      assert.isTrue(window.document.getElementById("fsa-definition").disabled);
+    });
 
-      click(window, "tab-concat");
-      click(window, "concat-build-btn");
-      assert.include(
-        window.document.getElementById("build-status").className,
-        "build-status--ok"
-      );
+    it("enables custom JSON editor when Custom machine is selected", function() {
+      const window = loadDemoAppDom();
+      const select = window.document.getElementById("example-select");
+      select.value = "custom";
+      select.dispatchEvent(new window.Event("change"));
 
-      click(window, "tab-star");
-      click(window, "star-build-btn");
-      assert.include(
-        window.document.getElementById("build-status").className,
-        "build-status--ok"
-      );
-
-      click(window, "tab-nfa2dfa");
-      click(window, "nfa2dfa-build-btn");
-      assert.include(
-        window.document.getElementById("build-status").textContent,
-        "Converted NFA to equivalent DFA"
-      );
+      const customPanel = window.document.getElementById("custom-panel");
+      assert.isFalse(customPanel.classList.contains("is-hidden"));
+      assert.isFalse(customPanel.hidden);
+      assert.isFalse(window.document.getElementById("fsa-definition").disabled);
+      assert.isFalse(window.document.getElementById("build-btn").disabled);
     });
 
     it("surfaces JSON parse errors for invalid definitions", function() {
       const window = loadDemoAppDom();
+      const select = window.document.getElementById("example-select");
+      select.value = "custom";
+      select.dispatchEvent(new window.Event("change"));
       window.document.getElementById("fsa-definition").value = "{not-json";
       click(window, "build-btn");
       assert.include(

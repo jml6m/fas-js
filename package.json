@@ -1,7 +1,7 @@
 {
   "name": "fas-js",
   "description": "Finate State Automata JS Solutions",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "type": "module",
   "main": "./lib/index.cjs",
   "module": "./lib/index.js",
@@ -25,14 +25,20 @@
     "prebuild": "node scripts/prebuild.mjs",
     "postbuild": "node scripts/postbuild.mjs",
     "clean": "node scripts/prebuild.mjs",
-    "prepublishOnly": "npm run build && npm test",
+    "prepublishOnly": "npm run guard:theorem && npm run build && npm test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "guard:theorem": "node scripts/check-theorem-annotations.mjs",
+    "free-port": "node scripts/free-port.mjs 3200",
+    "preserve:demo": "node scripts/free-port.mjs 3200",
     "serve:demo": "node scripts/serve-demo.mjs",
     "test:demo": "npm run build && cross-env NODE_OPTIONS=--import=tsx mocha \"test/demo.spec.js\"",
-    "test": "npm run typecheck && npm run lint && npm run build && cross-env NODE_OPTIONS=--import=tsx c8 mocha \"test/**/*.spec.js\"",
+    "test:presets": "cross-env NODE_OPTIONS=--import=tsx mocha \"test/demo-presets-golden.spec.js\"",
+    "test:languages": "cross-env NODE_OPTIONS=--import=tsx mocha \"test/languages.spec.js\"",
+    "test": "npm run guard:theorem && npm run typecheck && npm run lint && npm run build && npm run check:security && cross-env NODE_OPTIONS=--import=tsx c8 mocha \"test/**/*.spec.js\"",
     "audit:ci": "npm audit --audit-level=high",
+    "check:security": "node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs",
     "git:reset": "git reset --hard HEAD && git clean -fd",
     "npm:reinstall": "node scripts/reinstall.js"
   },
@@ -78,5 +84,10 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "overrides": {
+    "diff": "^8.0.3",
+    "serialize-javascript": "^7.0.5",
+    "esbuild": "^0.28.1"
   }
 }
