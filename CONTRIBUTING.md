@@ -1,6 +1,6 @@
 # Contributing to fas-js
 
-Thank you for your interest in contributing. This repository is a public npm package with active viewers, so we follow a strict branch workflow during the **v1.1 prep** phase.
+Thank you for your interest in contributing. This repository is a public npm package with active viewers, so we follow a strict branch workflow per release.
 
 > **Authority**: See [`AGENTS.md`](AGENTS.md) for agent protocols, build commands, and coding standards. This document covers human and contributor workflow.
 
@@ -11,34 +11,33 @@ Thank you for your interest in contributing. This repository is a public npm pac
 | Branch | Purpose |
 |--------|---------|
 | `master` | **Stable / public** — what npm, jsDelivr CDN, and badges reflect. Protected; no direct pushes. |
-| `main-v1-1-prep` | **Integration line** for v1.1 modernization (toolchain, TypeScript migration, coverage, docs). All prep work merges here first. |
-| `feat/*`, `chore/*`, `fix/*` | Short-lived topic branches. Open PRs against `main-v1-1-prep`. |
+| Version integration branch | **One branch off `master` per active release** (e.g. `fix/demo-v1.6-ux` for v1.6). Release PRs merge into `master`. |
+| `feat/*`, `chore/*`, `fix/*` (topic) | Short-lived branches stacked **on the current version integration branch**. |
 
-### What is "v1.1 prep"?
+### Releases
 
-v1.1 prep is the internal phase for modernizing the legacy codebase (build tooling, types, tests, documentation) **without** adding new public API features. New functionality ships in a future **v2** release.
+Each version line (e.g. v1.6) uses a single integration branch from `master`. Topic PRs land there first; when the release is ready, the integration branch merges to `master`, is tagged `v*.*.*`, and npm publish runs via CI (OIDC).
 
-At v1.1 release time, `main-v1-1-prep` merges into `master`, which will be renamed to `main`.
+New **public API** features are scheduled for **v2**; release branches ship demo UX, tests, docs, and internal language tooling without expanding the three-function npm surface.
 
 ---
 
 ## How to contribute
 
 1. **Check open issues** — avoid duplicating planned work. Reference issues in PR descriptions (`Closes #123`).
-2. **Branch from `main-v1-1-prep`** — not from `master`, unless you are explicitly asked to hotfix stable.
+2. **Branch from the current version integration branch** — not from `master`, unless you are explicitly asked to hotfix stable.
 3. **Keep PRs focused** — one logical change per PR. Governance, toolchain, and feature work should not be mixed.
 4. **Run tests locally** before opening a PR:
    ```bash
    npm ci
    npm test
    ```
-5. **Open a PR** targeting `main-v1-1-prep` using the PR template.
+5. **Open a PR** targeting the current version integration branch (or `master` for the release merge PR) using the PR template.
 6. **Wait for CI** — all checks must pass. CI runs on Node 18, 20, and 22.
 
 ### Coverage
 
-- **Current stable (`master`)**: 90% line coverage.
-- **v1.1 prep (`main-v1-1-prep`)**: **90%** floor on lines, statements, functions, and branches (c8). Tests target workflows and contracts, not line-hit goals. See [`docs/v1.1-prep/coverage-policy.md`](docs/v1.1-prep/coverage-policy.md) and [`docs/v1.1-prep/test-architecture.md`](docs/v1.1-prep/test-architecture.md).
+- **Coverage floor**: **90%** on lines, statements, functions, and branches (c8). Tests target workflows and contracts, not line-hit goals. See [`docs/v1.1-prep/coverage-policy.md`](docs/v1.1-prep/coverage-policy.md) and [`docs/v1.1-prep/test-architecture.md`](docs/v1.1-prep/test-architecture.md).
 
 ---
 
