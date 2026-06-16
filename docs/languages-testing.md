@@ -4,14 +4,16 @@
 
 Annotation rules: [`function-annotation-protocol.md`](function-annotation-protocol.md) (minimal — `DEFINITIONAL` / `THEOREM-IMPLEMENTED` only).
 
+Theorem citation for language equivalence: [`subset-construction.md`](subset-construction.md).
+
 ## Foundational tests (`@theorem-implemented-test`)
 
 | Source | Test |
 |--------|------|
 | `contains` (`DEFINITIONAL`) | `contains(w) agrees with simulateFSA(M, w)` |
-| `subsetConstruction` / `toDFA()` (`THEOREM-IMPLEMENTED`) | Golden `toDefinition()` vs `test/fixtures/subset-construction.expected.json` |
+| `subsetConstruction` / `toDFA()` (`THEOREM-IMPLEMENTED`) | Structural `subsetOf` witness (L1–L4) + minimal acceptance smoke |
 
-No `maxLength` word enumeration. Powerset construction is verified by **reviewed golden DFA definitions** per canonical NFA — not by sampling Σ^≤n.
+No `maxLength` word enumeration. Powerset construction is verified by **structural witnesses** per canonical NFA — not by sampling Σ^≤n.
 
 ## Coverage caveat
 

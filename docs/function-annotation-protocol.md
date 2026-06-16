@@ -37,7 +37,7 @@ Optional non-math comments (algorithm steps, dead-state rationale) are plain pro
 Place on the `describe` or `it` block:
 
 ```javascript
-// @theorem-implemented-test — powerset construction golden fixture (fixture instances only)
+// @theorem-implemented-test — structural subset witness + acceptance smoke
 ```
 
 ### Required pairing
@@ -45,11 +45,11 @@ Place on the `describe` or `it` block:
 | Source `@fas-correctness` | Test requirement |
 |---------------------------|------------------|
 | `DEFINITIONAL` | At least one `@theorem-implemented-test` |
-| `THEOREM-IMPLEMENTED` | `@theorem-implemented-test` via golden construction fixtures (`test/fixtures/subset-construction.expected.json`) |
+| `THEOREM-IMPLEMENTED` | `@theorem-implemented-test` via structural witness assertions (`test/helpers/subsetWitnessAssertions.js`) |
 
 ### No `maxLength` / no EXHAUSTIVE-BOUNDED
 
-Do **not** use arbitrary word-length caps, `languagesEquivalent`-style sampling, or bounded enumeration to claim theorem verification. Powerset construction is verified by **golden DFA definitions** produced from the formal construction — not by enumerating Σ^≤n.
+Do **not** use arbitrary word-length caps, `languagesEquivalent`-style sampling, or bounded enumeration to claim theorem verification. Powerset construction is verified by **structural witnesses** (L1–L4) plus **minimal acceptance smoke** on witness words — not by enumerating Σ^≤n.
 
 ### Strictly prohibited
 
@@ -66,4 +66,6 @@ Do **not** use arbitrary word-length caps, `languagesEquivalent`-style sampling,
 - \(F' = \{ R \in Q' \mid R \cap F \neq \emptyset \}\)
 - Explicit `dead` when \(\delta'\) is \(\emptyset\) (complete DFA for simulation)
 
-Tests assert `toDFA().toDefinition()` matches the reviewed fixture for each canonical NFA input.
+**Theorem (L5, cited):** Sipser Thm. 1.19 — every NFA has an equivalent DFA. See [`subset-construction.md`](subset-construction.md).
+
+Tests assert structural witnesses via `subsetOf` and minimal acceptance smoke on canonical NFA fixtures.

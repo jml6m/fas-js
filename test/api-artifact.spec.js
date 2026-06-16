@@ -10,6 +10,11 @@ import { runInNewContext } from "node:vm";
 
 import { assert } from "chai";
 
+import {
+  assertPublicApiSurface,
+  PUBLIC_API_EXPORTS,
+} from "./helpers/publicApiContract.js";
+
 const __dir = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dir, "..");
 const require = createRequire(import.meta.url);
@@ -40,19 +45,27 @@ function exercisePublicApi(api) {
 }
 
 describe("lib artifacts (#235)", function() {
+  it("lib/index.d.ts declares only the public API", function() {
+    const dts = readFileSync(resolve(root, "lib/index.d.ts"), "utf8");
+    assert.match(
+      dts,
+      /export\s*\{\s*type\s+TransitionInput\s*,\s*createFSA\s*,\s*simulateFSA\s*,\s*stepOnceFSA\s*\}\s*;/
+    );
+    assert.notInclude(dts, "RegularLanguage");
+    assert.notInclude(dts, "subsetConstruction");
+  });
+
   it("ESM entry (lib/index.js) matches public API contract", async function() {
     const mod = await import(pathToFileURL(resolve(root, "lib/index.js")).href);
-    assert.isFunction(mod.createFSA);
-    assert.isFunction(mod.simulateFSA);
-    assert.isFunction(mod.stepOnceFSA);
+    assertPublicApiSurface(mod, "lib/index.js");
+    assert.deepEqual(Object.keys(mod).sort(), PUBLIC_API_EXPORTS);
     exercisePublicApi(mod);
   });
 
   it("CJS entry (lib/index.cjs) matches public API contract", function() {
     const mod = require(resolve(root, "lib/index.cjs"));
-    assert.isFunction(mod.createFSA);
-    assert.isFunction(mod.simulateFSA);
-    assert.isFunction(mod.stepOnceFSA);
+    assertPublicApiSurface(mod, "lib/index.cjs");
+    assert.deepEqual(Object.keys(mod).sort(), PUBLIC_API_EXPORTS);
     exercisePublicApi(mod);
   });
 
@@ -62,6 +75,7 @@ describe("lib artifacts (#235)", function() {
     runInNewContext(code, sandbox, { filename: "lib/bundle.js" });
 
     assert.isObject(sandbox.fasJs);
+    assertPublicApiSurface(sandbox.fasJs, "lib/bundle.js fasJs");
     exercisePublicApi(sandbox.fasJs);
   });
 });

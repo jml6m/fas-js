@@ -1,19 +1,18 @@
 /**
- * Regular language theory — definitions, operations, closure, NFA→DFA.
+ * Regular language theory — definitions, operations, closure.
  *
  * Reviewer guide: docs/languages-testing.md
  */
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { createFSA, simulateFSA } from "../src/modules";
 import { ErrorCode } from "../src/globals/errors";
 import { Language } from "../src/languages/Language";
 import { RegularLanguage } from "../src/languages/RegularLanguage";
 import { subsetConstruction } from "../src/languages/NFAtoDFA";
-import { definitionsEqual } from "./helpers/fsaDefinition.js";
 import { dfaLanguagesEqual } from "./helpers/dfaLanguageEqual.js";
+import {
+  assertAcceptanceSmoke,
+  assertSubsetStructuralWitness,
+} from "./helpers/subsetWitnessAssertions.js";
 import { emitTheoremCoverageCaveat } from "./helpers/theoremCoverageCaveat.js";
 import {
   assertConcatMembership,
@@ -22,11 +21,6 @@ import {
 } from "./helpers/membershipAssertions.js";
 
 import { assert, expect } from "chai";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const SUBSET_FIXTURES = JSON.parse(
-  readFileSync(join(__dirname, "fixtures", "subset-construction.expected.json"), "utf8")
-);
 
 /** Mirrors RegularLanguage.contains — simulateFSA, with E-009 mapped to false. */
 function acceptanceViaSimulator(word, fsa) {
@@ -68,18 +62,6 @@ function endsIn(symbol) {
       "q0",
       ["q1"]
     )
-  );
-}
-
-function assertSubsetConstructionMatchesFixture(nfaLang, fixtureKey) {
-  const dfaLang = nfaLang.toDFA();
-  const actual = dfaLang.toDefinition();
-  const expected = SUBSET_FIXTURES[fixtureKey];
-
-  assert.equal(dfaLang.getAutomaton().getType(), "DFA");
-  assert.isTrue(
-    definitionsEqual(actual, expected),
-    `subset construction should match fixture ${fixtureKey}`
   );
 }
 
@@ -211,6 +193,83 @@ describe("Regular languages (#v1.5)", function() {
     });
   });
 
+  describe("Subset construction (toDFA)", function() {
+    // @theorem-implemented-test — structural witness (L1–L4) + acceptance smoke
+    it("witness and smoke: 01-or-1 NFA", function() {
+      const nfaLang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ["q1", "q2", "q3", "q4"],
+          "01",
+          [
+            { from: "q1", to: "q2", input: "0" },
+            { from: "q2", to: "q3", input: "1" },
+            { from: "q1", to: "q4", input: "1" },
+            { from: "q3", to: "q3", input: "" },
+            { from: "q4", to: "q4", input: "" },
+          ],
+          "q1",
+          ["q3", "q4"]
+        )
+      );
+      const nfa = nfaLang.getAutomaton();
+
+      assertSubsetStructuralWitness(nfa, subsetConstruction(nfa));
+      assertAcceptanceSmoke(nfaLang, ["", "0", "1", "01", "10"]);
+    });
+
+    it("witness and smoke: multi-destination NFA", function() {
+      const nfaLang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ["q1", "q2"],
+          "ab",
+          [
+            { from: "q1", to: "q1,q2", input: "a" },
+            { from: "q2", to: "q2", input: "b" },
+          ],
+          "q1",
+          ["q2"]
+        )
+      );
+      const nfa = nfaLang.getAutomaton();
+
+      assertSubsetStructuralWitness(nfa, subsetConstruction(nfa));
+      assertAcceptanceSmoke(nfaLang, ["a", "b", "ab"]);
+    });
+
+    it("witness and smoke: sparse NFA uses dead state", function() {
+      const nfaLang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ["q1", "q2"],
+          "a",
+          [
+            { from: "q1", to: "q2", input: "a" },
+            { from: "q2", to: "q2", input: "" },
+          ],
+          "q1",
+          ["q2"]
+        )
+      );
+      const nfa = nfaLang.getAutomaton();
+      const result = subsetConstruction(nfa);
+
+      assertSubsetStructuralWitness(nfa, result);
+      assert.include(result.definition.states, "dead");
+      assertAcceptanceSmoke(nfaLang, ["a", "b"]);
+    });
+
+    it("returns the same DFA when toDFA is applied twice", function() {
+      const dfaLang = singleton("a");
+      const once = dfaLang.toDFA().toDefinition();
+      const twice = dfaLang.toDFA().toDFA().toDefinition();
+      assert.deepEqual(once, twice);
+    });
+
+    it("rejects subset construction on a DFA", function() {
+      const dfa = singleton("a").getAutomaton();
+      expect(() => subsetConstruction(dfa)).to.throw(TypeError);
+    });
+  });
+
   describe("Kleene star", function() {
     it("builds an automaton for L*", function() {
       const source = singleton("a");
@@ -233,46 +292,6 @@ describe("Regular languages (#v1.5)", function() {
     });
   });
 
-  describe("Subset construction (every NFA has an equivalent DFA)", function() {
-    // @theorem-implemented-test — golden powerset construction fixtures (instances in subset-construction.expected.json)
-    it("produces the expected DFA for the 01-or-1 NFA", function() {
-      const nfaLang = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2", "q3", "q4"],
-          "01",
-          [
-            { from: "q1", to: "q2", input: "0" },
-            { from: "q2", to: "q3", input: "1" },
-            { from: "q1", to: "q4", input: "1" },
-            { from: "q3", to: "q3", input: "" },
-            { from: "q4", to: "q4", input: "" },
-          ],
-          "q1",
-          ["q3", "q4"]
-        )
-      );
-
-      assertSubsetConstructionMatchesFixture(nfaLang, "accepts01or1");
-    });
-
-    it("produces the expected DFA for a multi-destination NFA", function() {
-      const nfaLang = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2"],
-          "ab",
-          [
-            { from: "q1", to: "q1,q2", input: "a" },
-            { from: "q2", to: "q2", input: "b" },
-          ],
-          "q1",
-          ["q2"]
-        )
-      );
-
-      assertSubsetConstructionMatchesFixture(nfaLang, "multiDestAb");
-    });
-  });
-
   describe("Membership edge cases", function() {
     it("returns false for symbols outside the alphabet", function() {
       const lang = singleton("a");
@@ -285,37 +304,11 @@ describe("Regular languages (#v1.5)", function() {
       expect(() => lang.contains(null)).to.throw(TypeError);
     });
 
-    it("skips epsilon targets already in closure during subset construction", function() {
-      const lang = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2"],
-          "a",
-          [
-            { from: "q1", to: "q2", input: "" },
-            { from: "q1", to: "q2", input: "" },
-            { from: "q2", to: "q2", input: "a" },
-          ],
-          "q1",
-          ["q2"]
-        )
-      );
-
-      assertSubsetConstructionMatchesFixture(lang, "duplicateEpsilon");
-    });
-
     it("exports automata for inspection", function() {
       const lang = singleton("a");
       const definition = lang.toDefinition();
       assert.include(definition.states, "q1");
       assert.deepEqual(definition.accepts, ["q1"]);
-    });
-
-    it("returns the same DFA when toDFA is applied twice", function() {
-      const dfaLang = singleton("a");
-      const once = dfaLang.toDFA().toDefinition();
-      const twice = dfaLang.toDFA().toDFA().toDefinition();
-
-      assert.isTrue(definitionsEqual(once, twice));
     });
 
     it("detects non-equivalent languages via complete DFA distinguishability", function() {
@@ -327,28 +320,6 @@ describe("Regular languages (#v1.5)", function() {
       assert.isFalse(right.contains("a"));
     });
 
-    it("rejects subset construction on a DFA", function() {
-      const dfa = singleton("a").getAutomaton();
-      expect(() => subsetConstruction(dfa)).to.throw(TypeError);
-    });
-
-    it("uses a dead state when the NFA lacks a transition", function() {
-      const sparse = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2"],
-          "a",
-          [
-            { from: "q1", to: "q2", input: "a" },
-            { from: "q2", to: "q2", input: "" },
-          ],
-          "q1",
-          ["q2"]
-        )
-      );
-
-      assertSubsetConstructionMatchesFixture(sparse, "sparseTransition");
-    });
-
     it("preserves equivalence after Kleene star", function() {
       const source = endsIn("1");
       const star = source.kleeneStar();
@@ -356,25 +327,6 @@ describe("Regular languages (#v1.5)", function() {
 
       assert.isTrue(star.contains(""));
       assertStarMembership(source, star, words);
-    });
-
-    it("reuses subset states when symbols converge", function() {
-      const lang = RegularLanguage.fromAutomaton(
-        createFSA(
-          ["q1", "q2"],
-          "01",
-          [
-            { from: "q1", to: "q1", input: "0" },
-            { from: "q1", to: "q2", input: "1" },
-            { from: "q2", to: "q2", input: "0" },
-            { from: "q2", to: "q2", input: "1" },
-          ],
-          "q1",
-          ["q2"]
-        )
-      );
-
-      assert.isTrue(definitionsEqual(lang.toDefinition(), lang.toDFA().toDefinition()));
     });
 
     it("groups multi-destination transitions when exporting", function() {

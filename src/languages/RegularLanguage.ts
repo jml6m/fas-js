@@ -80,7 +80,7 @@ export class RegularLanguage extends Language {
       return this;
     }
 
-    const definition = subsetConstruction(this.#automaton);
+    const { definition } = subsetConstruction(this.#automaton);
     return RegularLanguage.fromAutomaton(buildFromDefinition(definition));
   }
 }

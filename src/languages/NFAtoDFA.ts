@@ -5,6 +5,20 @@ import { instanceOf } from "../globals/globals";
 import type { TransitionInput } from "../utils/DFAUtils";
 import { languageAlphabetSymbols } from "./fsaHelpers";
 
+export type SubsetConstructionDefinition = {
+  states: string[];
+  alphabet: string[];
+  transitions: TransitionInput[];
+  start: string;
+  accepts: string[];
+};
+
+export type SubsetConstructionResult = {
+  definition: SubsetConstructionDefinition;
+  /** DFA state name → sorted NFA state names in that subset (empty for dead). */
+  subsetOf: ReadonlyMap<string, readonly string[]>;
+};
+
 // ε-closure E(R): states reachable from R via zero or more ε-transitions.
 function epsilonClosure(states: State[], fsa: FSA): State[] {
   const closure = new Map<string, State>();
@@ -49,24 +63,23 @@ function stateSetKey(states: State[]): string {
   return states.map(state => state.name).join(",");
 }
 
+function subsetWitness(members: State[]): readonly string[] {
+  return members.map(state => state.name).sort();
+}
+
 /**
  * @fas-correctness THEOREM-IMPLEMENTED
- * @fas-spec Powerset (subset) construction with ε-closure — every NFA has an equivalent DFA.
+ * @fas-spec Powerset (subset) construction with ε-closure (Sipser Thm. 1.19).
  */
 /* @coverage-caveat: c8 100% here means fixture NFA instances were exercised — not Σ* proof */
-export function subsetConstruction(nfa: FSA): {
-  states: string[];
-  alphabet: string[];
-  transitions: TransitionInput[];
-  start: string;
-  accepts: string[];
-} {
+export function subsetConstruction(nfa: FSA): SubsetConstructionResult {
   if (!instanceOf(NFA, nfa)) {
     throw new TypeError("subsetConstruction requires an NFA");
   }
 
   const alphabet = languageAlphabetSymbols(nfa);
   const acceptNames = new Set([...nfa.getAcceptStates()].map(state => state.name));
+  const nfaStateNames = new Set([...nfa.getStates()].map(state => state.name));
   const startSet = epsilonClosure([nfa.getStartState()], nfa);
 
   const setRegistry = new Map<string, string>();
@@ -130,11 +143,25 @@ export function subsetConstruction(nfa: FSA): {
     .filter(([, members]) => members.some(state => acceptNames.has(state.name)))
     .map(([name]) => name);
 
+  const subsetOf = new Map<string, readonly string[]>();
+  for (const [name, members] of setMembers) {
+    const witness = subsetWitness(members);
+    for (const stateName of witness) {
+      if (!nfaStateNames.has(stateName)) {
+        throw new Error(`subset witness contains unknown NFA state: ${stateName}`);
+      }
+    }
+    subsetOf.set(name, witness);
+  }
+
   return {
-    states,
-    alphabet,
-    transitions,
-    start: startName,
-    accepts,
+    definition: {
+      states,
+      alphabet,
+      transitions,
+      start: startName,
+      accepts,
+    },
+    subsetOf,
   };
 }

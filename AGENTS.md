@@ -100,7 +100,7 @@ Minimal labels in [`docs/function-annotation-protocol.md`](docs/function-annotat
 | Source `src/` | Test `test/` |
 |---------------|--------------|
 | `@fas-correctness DEFINITIONAL` | `@theorem-implemented-test` required |
-| `@fas-correctness THEOREM-IMPLEMENTED` | `@theorem-implemented-test` via golden fixtures |
+| `@fas-correctness THEOREM-IMPLEMENTED` | `@theorem-implemented-test` via structural witness assertions |
 
 Do **not** annotate every helper or edge-case function. Use normal comments for “how it works” when needed.
 
@@ -113,13 +113,13 @@ Do **not** annotate every helper or edge-case function. Use normal comments for 
 - Equivalence helpers in **`src/`**
 - Renaming spot-checks as “equivalent”, “iff”, or “proved”
 
-**Required** for `subsetConstruction` / `toDFA()`: golden DFA fixtures in `test/fixtures/subset-construction.expected.json` with `@theorem-implemented-test` in `test/languages.spec.js`.
+**Required** for `subsetConstruction` / `toDFA()`: structural `subsetOf` witness assertions in `test/languages.spec.js` (`test/helpers/subsetWitnessAssertions.js`); theorem cited in `docs/subset-construction.md`.
 
 ---
 
 ## 🔄 CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): runs `npm audit --audit-level=high` + `npm test` on Node 18/20/22 for every PR and pushes to `master` / `main-v1-1-prep`; uploads coverage to Codecov via OIDC (tokenless) on the Node 20 matrix entry.
+- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov via OIDC (tokenless) on the Node 20 matrix entry.
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
 - **Stale** (`.github/workflows/stale.yml`): marks inactive issues stale after 60 days, closes after 14 more days.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).

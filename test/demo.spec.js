@@ -11,6 +11,7 @@ import { JSDOM } from "jsdom";
 import { assert } from "chai";
 
 import { startDemoStaticServer } from "../scripts/demo-static-server.mjs";
+import { assertPublicApiSurface } from "./helpers/publicApiContract.js";
 
 const __dir = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dir, "..");
@@ -48,10 +49,7 @@ function loadDemoBundleApi() {
 }
 
 function exerciseDemoBundle(api) {
-  assert.isFunction(api.createFSA);
-  assert.isFunction(api.simulateFSA);
-  assert.isFunction(api.stepOnceFSA);
-  assert.isUndefined(api.RegularLanguage);
+  assertPublicApiSurface(api, "demo vendor fasJs");
 
   const fsa = api.createFSA(
     ["q1", "q2"],
