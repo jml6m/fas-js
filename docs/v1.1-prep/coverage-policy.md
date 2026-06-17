@@ -10,8 +10,8 @@ Coverage is a **sanity check**, not the definition of done. Tests must prove **w
 
 | Branch | Gate (c8) |
 |--------|-----------|
-| `master` | 90% lines (legacy) |
-| `main-v1-1-prep` | **90%** lines, statements, functions, branches |
+| `master` | **90%** lines, statements, functions, branches |
+| version integration branches | **90%** lines, statements, functions, branches |
 
 Aspire toward higher coverage when it falls out naturally from meaningful tests. The floor is ~90%; there is no reward for 100% line hits without behavioral assertions.
 

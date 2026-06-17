@@ -2,11 +2,11 @@
 
 **Project:** fas-js
 **Runtime:** Node.js (>=18)
-**Testing:** Mocha + nyc (coverage)
-**Build:** Browserify + Babelify + tinyify → `lib/bundle.js`
-**Types:** Flow
+**Testing:** Mocha + c8 (coverage)
+**Build:** tsup → `lib/index.js`, `lib/index.cjs`, `lib/bundle.js`
+**Types:** TypeScript (strict)
 
-> **📌 Single Source of Truth**: `AGENTS.md` is the authoritative reference for coding standards, architecture rules, and project policies. This file is a generated mirror for Copilot; if there is a conflict, follow `AGENTS.md`.
+> **📌 Single Source of Truth**: `AGENTS.md` is the authoritative reference for coding standards, architecture rules, and project policies. This file is a mirror for Copilot; if there is a conflict, follow `AGENTS.md`.
 
 ---
 
@@ -30,16 +30,17 @@ For unsupervised runs (e.g. automated fixes):
 - `git push` (agents propose; CI/humans push)
 - Bumping `version` in `package.json`
 
-### 4. Branch Workflow (v1.1 Prep)
+### 4. Branch Workflow
 
 | Branch | Purpose |
 |--------|---------|
-| `master` | Stable / public — protected; PR-only from maintainers |
-| `main-v1-1-prep` | Integration line for v1.1 modernization — **default target for all new PRs** |
-| `feat/*`, `chore/*`, `fix/*` | Short-lived topic branches → PR into `main-v1-1-prep` |
+| `master` | Stable / public — protected; what npm and badges reflect |
+| `fix/*`, `feat/*`, `chore/*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
+| topic branches on top | Short-lived branches → PR into the **current version integration branch** |
 
-- v1.1 prep modernizes toolchain, types, tests, and docs — **not** new public API features (v2).
-- At v1.1 release: merge `main-v1-1-prep` → `master`, then rename `master` → `main`.
+- While a release (e.g. v1.7) is in flight, stack topic work on that integration branch (e.g. `chore/v1.7-repo-org`).
+- At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
+- New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
 - See [`CONTRIBUTING.md`](../CONTRIBUTING.md) for contributor-facing details.
 
 ### 5. GitHub Issue Workflow
@@ -61,23 +62,26 @@ Use the issue templates in `.github/ISSUE_TEMPLATE/`. Blank issues are disabled.
 
 ```bash
 npm ci              # install
-npm run build       # browserify → lib/bundle.js (requires lib/ directory)
-npm run flow check  # Flow type check
-npm test            # build + mocha + nyc coverage
+npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/index.d.ts
+npm run typecheck   # TypeScript type check (no emit)
+npm run lint        # ESLint on src/
+npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
-- Flow types are checked as part of `prepublishOnly` via `npm run flow check` (Babel's `@babel/preset-flow` strips types during build; it does not type-check).
-- Coverage threshold: **90%** lines on `master` (current); **100%** target on `main-v1-1-prep` (enforced by nyc in `npm test` once raised). Documented exceptions only for genuinely complex edge cases.
+- TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
+- Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See `docs/v1.1-prep/coverage-policy.md`.
 
 ---
 
 ## 🏗️ Architecture
 
-- **Source**: `src/` — Flow-typed JavaScript modules
-- **Entry**: `src/modules.js` exports public API (`simulateFSA`, `stepOnceFSA`, `createFSA`)
-- **Build output**: `lib/bundle.js` (UMD bundle, standalone `fasJs`)
-- **Tests**: `test/**/*.spec.js` — Mocha + Chai + Babel register
+- **Source**: `src/` — TypeScript modules
+- **Entry**: `src/modules.ts` exports public API (`simulateFSA`, `stepOnceFSA`, `createFSA`)
+- **Languages**: `src/languages/` — abstract `Language` base class; `RegularLanguage` extends it for FSA-backed regular languages. Future non-regular types extend `Language` directly, not `RegularLanguage`. Internal to npm; demo bundle (`src/demo-bundle.ts`) exposes only the public FSA API.
+- **Build output**: `lib/index.js` (ESM), `lib/index.cjs` (CJS), `lib/bundle.js` (IIFE global `fasJs`), `lib/index.d.ts`
+- **Tests**: `test/**/*.spec.js` — Mocha + Chai + tsx loader. See `docs/v1.1-prep/test-architecture.md`.
+- **Demo QA**: `test/demo.spec.js` (in `npm test`) — artifact + HTTP + jsdom UI checks; `npm run serve:demo` for local browser testing.
 
 Do not change the public API surface without bumping the major version (human decision).
 
@@ -86,15 +90,36 @@ Do not change the public API surface without bumping the major version (human de
 ## 🧪 Testing
 
 - Tests live in `test/` as `*.spec.js` files.
-- Run with `npm test` (builds first, then mocha with nyc coverage).
-- On `master`: maintain ≥90% line coverage.
-- On `main-v1-1-prep`: maintain **100%** line coverage; exceptions require a linked issue and inline documentation.
+- Run with `npm test` (builds first, then mocha with c8 coverage).
+- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/test-architecture.md` and `docs/v1.1-prep/coverage-policy.md`.
+
+### Function annotations (foundational math only)
+
+Minimal labels in [`docs/function-annotation-protocol.md`](../docs/function-annotation-protocol.md). Grep: `@fas-correctness`, `@theorem-implemented-test`, `@coverage-caveat`.
+
+| Source `src/` | Test `test/` |
+|---------------|--------------|
+| `@fas-correctness DEFINITIONAL` | `@theorem-implemented-test` required |
+| `@fas-correctness THEOREM-IMPLEMENTED` | `@theorem-implemented-test` via structural witness assertions |
+
+Do **not** annotate every helper or edge-case function. Use normal comments for “how it works” when needed.
+
+### ⛔ Prohibited testing shortcuts (agents & contributors)
+
+**Never** treat any of the following as proof that a theorem-backed `src/` function is correct:
+
+- Line/branch **coverage %** alone (“all lines hit once”) — see `@coverage-caveat` on `THEOREM-IMPLEMENTED` functions
+- Arbitrary `maxLength` word enumeration or bounded equivalence oracles (removed; do not reintroduce in `src/` or as theorem proof)
+- Equivalence helpers in **`src/`**
+- Renaming spot-checks as “equivalent”, “iff”, or “proved”
+
+**Required** for `subsetConstruction` / `toDFA()`: structural `subsetOf` witness assertions in `test/languages.spec.js` (`test/helpers/subsetWitnessAssertions.js`); theorem cited in `docs/subset-construction.md`.
 
 ---
 
 ## 🔄 CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): runs `npm audit --audit-level=high` + `npm test` on Node 18/20/22 for every PR and pushes to `master` / `main-v1-1-prep`; uploads coverage to Codecov via OIDC (tokenless) on the Node 20 matrix entry.
+- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via `CODECOV_TOKEN`.
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
 - **Stale** (`.github/workflows/stale.yml`): marks inactive issues stale after 60 days, closes after 14 more days.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).

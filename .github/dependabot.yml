@@ -6,25 +6,11 @@ updates:
       interval: monthly
     open-pull-requests-limit: 10
     groups:
-      babel:
-        patterns:
-          - "@babel/*"
-          - "babelify"
-          - "babel-*"
       testing:
         patterns:
           - "mocha"
           - "chai"
-          - "nyc"
           - "c8"
-    ignore:
-      # Flow frozen until TypeScript migration (Phase 3)
-      - dependency-name: flow-bin
-        versions:
-          - "> 0.107.0"
-      - dependency-name: "@babel/preset-flow"
-        versions:
-          - "> 7.0.0"
 
   - package-ecosystem: github-actions
     directory: "/"
