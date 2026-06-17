@@ -27,7 +27,7 @@ Describe new functions, parameters, or return types. If extending existing API:
 - [ ] No — backward compatible addition
 - [ ] Yes — requires a major version bump (v2+)
 
-> New public API features are typically scheduled for **v2**, not the v1.1 prep modernization phase. If this is prep-phase work (tooling, types, docs), say so in the summary.
+> New public API features are typically scheduled for **v2**. If this is release-line work (tooling, tests, docs, demo UX), say so in the summary.
 
 ## Acceptance criteria
 
@@ -36,6 +36,6 @@ Describe new functions, parameters, or return types. If extending existing API:
 ## Testing checklist
 
 - [ ] Unit tests added or updated
-- [ ] Coverage maintained (100% on `main-v1-1-prep`, 90% on `master`)
+- [ ] Coverage maintained (90% floor on lines, statements, functions, branches)
 - [ ] `npm test` passes locally
 - [ ] README updated if user-facing

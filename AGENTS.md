@@ -38,7 +38,7 @@ For unsupervised runs (e.g. automated fixes):
 | `fix/*`, `feat/*`, `chore/*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
 | topic branches on top | Short-lived branches → PR into the **current version integration branch** |
 
-- While a release (e.g. v1.6) is in flight, stack topic work on that integration branch (e.g. `fix/demo-v1.6-ux`).
+- While a release (e.g. v1.7) is in flight, stack topic work on that integration branch (e.g. `chore/v1.7-repo-org`).
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
 - See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contributor-facing details.
@@ -70,7 +70,7 @@ npm test            # typecheck + lint + build + mocha + c8 coverage
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
-- Coverage threshold on `main-v1-1-prep`: **90%** lines/statements/functions/branches (c8 in `npm test`). Tests target workflows and contracts, not line-hit goals. See `docs/v1.1-prep/coverage-policy.md`.
+- Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). Tests target workflows and contracts, not line-hit goals. See `docs/v1.1-prep/coverage-policy.md`.
 
 ---
 
@@ -90,9 +90,8 @@ Do not change the public API surface without bumping the major version (human de
 ## 🧪 Testing
 
 - Tests live in `test/` as `*.spec.js` files.
-- Run with `npm test` (builds first, then mocha with nyc coverage).
-- On `master`: maintain ≥90% line coverage.
-- On `main-v1-1-prep`: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/test-architecture.md` and `docs/v1.1-prep/coverage-policy.md`.
+- Run with `npm test` (builds first, then mocha with c8 coverage).
+- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/test-architecture.md` and `docs/v1.1-prep/coverage-policy.md`.
 
 ### Function annotations (foundational math only)
 
@@ -120,7 +119,7 @@ Do **not** annotate every helper or edge-case function. Use normal comments for 
 
 ## 🔄 CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov via OIDC (tokenless) on the Node 20 matrix entry.
+- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via repository secret `CODECOV_TOKEN`.
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
 - **Stale** (`.github/workflows/stale.yml`): marks inactive issues stale after 60 days, closes after 14 more days.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
