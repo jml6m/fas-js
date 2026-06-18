@@ -13,7 +13,6 @@ import {
   assertAcceptanceSmoke,
   assertSubsetStructuralWitness,
 } from "./helpers/subsetWitnessAssertions.js";
-import { emitTheoremCoverageCaveat } from "./helpers/theoremCoverageCaveat.js";
 import {
   assertConcatMembership,
   assertStarMembership,
@@ -66,12 +65,7 @@ function endsIn(symbol) {
 }
 
 describe("Regular languages (#v1.5)", function() {
-  before(function() {
-    emitTheoremCoverageCaveat("test/languages.spec.js");
-  });
-
   describe("Definition: L(M) = { w | M accepts w }", function() {
-    // @theorem-implemented-test — DEFINITIONAL contains ↔ simulateFSA
     it("contains(w) agrees with simulateFSA(M, w)", function() {
       const lang = singleton("a");
       const fsa = lang.getAutomaton();
@@ -194,7 +188,6 @@ describe("Regular languages (#v1.5)", function() {
   });
 
   describe("Subset construction (toDFA)", function() {
-    // @theorem-implemented-test — structural witness (L1–L4) + acceptance smoke
     it("witness and smoke: 01-or-1 NFA", function() {
       const nfaLang = RegularLanguage.fromAutomaton(
         createFSA(

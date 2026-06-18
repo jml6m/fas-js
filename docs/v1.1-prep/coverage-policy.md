@@ -15,7 +15,7 @@ Coverage is a **sanity check**, not the definition of done. Tests must prove **w
 
 Aspire toward higher coverage when it falls out naturally from meaningful tests. The floor is ~90%; there is no reward for 100% line hits without behavioral assertions.
 
-Functions tagged `@fas-correctness THEOREM-IMPLEMENTED` carry `/* @coverage-caveat */` in source: **c8 100% on those functions means fixture instances were exercised, not Σ\* verification.** See [`../function-annotation-protocol.md`](../function-annotation-protocol.md).
+High coverage on language algorithms means fixture instances were exercised, not full input-space verification. See [`../types-and-correctness.md`](../types-and-correctness.md).
 
 ## CI config
 
