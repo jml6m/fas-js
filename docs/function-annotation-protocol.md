@@ -1,4 +1,4 @@
-# Function annotation protocol (minimal)
+# Function annotation protocol
 
 Only **foundational** math boundaries use `@fas-correctness` labels. Everything else uses normal comments if needed.
 
@@ -6,9 +6,9 @@ Grep anchors: `@fas-correctness`, `@theorem-implemented-test`, `@coverage-caveat
 
 ## Source (`src/`) — two labels only
 
-| Label | When | Example |
-|-------|------|---------|
-| `DEFINITIONAL` | Direct encoding of a formal definition | `contains` = M accepts w |
+| Label                 | When                                                   | Example                       |
+| --------------------- | ------------------------------------------------------ | ----------------------------- |
+| `DEFINITIONAL`        | Direct encoding of a formal definition                 | `contains` = M accepts w      |
 | `THEOREM-IMPLEMENTED` | Standard TOC construction; proof cited, not duplicated | `subsetConstruction`, `toDFA` |
 
 ### Minimal source template
@@ -30,8 +30,8 @@ Optional non-math comments (algorithm steps, dead-state rationale) are plain pro
 
 ## Tests — one label for foundational verification
 
-| Label | When |
-|-------|------|
+| Label                       | When                                                               |
+| --------------------------- | ------------------------------------------------------------------ |
 | `@theorem-implemented-test` | Verifies a `DEFINITIONAL` or `THEOREM-IMPLEMENTED` source function |
 
 Place on the `describe` or `it` block:
@@ -42,10 +42,10 @@ Place on the `describe` or `it` block:
 
 ### Required pairing
 
-| Source `@fas-correctness` | Test requirement |
-|---------------------------|------------------|
-| `DEFINITIONAL` | At least one `@theorem-implemented-test` |
-| `THEOREM-IMPLEMENTED` | `@theorem-implemented-test` via structural witness assertions (`test/helpers/subsetWitnessAssertions.js`) |
+| Source `@fas-correctness` | Test requirement                                                                                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `DEFINITIONAL`            | At least one `@theorem-implemented-test`                                                                  |
+| `THEOREM-IMPLEMENTED`     | `@theorem-implemented-test` via structural witness assertions (`test/helpers/subsetWitnessAssertions.js`) |
 
 ### No `maxLength` / no EXHAUSTIVE-BOUNDED
 
@@ -53,7 +53,7 @@ Do **not** use arbitrary word-length caps, `languagesEquivalent`-style sampling,
 
 ### Strictly prohibited
 
-- Treating **c8 coverage %** as proof of a theorem or Σ* correctness.
+- Treating **c8 coverage %** as proof of a theorem or Σ\* correctness.
 - Equivalence oracles in **`src/`**.
 - Naming spot-checks “equivalent”, “iff”, or “proved”.
 
@@ -61,8 +61,8 @@ Do **not** use arbitrary word-length caps, `languagesEquivalent`-style sampling,
 
 `subsetConstruction` / `toDFA()` implement:
 
-- \(q'_0 = E(\{q_0\})\)
-- \(\delta'(R, a) = E\left(\bigcup_{r \in R} \delta(r, a)\right)\)
+- \(q'\_0 = E(\{q_0\})\)
+- \(\delta'(R, a) = E\left(\bigcup\_{r \in R} \delta(r, a)\right)\)
 - \(F' = \{ R \in Q' \mid R \cap F \neq \emptyset \}\)
 - Explicit `dead` when \(\delta'\) is \(\emptyset\) (complete DFA for simulation)
 

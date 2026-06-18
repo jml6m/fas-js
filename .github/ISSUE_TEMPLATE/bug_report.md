@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Report incorrect FSA behavior, build failure, or test regression
-title: "[BUG]"
+title: '[BUG]'
 labels: bug
 assignees: ''
 ---
@@ -47,4 +47,4 @@ Paste error output here
 
 ## Additional context
 
-Screenshots, ObservableHQ demo link, or minimal code snippet if helpful.
+Screenshots, academic discussions, or minimal code snippet if helpful.
