@@ -1,7 +1,7 @@
 /**
  * CI gate: fail when a PR touches paths listed in .github/PROTECTED_FILES.json.
  */
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,7 +48,7 @@ export function resolveBaseSha() {
 
 export function getChangedFiles(baseSha) {
   try {
-    const output = execSync(`git diff ${baseSha} HEAD --name-only`, {
+    const output = execFileSync("git", ["diff", baseSha, "HEAD", "--name-only"], {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
