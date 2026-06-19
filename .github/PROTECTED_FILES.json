@@ -3,8 +3,8 @@
     "test/helpers/**",
     "src/modules.ts",
     "scripts/check-public-api.mjs",
-    "scripts/check-theorem-annotations.mjs",
-    "docs/function-annotation-protocol.md",
+    "scripts/check-protected-files.mjs",
+    ".github/PROTECTED_FILES.json",
     "package.json"
   ]
 }
