@@ -1,18 +1,20 @@
 /**
  * Unit tests for scripts/check-protected-files.mjs.
- * All runs are mocked — no real git commands or file I/O.
+ * All runs are mocked ΓÇö no real git commands or file I/O.
  */
+import { execFileSync } from "node:child_process";
 import { assert } from "chai";
 import {
   globToRegExp,
   findViolations,
+  loadPatterns,
   resolveBaseSha,
   runCheck,
 } from "../scripts/check-protected-files.mjs";
 
 const FAKE_SHA = "a".repeat(40);
 
-// ─── globToRegExp ────────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ globToRegExp ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 describe("globToRegExp", function () {
   it("matches an exact path", function () {
@@ -49,7 +51,7 @@ describe("globToRegExp", function () {
   });
 });
 
-// ─── findViolations ──────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ findViolations ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 describe("findViolations", function () {
   const patterns = [
@@ -100,7 +102,31 @@ describe("findViolations", function () {
   });
 });
 
-// ─── resolveBaseSha ──────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ loadPatterns ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+describe("loadPatterns", function () {
+  // Use the oldest reachable commit as a SHA that predates PROTECTED_FILES.json
+  const rootSha = execFileSync("git", ["rev-list", "--max-parents=0", "HEAD"], {
+    encoding: "utf8",
+  }).trim();
+
+  it("returns [] when PROTECTED_FILES.json does not exist at the base SHA", function () {
+    assert.deepEqual(loadPatterns(rootSha), []);
+  });
+
+  it("returns compiled patterns when PROTECTED_FILES.json exists at the base SHA", function () {
+    // HEAD on this branch has the file; use HEAD SHA as base
+    const headSha = execFileSync("git", ["rev-parse", "HEAD"], {
+      encoding: "utf8",
+    }).trim();
+    const patterns = loadPatterns(headSha);
+    assert.isArray(patterns);
+    assert.isAbove(patterns.length, 0);
+    assert.ok(patterns.every((p) => p instanceof RegExp));
+  });
+});
+
+// ΓöÇΓöÇΓöÇ resolveBaseSha ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 describe("resolveBaseSha", function () {
   const VALID_SHA = "a".repeat(40);
@@ -136,7 +162,7 @@ describe("resolveBaseSha", function () {
   });
 });
 
-// ─── runCheck (main orchestration) ──────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ runCheck (main orchestration) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 describe("runCheck", function () {
   function makeCapture() {
@@ -152,6 +178,22 @@ describe("runCheck", function () {
       get exitCode() { return exitCode; },
     };
   }
+
+  it("passes baseSha to loadPatternsFn", function () {
+    const cap = makeCapture();
+    const sha = "c".repeat(40);
+    let receivedSha;
+    runCheck({
+      resolveBaseShaFn: () => sha,
+      loadPatternsFn: (s) => { receivedSha = s; return []; },
+      getChangedFilesFn: () => [],
+      findViolationsFn: () => [],
+      log: cap.log,
+      error: cap.error,
+      exit: cap.exit,
+    });
+    assert.equal(receivedSha, sha);
+  });
 
   it("exits 0 and logs OK when there are no violations", function () {
     const cap = makeCapture();
@@ -210,6 +252,7 @@ describe("runCheck", function () {
     assert.throws(
       () =>
         runCheck({
+          resolveBaseShaFn: () => FAKE_SHA,
           loadPatternsFn: () => {
             throw new Error("bad config file");
           },
