@@ -33,23 +33,22 @@ export function loadPatterns() {
   return config.patterns.map(globToRegExp);
 }
 
-export function resolveBaseRef() {
-  const baseRef =
-    process.env.GITHUB_BASE_REF ??
-    process.env.PROTECTED_FILES_BASE_REF ??
-    "master";
-
-  if (!/^[0-9A-Za-z._/-]+$/.test(baseRef)) {
-    throw new Error(`Invalid base ref: ${baseRef}`);
+export function resolveBaseSha() {
+  const baseSha = process.env.BASE_SHA ?? process.env.PROTECTED_FILES_BASE_SHA;
+  if (!baseSha) {
+    throw new Error(
+      "BASE_SHA is required (set automatically in CI; for local runs set PROTECTED_FILES_BASE_SHA to a full commit SHA)"
+    );
   }
-
-  return baseRef;
+  if (!/^[0-9a-f]{40}$/i.test(baseSha)) {
+    throw new Error(`Invalid base SHA: ${baseSha}`);
+  }
+  return baseSha;
 }
 
-export function getChangedFiles(baseRef) {
-  const remoteRef = `origin/${baseRef}`;
+export function getChangedFiles(baseSha) {
   try {
-    const output = execSync(`git diff ${remoteRef}...HEAD --name-only`, {
+    const output = execSync(`git diff ${baseSha} HEAD --name-only`, {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
@@ -57,7 +56,7 @@ export function getChangedFiles(baseRef) {
     return output ? output.split(/\r?\n/).filter(Boolean) : [];
   } catch (err) {
     throw new Error(
-      `[lock-files] git diff failed for base ref "${baseRef}": ${err.message}`
+      `[lock-files] git diff failed for base SHA "${baseSha}": ${err.message}`
     );
   }
 }
@@ -75,7 +74,7 @@ export function findViolations(changedFiles, patterns) {
 
 export function runCheck({
   loadPatternsFn = loadPatterns,
-  resolveBaseRefFn = resolveBaseRef,
+  resolveBaseShaFn = resolveBaseSha,
   getChangedFilesFn = getChangedFiles,
   findViolationsFn = findViolations,
   log = (msg) => console.log(msg),
@@ -83,8 +82,8 @@ export function runCheck({
   exit = (code) => process.exit(code),
 } = {}) {
   const patterns = loadPatternsFn();
-  const baseRef = resolveBaseRefFn();
-  const changedFiles = getChangedFilesFn(baseRef);
+  const baseSha = resolveBaseShaFn();
+  const changedFiles = getChangedFilesFn(baseSha);
   const violations = findViolationsFn(changedFiles, patterns);
 
   if (violations.length === 0) {
@@ -94,7 +93,7 @@ export function runCheck({
   }
 
   error(`${RED}[lock-files] VIOLATION${RESET}`);
-  error(`Base ref: ${baseRef}`);
+  error(`Base SHA: ${baseSha}`);
   error("Protected files changed:");
   for (const file of violations) {
     error(`  - ${file}`);
