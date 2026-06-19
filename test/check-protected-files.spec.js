@@ -9,6 +9,8 @@ import {
   runCheck,
 } from "../scripts/check-protected-files.mjs";
 
+const FAKE_SHA = "a".repeat(40);
+
 // ─── globToRegExp ────────────────────────────────────────────────────────────
 
 describe("globToRegExp", function () {
@@ -118,7 +120,7 @@ describe("runCheck", function () {
     const cap = makeCapture();
     runCheck({
       loadPatternsFn: () => [globToRegExp("package.json")],
-      resolveBaseRefFn: () => "master",
+      resolveBaseShaFn: () => FAKE_SHA,
       getChangedFilesFn: () => ["src/foo.ts", "README.md"],
       findViolationsFn: () => [],
       log: cap.log,
@@ -133,9 +135,10 @@ describe("runCheck", function () {
 
   it("exits 1 and reports violations when protected files are changed", function () {
     const cap = makeCapture();
+    const sha = "b".repeat(40);
     runCheck({
       loadPatternsFn: () => [globToRegExp("package.json")],
-      resolveBaseRefFn: () => "chore/v1.7-repo-org",
+      resolveBaseShaFn: () => sha,
       getChangedFilesFn: () => ["package.json", "src/foo.ts"],
       findViolationsFn: () => ["package.json"],
       log: cap.log,
@@ -145,7 +148,7 @@ describe("runCheck", function () {
 
     assert.equal(cap.exitCode, 1);
     assert.isTrue(cap.errors.some((e) => e.includes("[lock-files] VIOLATION")));
-    assert.isTrue(cap.errors.some((e) => e.includes("Base ref: chore/v1.7-repo-org")));
+    assert.isTrue(cap.errors.some((e) => e.includes(`Base SHA: ${sha}`)));
     assert.isTrue(cap.errors.some((e) => e.includes("package.json")));
     assert.isTrue(cap.errors.some((e) => e.includes("CONTRIBUTING.md")));
   });
@@ -154,7 +157,7 @@ describe("runCheck", function () {
     const cap = makeCapture();
     runCheck({
       loadPatternsFn: () => [],
-      resolveBaseRefFn: () => "master",
+      resolveBaseShaFn: () => FAKE_SHA,
       getChangedFilesFn: () => [],
       findViolationsFn: () => ["package.json", "src/modules.ts"],
       log: cap.log,
@@ -179,17 +182,17 @@ describe("runCheck", function () {
     );
   });
 
-  it("propagates errors thrown by resolveBaseRef", function () {
+  it("propagates errors thrown by resolveBaseSha", function () {
     assert.throws(
       () =>
         runCheck({
           loadPatternsFn: () => [],
-          resolveBaseRefFn: () => {
-            throw new Error("invalid ref");
+          resolveBaseShaFn: () => {
+            throw new Error("missing SHA");
           },
           exit: () => {},
         }),
-      /invalid ref/
+      /missing SHA/
     );
   });
 
@@ -198,7 +201,7 @@ describe("runCheck", function () {
       () =>
         runCheck({
           loadPatternsFn: () => [],
-          resolveBaseRefFn: () => "master",
+          resolveBaseShaFn: () => FAKE_SHA,
           getChangedFilesFn: () => {
             throw new Error("git diff failed");
           },
