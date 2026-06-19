@@ -6,6 +6,7 @@ import { assert } from "chai";
 import {
   globToRegExp,
   findViolations,
+  resolveBaseSha,
   runCheck,
 } from "../scripts/check-protected-files.mjs";
 
@@ -96,6 +97,42 @@ describe("findViolations", function () {
 
   it("returns empty array when changedFiles is empty", function () {
     assert.deepEqual(findViolations([], patterns), []);
+  });
+});
+
+// ─── resolveBaseSha ──────────────────────────────────────────────────────────
+
+describe("resolveBaseSha", function () {
+  const VALID_SHA = "a".repeat(40);
+
+  afterEach(function () {
+    delete process.env.BASE_SHA;
+    delete process.env.PROTECTED_FILES_BASE_SHA;
+  });
+
+  it("returns BASE_SHA when set to a valid 40-char hex string", function () {
+    process.env.BASE_SHA = VALID_SHA;
+    assert.equal(resolveBaseSha(), VALID_SHA);
+  });
+
+  it("falls back to PROTECTED_FILES_BASE_SHA when BASE_SHA is absent", function () {
+    const fallback = "b".repeat(40);
+    process.env.PROTECTED_FILES_BASE_SHA = fallback;
+    assert.equal(resolveBaseSha(), fallback);
+  });
+
+  it("throws when neither env var is set", function () {
+    assert.throws(() => resolveBaseSha(), /BASE_SHA is required/);
+  });
+
+  it("throws when the SHA is not a 40-char hex string", function () {
+    process.env.BASE_SHA = "not-a-sha";
+    assert.throws(() => resolveBaseSha(), /Invalid base SHA/);
+  });
+
+  it("throws when the SHA is shorter than 40 hex chars", function () {
+    process.env.BASE_SHA = "a".repeat(39);
+    assert.throws(() => resolveBaseSha(), /Invalid base SHA/);
   });
 });
 
