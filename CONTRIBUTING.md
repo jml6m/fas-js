@@ -50,16 +50,16 @@ Certain paths are locked by the `lock-files` CI check (see [`.github/PROTECTED_F
 | `test/helpers/**` | Contract test functions — changes break foundational test fidelity |
 | `src/modules.ts` | Public API entry point — signature changes require major version bump |
 | `scripts/check-public-api.mjs` | Enforces public API contract |
-| `scripts/check-theorem-annotations.mjs` | Enforces correctness labeling protocol |
-| `docs/function-annotation-protocol.md` | Defines theorem vs. spot-check distinctions |
+| `scripts/check-protected-files.mjs` | The CI gate itself — must not be bypassed without owner review |
+| `.github/PROTECTED_FILES.json` | Defines the protected-path list — changes alter what is locked |
 | `package.json` | Version, public exports, build config |
 
 **Override process** (when a protected change is intentional):
 
 1. Open a PR with a clear explanation of why the protected file must change.
 2. Wait for the `lock-files` check to fail — that failure is expected.
-3. Request maintainer review and tag `@jml6m`.
-4. The maintainer decides whether to merge as-is or request refinements.
+3. Request review and tag `@jml6m`.
+4. Only `@jml6m` (project owner) can merge changes that touch protected files.
 
 ---
 

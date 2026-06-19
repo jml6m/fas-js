@@ -6,14 +6,15 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __dir = dirname(fileURLToPath(import.meta.url));
+const __file = fileURLToPath(import.meta.url);
+const __dir = dirname(__file);
 const root = resolve(__dir, "..");
 
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
 const RESET = "\x1b[0m";
 
-function globToRegExp(pattern) {
+export function globToRegExp(pattern) {
   const normalized = pattern.replace(/\\/g, "/");
   const escaped = normalized
     .replace(/[.+^${}()|[\]\\]/g, "\\$&")
@@ -23,7 +24,7 @@ function globToRegExp(pattern) {
   return new RegExp(`^${escaped}$`);
 }
 
-function loadPatterns() {
+export function loadPatterns() {
   const configPath = resolve(root, ".github/PROTECTED_FILES.json");
   const config = JSON.parse(readFileSync(configPath, "utf8"));
   if (!Array.isArray(config.patterns) || config.patterns.length === 0) {
@@ -32,7 +33,7 @@ function loadPatterns() {
   return config.patterns.map(globToRegExp);
 }
 
-function resolveBaseRef() {
+export function resolveBaseRef() {
   const baseRef =
     process.env.GITHUB_BASE_REF ??
     process.env.PROTECTED_FILES_BASE_REF ??
@@ -45,31 +46,23 @@ function resolveBaseRef() {
   return baseRef;
 }
 
-function getChangedFiles(baseRef) {
+export function getChangedFiles(baseRef) {
   const remoteRef = `origin/${baseRef}`;
-  const commands = [
-    `git diff ${remoteRef}...HEAD --name-only`,
-    "git diff HEAD~1...HEAD --name-only",
-  ];
-
-  for (const command of commands) {
-    try {
-      const output = execSync(command, {
-        cwd: root,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      }).trim();
-
-      return output ? output.split(/\r?\n/).filter(Boolean) : [];
-    } catch {
-      // Try the next diff strategy.
-    }
+  try {
+    const output = execSync(`git diff ${remoteRef}...HEAD --name-only`, {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+    return output ? output.split(/\r?\n/).filter(Boolean) : [];
+  } catch (err) {
+    throw new Error(
+      `[lock-files] git diff failed for base ref "${baseRef}": ${err.message}`
+    );
   }
-
-  throw new Error(`[lock-files] Unable to determine changed files (base ref: ${baseRef})`);
 }
 
-function findViolations(changedFiles, patterns) {
+export function findViolations(changedFiles, patterns) {
   const violations = [];
   for (const file of changedFiles) {
     const normalized = file.replace(/\\/g, "/");
@@ -80,21 +73,36 @@ function findViolations(changedFiles, patterns) {
   return [...new Set(violations)].sort();
 }
 
-const patterns = loadPatterns();
-const baseRef = resolveBaseRef();
-const changedFiles = getChangedFiles(baseRef);
-const violations = findViolations(changedFiles, patterns);
+export function runCheck({
+  loadPatternsFn = loadPatterns,
+  resolveBaseRefFn = resolveBaseRef,
+  getChangedFilesFn = getChangedFiles,
+  findViolationsFn = findViolations,
+  log = (msg) => console.log(msg),
+  error = (msg) => console.error(msg),
+  exit = (code) => process.exit(code),
+} = {}) {
+  const patterns = loadPatternsFn();
+  const baseRef = resolveBaseRefFn();
+  const changedFiles = getChangedFilesFn(baseRef);
+  const violations = findViolationsFn(changedFiles, patterns);
 
-if (violations.length === 0) {
-  console.log(`${GREEN}[lock-files] OK${RESET}`);
-  process.exit(0);
+  if (violations.length === 0) {
+    log(`${GREEN}[lock-files] OK${RESET}`);
+    exit(0);
+    return;
+  }
+
+  error(`${RED}[lock-files] VIOLATION${RESET}`);
+  error(`Base ref: ${baseRef}`);
+  error("Protected files changed:");
+  for (const file of violations) {
+    error(`  - ${file}`);
+  }
+  error("See CONTRIBUTING.md § Protected Files for the override process.");
+  exit(1);
 }
 
-console.error(`${RED}[lock-files] VIOLATION${RESET}`);
-console.error(`Base ref: ${baseRef}`);
-console.error("Protected files changed:");
-for (const file of violations) {
-  console.error(`  - ${file}`);
+if (resolve(process.argv[1] ?? "") === __file) {
+  runCheck();
 }
-console.error("See CONTRIBUTING.md § Protected Files for the override process.");
-process.exit(1);
