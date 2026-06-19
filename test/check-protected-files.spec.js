@@ -40,7 +40,7 @@ describe("globToRegExp", function () {
     assert.isFalse(re.test("XgithubYPROTECTED_FILESZjson"));
   });
 
-  it("normalises Windows backslashes in the pattern", function () {
+  it("normalizes Windows backslashes in the pattern", function () {
     const re = globToRegExp("src\\modules.ts");
     assert.isTrue(re.test("src/modules.ts"));
   });
@@ -87,7 +87,7 @@ describe("findViolations", function () {
     assert.deepEqual(violations, ["package.json"]);
   });
 
-  it("normalises Windows backslashes in file paths", function () {
+  it("normalizes Windows backslashes in file paths", function () {
     const violations = findViolations(["src\\modules.ts"], patterns);
     assert.deepEqual(violations, ["src/modules.ts"]);
   });
