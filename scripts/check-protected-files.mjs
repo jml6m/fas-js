@@ -33,13 +33,16 @@ function loadPatterns() {
 }
 
 function resolveBaseRef() {
-  if (process.env.GITHUB_BASE_REF) {
-    return process.env.GITHUB_BASE_REF;
+  const baseRef =
+    process.env.GITHUB_BASE_REF ??
+    process.env.PROTECTED_FILES_BASE_REF ??
+    "master";
+
+  if (!/^[0-9A-Za-z._/-]+$/.test(baseRef)) {
+    throw new Error(`Invalid base ref: ${baseRef}`);
   }
-  if (process.env.PROTECTED_FILES_BASE_REF) {
-    return process.env.PROTECTED_FILES_BASE_REF;
-  }
-  return "chore/v1.7-repo-org";
+
+  return baseRef;
 }
 
 function getChangedFiles(baseRef) {
@@ -56,15 +59,14 @@ function getChangedFiles(baseRef) {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
       }).trim();
-      if (output) {
-        return output.split(/\r?\n/).filter(Boolean);
-      }
+
+      return output ? output.split(/\r?\n/).filter(Boolean) : [];
     } catch {
       // Try the next diff strategy.
     }
   }
 
-  return [];
+  throw new Error(`[lock-files] Unable to determine changed files (base ref: ${baseRef})`);
 }
 
 function findViolations(changedFiles, patterns) {
