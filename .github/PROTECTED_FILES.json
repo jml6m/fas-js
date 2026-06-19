@@ -1,0 +1,10 @@
+{
+  "patterns": [
+    "test/helpers/**",
+    "src/modules.ts",
+    "scripts/check-public-api.mjs",
+    "scripts/check-protected-files.mjs",
+    ".github/PROTECTED_FILES.json",
+    "package.json"
+  ]
+}
