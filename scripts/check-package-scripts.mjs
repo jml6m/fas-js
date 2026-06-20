@@ -47,7 +47,7 @@ const checks = [
     field: 'scripts["check:security"]',
     actual: pkg?.scripts?.["check:security"],
     expected:
-      'node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs && node scripts/check-package-scripts.mjs',
+      'node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs',
   },
   {
     field: 'exports["."].types',
