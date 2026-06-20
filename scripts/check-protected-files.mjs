@@ -32,7 +32,7 @@ export function loadPatterns(baseSha) {
       { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
     );
   } catch {
-    // File does not exist at the base SHA; no protected paths defined yet
+    // File does not exist at the base SHA; no protected paths defined yet
     return [];
   }
   const config = JSON.parse(content);
@@ -95,8 +95,21 @@ export function runCheck({
   const changedFiles = getChangedFilesFn(baseSha);
   const violations = findViolationsFn(changedFiles, patterns);
 
-  if (violations.length === 0) {
-    log(`${GREEN}[lock-files] OK${RESET}`);
+  // Owner-authored PRs may intentionally touch protected files (e.g. maintaining
+  // the gate itself). GitHub sets author_association to OWNER for the repo owner.
+  const isOwner = process.env.PR_AUTHOR_ASSOCIATION === "OWNER";
+
+  if (violations.length === 0 || isOwner) {
+    if (isOwner && violations.length > 0) {
+      log(`${GREEN}[lock-files] OWNER OVERRIDE${RESET}`);
+      log(`Base SHA: ${baseSha}`);
+      log("Protected files changed:");
+      for (const file of violations) {
+        log(`  - ${file}`);
+      }
+    } else {
+      log(`${GREEN}[lock-files] OK${RESET}`);
+    }
     exit(0);
     return;
   }
@@ -107,7 +120,7 @@ export function runCheck({
   for (const file of violations) {
     error(`  - ${file}`);
   }
-  error("See CONTRIBUTING.md \"Protected Files\" for the override process.");
+  error("See CONTRIBUTING.md \"Protected Files\" for the override process.");
   exit(1);
 }
 

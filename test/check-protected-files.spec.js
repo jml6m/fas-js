@@ -1,6 +1,6 @@
 /**
  * Unit tests for scripts/check-protected-files.mjs.
- * Some tests invoke git commands; the check logic is otherwise exercised via injected functions.
+ * Some tests invoke git commands; the check logic is otherwise exercised via injected functions.
  */
 import { execFileSync } from "node:child_process";
 import { assert } from "chai";
@@ -14,7 +14,7 @@ import {
 
 const FAKE_SHA = "a".repeat(40);
 
-// --- globToRegExp ----------------------------------------------------------
+// --- globToRegExp ----------------------------------------------------------
 
 describe("globToRegExp", function () {
   it("matches an exact path", function () {
@@ -51,7 +51,7 @@ describe("globToRegExp", function () {
   });
 });
 
-// --- findViolations ---------------------------------------------------------
+// --- findViolations ---------------------------------------------------------
 
 describe("findViolations", function () {
   const patterns = [
@@ -102,14 +102,14 @@ describe("findViolations", function () {
   });
 });
 
-// --- loadPatterns ----------------------------------------------------------
+// --- loadPatterns ----------------------------------------------------------
 
 describe("loadPatterns", function () {
-  // Use an unreachable SHA to exercise the "file missing at base" path deterministically.
-  const missingSha = "0".repeat(40);
+  // Use an unreachable SHA to exercise the "file missing at base" path deterministically.
+  const missingSha = "0".repeat(40);
 
   it("returns [] when PROTECTED_FILES.json does not exist at the base SHA", function () {
-    assert.deepEqual(loadPatterns(missingSha), []);
+    assert.deepEqual(loadPatterns(missingSha), []);
   });
 
   it("returns compiled patterns when PROTECTED_FILES.json exists at the base SHA", function () {
@@ -124,7 +124,7 @@ describe("loadPatterns", function () {
   });
 });
 
-// --- resolveBaseSha ---------------------------------------------------------
+// --- resolveBaseSha ---------------------------------------------------------
 
 describe("resolveBaseSha", function () {
   const VALID_SHA = "a".repeat(40);
@@ -160,7 +160,7 @@ describe("resolveBaseSha", function () {
   });
 });
 
-// --- runCheck (main orchestration) -----------------------------------------
+// --- runCheck (main orchestration) -----------------------------------------
 
 describe("runCheck", function () {
   function makeCapture() {
@@ -287,5 +287,53 @@ describe("runCheck", function () {
         }),
       /git diff failed/
     );
+  });
+
+  it("owner-authored PR overrides and passes even with violations", function () {
+    const cap = makeCapture();
+    const prev = process.env.PR_AUTHOR_ASSOCIATION;
+    process.env.PR_AUTHOR_ASSOCIATION = "OWNER";
+    try {
+      runCheck({
+        loadPatternsFn: () => [globToRegExp("package.json")],
+        resolveBaseShaFn: () => FAKE_SHA,
+        getChangedFilesFn: () => ["package.json"],
+        findViolationsFn: () => ["package.json"],
+        log: cap.log,
+        error: cap.error,
+        exit: cap.exit,
+      });
+    } finally {
+      if (prev === undefined) delete process.env.PR_AUTHOR_ASSOCIATION;
+      else process.env.PR_AUTHOR_ASSOCIATION = prev;
+    }
+
+    assert.equal(cap.exitCode, 0);
+    assert.isTrue(cap.logs.some((l) => l.includes("[lock-files] OWNER OVERRIDE")));
+    assert.isTrue(cap.logs.some((l) => l.includes("package.json")));
+    assert.isEmpty(cap.errors);
+  });
+
+  it("non-owner association still fails on violations", function () {
+    const cap = makeCapture();
+    const prev = process.env.PR_AUTHOR_ASSOCIATION;
+    process.env.PR_AUTHOR_ASSOCIATION = "CONTRIBUTOR";
+    try {
+      runCheck({
+        loadPatternsFn: () => [globToRegExp("package.json")],
+        resolveBaseShaFn: () => FAKE_SHA,
+        getChangedFilesFn: () => ["package.json"],
+        findViolationsFn: () => ["package.json"],
+        log: cap.log,
+        error: cap.error,
+        exit: cap.exit,
+      });
+    } finally {
+      if (prev === undefined) delete process.env.PR_AUTHOR_ASSOCIATION;
+      else process.env.PR_AUTHOR_ASSOCIATION = prev;
+    }
+
+    assert.equal(cap.exitCode, 1);
+    assert.isTrue(cap.errors.some((e) => e.includes("[lock-files] VIOLATION")));
   });
 });
