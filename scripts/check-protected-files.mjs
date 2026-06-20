@@ -2,6 +2,7 @@
  * CI gate: fail when a PR touches paths listed in .github/PROTECTED_FILES.json.
  */
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -81,11 +82,30 @@ export function findViolations(changedFiles, patterns) {
   return [...new Set(violations)].sort();
 }
 
+export function ownerOverrideApplies({
+  eventPath = process.env.GITHUB_EVENT_PATH,
+  readFile = (path) => readFileSync(path, "utf8"),
+} = {}) {
+  if (!eventPath) {
+    return false;
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(readFile(eventPath));
+  } catch {
+    return false;
+  }
+
+  return payload?.pull_request?.author_association === "OWNER";
+}
+
 export function runCheck({
   loadPatternsFn = loadPatterns,
   resolveBaseShaFn = resolveBaseSha,
   getChangedFilesFn = getChangedFiles,
   findViolationsFn = findViolations,
+  ownerOverrideAppliesFn = ownerOverrideApplies,
   log = (msg) => console.log(msg),
   error = (msg) => console.error(msg),
   exit = (code) => process.exit(code),
@@ -97,6 +117,17 @@ export function runCheck({
 
   if (violations.length === 0) {
     log(`${GREEN}[lock-files] OK${RESET}`);
+    exit(0);
+    return;
+  }
+
+  if (ownerOverrideAppliesFn()) {
+    log(`${GREEN}[lock-files] OWNER OVERRIDE${RESET}`);
+    log(`Base SHA: ${baseSha}`);
+    log("Protected files changed by an owner-authored pull request:");
+    for (const file of violations) {
+      log(`  - ${file}`);
+    }
     exit(0);
     return;
   }

@@ -8,6 +8,7 @@ import {
   globToRegExp,
   findViolations,
   loadPatterns,
+  ownerOverrideApplies,
   resolveBaseSha,
   runCheck,
 } from "../scripts/check-protected-files.mjs";
@@ -160,7 +161,47 @@ describe("resolveBaseSha", function () {
   });
 });
 
-// --- runCheck (main orchestration) -----------------------------------------
+// --- ownerOverrideApplies ---------------------------------------------------
+
+describe("ownerOverrideApplies", function () {
+  it("returns false when no GitHub event path is available", function () {
+    assert.isFalse(ownerOverrideApplies({ eventPath: undefined }));
+  });
+
+  it("returns false when the event payload cannot be parsed", function () {
+    assert.isFalse(ownerOverrideApplies({ eventPath: "/tmp/missing", readFile: () => "{" }));
+  });
+
+  it("returns false for non-owner pull requests", function () {
+    assert.isFalse(
+      ownerOverrideApplies({
+        eventPath: "/tmp/event.json",
+        readFile: () =>
+          JSON.stringify({
+            pull_request: {
+              author_association: "CONTRIBUTOR",
+            },
+          }),
+      })
+    );
+  });
+
+  it("returns true for owner-authored pull requests", function () {
+    assert.isTrue(
+      ownerOverrideApplies({
+        eventPath: "/tmp/event.json",
+        readFile: () =>
+          JSON.stringify({
+            pull_request: {
+              author_association: "OWNER",
+            },
+          }),
+      })
+    );
+  });
+});
+
+// --- runCheck (main orchestration) -----------------------------------------
 
 describe("runCheck", function () {
   function makeCapture() {
@@ -244,6 +285,26 @@ describe("runCheck", function () {
 
     assert.isTrue(cap.errors.some((e) => e.includes("package.json")));
     assert.isTrue(cap.errors.some((e) => e.includes("src/modules.ts")));
+  });
+
+  it("allows owner-authored pull requests to change protected files", function () {
+    const cap = makeCapture();
+    runCheck({
+      loadPatternsFn: () => [],
+      resolveBaseShaFn: () => FAKE_SHA,
+      getChangedFilesFn: () => [],
+      findViolationsFn: () => ["package.json", "src/modules.ts"],
+      ownerOverrideAppliesFn: () => true,
+      log: cap.log,
+      error: cap.error,
+      exit: cap.exit,
+    });
+
+    assert.equal(cap.exitCode, 0);
+    assert.isTrue(cap.logs.some((l) => l.includes("[lock-files] OWNER OVERRIDE")));
+    assert.isTrue(cap.logs.some((l) => l.includes("package.json")));
+    assert.isTrue(cap.logs.some((l) => l.includes("src/modules.ts")));
+    assert.isEmpty(cap.errors);
   });
 
   it("propagates errors thrown by loadPatterns", function () {

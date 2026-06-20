@@ -57,9 +57,10 @@ Certain paths are locked by the `lock-files` CI check (see [`.github/PROTECTED_F
 **Override process** (when a protected change is intentional):
 
 1. Open a PR with a clear explanation of why the protected file must change.
-2. Wait for the `lock-files` check to fail — that failure is expected.
-3. Request review and tag `@jml6m`.
-4. Only `@jml6m` (project owner) can merge changes that touch protected files.
+2. If you are not `@jml6m`, expect `lock-files` to fail — non-owner PRs cannot modify protected paths.
+3. Owner-authored PRs can proceed, but the `lock-files` job will log an explicit owner override.
+4. Request review and tag `@jml6m`.
+5. Only `@jml6m` (project owner) can merge changes that touch protected files.
 
 ### Locked Files in the Development Lifecycle
 
