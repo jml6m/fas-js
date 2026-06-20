@@ -7,9 +7,7 @@ on:
     branches:
       - master
       - 'chore/v*'
-      - 'chore/v*-*'
       - 'v*'
-      - 'v*-*'
 
 permissions:
   contents: read

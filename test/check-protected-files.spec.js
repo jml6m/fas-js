@@ -1,12 +1,16 @@
 /**
  * Unit tests for scripts/check-protected-files.mjs.
- * Some tests invoke git commands; the check logic is otherwise exercised via injected functions.
+ * Some tests invoke real git commands; the check logic is otherwise exercised via injected functions.
  */
 import { execFileSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { assert } from "chai";
 import {
   globToRegExp,
   findViolations,
+  getAuthorAssociation,
   loadPatterns,
   resolveBaseSha,
   runCheck,
@@ -105,11 +109,9 @@ describe("findViolations", function () {
 // --- loadPatterns ----------------------------------------------------------
 
 describe("loadPatterns", function () {
-  // Use an unreachable SHA to exercise the "file missing at base" path deterministically.
-  const missingSha = "0".repeat(40);
-
-  it("returns [] when PROTECTED_FILES.json does not exist at the base SHA", function () {
-    assert.deepEqual(loadPatterns(missingSha), []);
+  it("throws when PROTECTED_FILES.json does not exist at the base SHA (fail-closed)", function () {
+    const missingSha = "0".repeat(40);
+    assert.throws(() => loadPatterns(missingSha), /failed to read .github\/PROTECTED_FILES\.json from base SHA/);
   });
 
   it("returns compiled patterns when PROTECTED_FILES.json exists at the base SHA", function () {
@@ -121,6 +123,47 @@ describe("loadPatterns", function () {
     assert.isArray(patterns);
     assert.isAbove(patterns.length, 0);
     assert.ok(patterns.every((p) => p instanceof RegExp));
+  });
+});
+
+// --- getAuthorAssociation --------------------------------------------------
+
+describe("getAuthorAssociation", function () {
+  let prevEventPath;
+
+  beforeEach(function () {
+    prevEventPath = process.env.GITHUB_EVENT_PATH;
+    delete process.env.GITHUB_EVENT_PATH;
+  });
+
+  afterEach(function () {
+    if (prevEventPath === undefined) delete process.env.GITHUB_EVENT_PATH;
+    else process.env.GITHUB_EVENT_PATH = prevEventPath;
+  });
+
+  it("returns undefined when GITHUB_EVENT_PATH is not set", function () {
+    assert.isUndefined(getAuthorAssociation());
+  });
+
+  it("reads author_association from the event payload file", function () {
+    const tmpFile = join(tmpdir(), "test-event-assoc.json");
+    writeFileSync(tmpFile, JSON.stringify({ pull_request: { author_association: "OWNER" } }));
+    process.env.GITHUB_EVENT_PATH = tmpFile;
+    assert.equal(getAuthorAssociation(), "OWNER");
+  });
+
+  it("returns undefined when the event file contains invalid JSON", function () {
+    const tmpFile = join(tmpdir(), "test-event-bad.json");
+    writeFileSync(tmpFile, "not json");
+    process.env.GITHUB_EVENT_PATH = tmpFile;
+    assert.isUndefined(getAuthorAssociation());
+  });
+
+  it("returns undefined when pull_request is absent from the event payload", function () {
+    const tmpFile = join(tmpdir(), "test-event-push.json");
+    writeFileSync(tmpFile, JSON.stringify({ action: "push" }));
+    process.env.GITHUB_EVENT_PATH = tmpFile;
+    assert.isUndefined(getAuthorAssociation());
   });
 });
 
@@ -291,22 +334,16 @@ describe("runCheck", function () {
 
   it("owner-authored PR overrides and passes even with violations", function () {
     const cap = makeCapture();
-    const prev = process.env.PR_AUTHOR_ASSOCIATION;
-    process.env.PR_AUTHOR_ASSOCIATION = "OWNER";
-    try {
-      runCheck({
-        loadPatternsFn: () => [globToRegExp("package.json")],
-        resolveBaseShaFn: () => FAKE_SHA,
-        getChangedFilesFn: () => ["package.json"],
-        findViolationsFn: () => ["package.json"],
-        log: cap.log,
-        error: cap.error,
-        exit: cap.exit,
-      });
-    } finally {
-      if (prev === undefined) delete process.env.PR_AUTHOR_ASSOCIATION;
-      else process.env.PR_AUTHOR_ASSOCIATION = prev;
-    }
+    runCheck({
+      loadPatternsFn: () => [globToRegExp("package.json")],
+      resolveBaseShaFn: () => FAKE_SHA,
+      getChangedFilesFn: () => ["package.json"],
+      findViolationsFn: () => ["package.json"],
+      getAuthorAssociationFn: () => "OWNER",
+      log: cap.log,
+      error: cap.error,
+      exit: cap.exit,
+    });
 
     assert.equal(cap.exitCode, 0);
     assert.isTrue(cap.logs.some((l) => l.includes("[lock-files] OWNER OVERRIDE")));
@@ -316,22 +353,16 @@ describe("runCheck", function () {
 
   it("non-owner association still fails on violations", function () {
     const cap = makeCapture();
-    const prev = process.env.PR_AUTHOR_ASSOCIATION;
-    process.env.PR_AUTHOR_ASSOCIATION = "CONTRIBUTOR";
-    try {
-      runCheck({
-        loadPatternsFn: () => [globToRegExp("package.json")],
-        resolveBaseShaFn: () => FAKE_SHA,
-        getChangedFilesFn: () => ["package.json"],
-        findViolationsFn: () => ["package.json"],
-        log: cap.log,
-        error: cap.error,
-        exit: cap.exit,
-      });
-    } finally {
-      if (prev === undefined) delete process.env.PR_AUTHOR_ASSOCIATION;
-      else process.env.PR_AUTHOR_ASSOCIATION = prev;
-    }
+    runCheck({
+      loadPatternsFn: () => [globToRegExp("package.json")],
+      resolveBaseShaFn: () => FAKE_SHA,
+      getChangedFilesFn: () => ["package.json"],
+      findViolationsFn: () => ["package.json"],
+      getAuthorAssociationFn: () => "CONTRIBUTOR",
+      log: cap.log,
+      error: cap.error,
+      exit: cap.exit,
+    });
 
     assert.equal(cap.exitCode, 1);
     assert.isTrue(cap.errors.some((e) => e.includes("[lock-files] VIOLATION")));
