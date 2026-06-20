@@ -11,7 +11,7 @@ Thank you for your interest in contributing. This repository is a public npm pac
 | Branch                               | Purpose                                                                                                                |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `master`                             | **Stable / public** — what npm, jsDelivr CDN, and badges reflect. Protected; no direct pushes.                         |
-| Version integration branch           | **One branch off `master` per active release** (e.g. `chore/v1.7-repo-org` for v1.7). Release PRs merge into `master`. |
+| Version integration branch           | **One branch off `master` per active release** (e.g. `chore/v1.7-repo-org` for v1.7). Naming must match `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, or `vX-*` (enforced by branch ruleset). Release PRs merge into `master`. |
 | `feat/*`, `chore/*`, `fix/*` (topic) | Short-lived branches stacked **on the current version integration branch**.                                            |
 
 **Active release (v1.7):** integration branch `chore/v1.7-repo-org` — repo organization, template hardening, dead-asset cleanup. Topic PRs target this branch (not `master`).

@@ -6,8 +6,10 @@ on:
   push:
     branches:
       - master
-      - 'chore/v*'
-      - 'v*'
+      - 'chore/v*.*-*'
+      - 'chore/v*-*'
+      - 'v*.*-*'
+      - 'v*-*'
 
 permissions:
   contents: read
