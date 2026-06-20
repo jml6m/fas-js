@@ -15,6 +15,7 @@
 ### 1. Loop Prevention
 
 For unsupervised runs (e.g. automated fixes):
+
 - If the same error persists after **3 attempts**: **STOP**, revert to last working state, mark with `// FIXME: Agent failed`, and report.
 
 ### 2. Versioning & Release Policy
@@ -26,17 +27,18 @@ For unsupervised runs (e.g. automated fixes):
 ### 3. Command Execution Safety
 
 **STRICTLY PROHIBITED for agents:**
+
 - `npm publish`
 - `git push` (agents propose; CI/humans push)
 - Bumping `version` in `package.json`
 
 ### 4. Branch Workflow
 
-| Branch | Purpose |
-|--------|---------|
-| `master` | Stable / public — protected; what npm and badges reflect |
+| Branch                                             | Purpose                                                                                             |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `master`                                           | Stable / public — protected; what npm and badges reflect                                            |
 | `fix/*`, `feat/*`, `chore/*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
-| topic branches on top | Short-lived branches → PR into the **current version integration branch** |
+| topic branches on top                              | Short-lived branches → PR into the **current version integration branch**                           |
 
 - While a release (e.g. v1.7) is in flight, stack topic work on that integration branch (e.g. `chore/v1.7-repo-org`).
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
@@ -106,6 +108,7 @@ See [`docs/types-and-correctness.md`](docs/types-and-correctness.md). Typecheck 
 - **Stale** (`.github/workflows/stale.yml`): marks inactive issues stale after 60 days, closes after 14 more days.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (weekly, `github-actions` ecosystem) auto-bumps them.
+- The `lock-files` gate protects the project's stable foundation (see `CONTRIBUTING.md` → "Protected Files" and "Locked Files in the Development Lifecycle"). Most development adds new code; modifications to locked paths are intentionally rare and heavily gated.
 
 ---
 
