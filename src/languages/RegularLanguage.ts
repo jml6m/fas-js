@@ -32,7 +32,7 @@ export class RegularLanguage extends Language {
     try {
       return Boolean(simulateFSA(word, this.#automaton));
     } catch (error) {
-      if (error instanceof Error && error.message === ErrorCode.INVALID_INPUT_CHAR) {
+      if (instanceOf(Error, error) && (error as Error).message === ErrorCode.INVALID_INPUT_CHAR) {
         return false;
       }
       throw error;

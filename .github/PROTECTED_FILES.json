@@ -1,6 +1,6 @@
 {
   "patterns": [
-    "test/helpers/**",
+    "test/helpers/publicApiContract.js",
     "src/globals/globals.ts",
     "src/modules.ts",
     "scripts/check-public-api.mjs",
