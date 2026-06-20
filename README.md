@@ -172,9 +172,7 @@ Interactive demos visualize FSAs as you simulate input strings.
 | **v1.1** | [Redirect](https://jml6m.github.io/fas-js/v1.1/) | Preserved URL → v1.5 |
 | **v1** (legacy) | [ObservableHQ](https://observablehq.com/@jml6m/state-machine-simulator) | Original notebook |
 
-Local: `npm run build && npm run serve:demo` → http://127.0.0.1:3000/v1.5/
-
-See [demo/README.md](demo/README.md) for local development and deployment details.
+See [demo/README.md](demo/README.md) for version history, local development (`npm run serve:demo` on port 3200), automated tests, and deployment details.
 
 ## License
 This library is distributed under the GPL 3.0 license found in the [LICENSE](https://github.com/jml6m/fas-js/blob/master/LICENSE) file.

@@ -2,7 +2,6 @@
  * CI gate: fail when a PR touches paths listed in .github/PROTECTED_FILES.json.
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,9 +23,20 @@ export function globToRegExp(pattern) {
   return new RegExp(`^${escaped}$`);
 }
 
-export function loadPatterns() {
-  const configPath = resolve(root, ".github/PROTECTED_FILES.json");
-  const config = JSON.parse(readFileSync(configPath, "utf8"));
+export function loadPatterns(baseSha) {
+  let content;
+  try {
+    content = execFileSync(
+      "git",
+      ["show", `${baseSha}:.github/PROTECTED_FILES.json`],
+      { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
+    );
+  } catch (err) {
+    throw new Error(
+      `[lock-files] failed to read .github/PROTECTED_FILES.json from base SHA "${baseSha}": ${err.message}`
+    );
+  }
+  const config = JSON.parse(content);
   if (!Array.isArray(config.patterns) || config.patterns.length === 0) {
     throw new Error(".github/PROTECTED_FILES.json must define a non-empty patterns array");
   }
@@ -81,8 +91,8 @@ export function runCheck({
   error = (msg) => console.error(msg),
   exit = (code) => process.exit(code),
 } = {}) {
-  const patterns = loadPatternsFn();
   const baseSha = resolveBaseShaFn();
+  const patterns = loadPatternsFn(baseSha);
   const changedFiles = getChangedFilesFn(baseSha);
   const violations = findViolationsFn(changedFiles, patterns);
 
@@ -98,7 +108,7 @@ export function runCheck({
   for (const file of violations) {
     error(`  - ${file}`);
   }
-  error("See CONTRIBUTING.md § Protected Files for the override process.");
+  error("See CONTRIBUTING.md \"Protected Files\" for the override process.");
   exit(1);
 }
 

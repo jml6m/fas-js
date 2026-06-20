@@ -4,7 +4,12 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
   push:
-    branches: [master]
+    branches:
+      - master
+      - 'chore/v*.*-*'
+      - 'chore/v*-*'
+      - 'v*.*-*'
+      - 'v*-*'
 
 permissions:
   contents: read
@@ -32,6 +37,11 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+      # Upgrade npm only on Node 20+ (npm 11 requires Node ^20.17 || >=22.9;
+      # Node 18 ships npm 10, which is sufficient for the test path).
+      - name: Upgrade npm (Node 20+ only)
+        if: matrix.node != '18'
+        run: npm install -g npm@^11.5.1
       - run: npm ci
       - run: npm test
       - name: Upload coverage to Codecov
@@ -50,6 +60,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      # Upgrade npm for consistent behavior (Node 20 ships npm 10 which has
+      # OIDC/trusted publish limitations; same upgrade used in publish path).
+      - run: npm install -g npm@^11.5.1
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm run build

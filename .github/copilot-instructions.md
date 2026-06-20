@@ -35,7 +35,7 @@ For unsupervised runs (e.g. automated fixes):
 | Branch | Purpose |
 |--------|---------|
 | `master` | Stable / public — protected; what npm and badges reflect |
-| `fix/*`, `feat/*`, `chore/*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
+| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
 | topic branches on top | Short-lived branches → PR into the **current version integration branch** |
 
 - While a release (e.g. v1.7) is in flight, stack topic work on that integration branch (e.g. `chore/v1.7-repo-org`).
