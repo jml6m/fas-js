@@ -108,7 +108,7 @@ See [`docs/types-and-correctness.md`](docs/types-and-correctness.md). Typecheck 
 - **Stale** (`.github/workflows/stale.yml`): marks inactive issues stale after 60 days, closes after 14 more days.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (weekly, `github-actions` ecosystem) auto-bumps them.
-- The `lock-files` gate protects the project's stable foundation (see `CONTRIBUTING.md` → "Protected Files" and "Locked Files in the Development Lifecycle"). Most development adds new code; modifications to locked paths are intentionally rare and heavily gated.
+- The `lock-files` gate protects the project's stable foundation (see `CONTRIBUTING.md` → "Protected Files" and "Locked Files in the Development Lifecycle"). Most development adds new code; modifications to locked paths are intentionally rare and heavily gated. **There is no automated bypass** — even owner-authored or agent-authored PRs that touch protected paths must wait for the project owner to manually disable the `lock-files` required status check in the ruleset, merge, and re-enable it.
 
 ---
 
