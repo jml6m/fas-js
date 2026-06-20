@@ -32,7 +32,7 @@ export function loadPatterns(baseSha) {
       { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
     );
   } catch {
-    // File does not exist at the base SHA ΓÇö no protected paths defined yet
+    // File does not exist at the base SHA; no protected paths defined yet
     return [];
   }
   const config = JSON.parse(content);
@@ -107,7 +107,7 @@ export function runCheck({
   for (const file of violations) {
     error(`  - ${file}`);
   }
-  error("See CONTRIBUTING.md ┬º Protected Files for the override process.");
+  error("See CONTRIBUTING.md \"Protected Files\" for the override process.");
   exit(1);
 }
 
