@@ -7,7 +7,6 @@
     "scripts/check-protected-files.mjs",
     ".github/PROTECTED_FILES.json",
     ".github/workflows/lock-files.yml",
-    ".github/workflows/publish.yml",
-    "package.json"
+    ".github/workflows/publish.yml"
   ]
 }

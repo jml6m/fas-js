@@ -141,6 +141,24 @@ describe("FSAUtils test", function() {
       assert(instanceOf(NFA, proxy) === false);
     });
 
+    it("Should return false when getConstructorName throws during prototype introspection", function() {
+      // Override Symbol.hasInstance so instanceof returns false without walking the
+      // prototype chain — this forces execution into getConstructorName(), where the
+      // proxy's getPrototypeOf trap fires and the try/catch must catch it.
+      const NFASkipInstance = class NFA {
+        static [Symbol.hasInstance](_v) { return false; }
+      };
+      const proxy = new Proxy(
+        {},
+        {
+          getPrototypeOf() {
+            throw new Error("boom");
+          },
+        }
+      );
+      assert(instanceOf(NFASkipInstance, proxy) === false);
+    });
+
     it("Should return false when prototype constructor access throws in instanceOf", function() {
       const throwingProto = {};
       Object.defineProperty(throwingProto, "constructor", {
