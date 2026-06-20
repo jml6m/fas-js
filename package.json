@@ -38,7 +38,7 @@
     "test:languages": "cross-env NODE_OPTIONS=--import=tsx mocha \"test/languages.spec.js\"",
     "test": "npm run typecheck && npm run lint && npm run build && npm run check:security && cross-env NODE_OPTIONS=--import=tsx c8 mocha \"test/**/*.spec.js\"",
     "audit:ci": "npm audit --audit-level=high",
-    "check:security": "node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs",
+    "check:security": "node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs && node scripts/check-package-scripts.mjs",
     "git:reset": "git reset --hard HEAD && git clean -fd",
     "npm:reinstall": "node scripts/reinstall.js"
   },
