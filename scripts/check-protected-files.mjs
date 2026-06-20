@@ -2,7 +2,6 @@
  * CI gate: fail when a PR touches paths listed in .github/PROTECTED_FILES.json.
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,17 +41,6 @@ export function loadPatterns(baseSha) {
     throw new Error(".github/PROTECTED_FILES.json must define a non-empty patterns array");
   }
   return config.patterns.map(globToRegExp);
-}
-
-export function getAuthorAssociation() {
-  const eventPath = process.env.GITHUB_EVENT_PATH;
-  if (!eventPath) return undefined;
-  try {
-    const event = JSON.parse(readFileSync(eventPath, "utf8"));
-    return event?.pull_request?.author_association;
-  } catch {
-    return undefined;
-  }
 }
 
 export function resolveBaseSha() {
@@ -99,7 +87,6 @@ export function runCheck({
   resolveBaseShaFn = resolveBaseSha,
   getChangedFilesFn = getChangedFiles,
   findViolationsFn = findViolations,
-  getAuthorAssociationFn = getAuthorAssociation,
   log = (msg) => console.log(msg),
   error = (msg) => console.error(msg),
   exit = (code) => process.exit(code),
@@ -109,22 +96,8 @@ export function runCheck({
   const changedFiles = getChangedFilesFn(baseSha);
   const violations = findViolationsFn(changedFiles, patterns);
 
-  // Owner-authored PRs may intentionally touch protected files (e.g. maintaining
-  // the gate itself). Read author_association from the GitHub event payload
-  // (GITHUB_EVENT_PATH) so the value cannot be spoofed by workflow edits in the PR.
-  const isOwner = getAuthorAssociationFn() === "OWNER";
-
-  if (violations.length === 0 || isOwner) {
-    if (isOwner && violations.length > 0) {
-      log(`${GREEN}[lock-files] OWNER OVERRIDE${RESET}`);
-      log(`Base SHA: ${baseSha}`);
-      log("Protected files changed:");
-      for (const file of violations) {
-        log(`  - ${file}`);
-      }
-    } else {
-      log(`${GREEN}[lock-files] OK${RESET}`);
-    }
+  if (violations.length === 0) {
+    log(`${GREEN}[lock-files] OK${RESET}`);
     exit(0);
     return;
   }

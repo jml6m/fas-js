@@ -52,16 +52,20 @@ Certain paths are locked by the `lock-files` CI check (see [`.github/PROTECTED_F
 | `scripts/check-public-api.mjs`      | Enforces public API contract                                          |
 | `scripts/check-protected-files.mjs` | The CI gate itself — must not be bypassed without owner review        |
 | `.github/PROTECTED_FILES.json`      | Defines the protected-path list — changes alter what is locked        |
+| `.github/workflows/lock-files.yml`  | The gate workflow — must not be weakened without owner review         |
+| `.github/workflows/publish.yml`     | Release / publish workflow — supply-chain security boundary           |
 | `package.json`                      | Version, public exports, build config                                 |
 
 **Override process** (when a protected change is intentional):
 
-- **Owner-authored PRs** (GitHub `author_association` of `OWNER`) automatically pass the `lock-files` check, which logs an `OWNER OVERRIDE` listing the touched paths. This lets the owner maintain the gate and other core files without self-blocking.
-- **Non-owner PRs:**
-  1. Open a PR with a clear explanation of why the protected file must change.
-  2. The `lock-files` check will fail — that failure is expected.
-  3. Request review and tag `@jml6m`.
-  4. Only `@jml6m` (project owner) can merge changes that touch protected files.
+Any PR touching a protected path will fail the `lock-files` check. To land such a change:
+
+1. Open a PR with a clear explanation of why the protected file must change.
+2. The `lock-files` check will fail — that failure is expected.
+3. Request review and tag `@jml6m`.
+4. The project owner (`@jml6m`) reviews the change, then temporarily disables the `lock-files` required status check in the branch protection ruleset, merges the PR, and re-enables the check.
+
+There is no automated bypass path — even owner-authored PRs go through this process. The intent is that every change to the protected set is explicitly reviewed and approved by a human before it lands.
 
 ### Locked Files in the Development Lifecycle
 
