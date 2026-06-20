@@ -43,6 +43,7 @@ jobs:
         if: matrix.node != '18'
         run: npm install -g npm@^11.5.1
       - run: npm ci
+      - run: node scripts/check-package-scripts.mjs
       - run: npm test
       - name: Upload coverage to Codecov
         if: matrix.node == 20
@@ -64,6 +65,7 @@ jobs:
       # OIDC/trusted publish limitations; same upgrade used in publish path).
       - run: npm install -g npm@^11.5.1
       - run: npm ci
+      - run: node scripts/check-package-scripts.mjs
       - run: npm audit --audit-level=high
       - run: npm run build
       - run: npm run check:security

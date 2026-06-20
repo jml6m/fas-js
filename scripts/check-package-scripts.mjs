@@ -37,6 +37,11 @@ const checks = [
     expected: 'tsup',
   },
   {
+    field: 'scripts["check:package-scripts"]',
+    actual: pkg?.scripts?.["check:package-scripts"],
+    expected: 'node scripts/check-package-scripts.mjs',
+  },
+  {
     field: 'scripts["check:security"]',
     actual: pkg?.scripts?.["check:security"],
     expected:

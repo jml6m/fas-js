@@ -21,6 +21,7 @@ const REAL_PKG = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"))
 const EXPECTED_FIELDS = {
   "scripts.test": REAL_PKG?.scripts?.test,
   "scripts.build": REAL_PKG?.scripts?.build,
+  'scripts["check:package-scripts"]': REAL_PKG?.scripts?.["check:package-scripts"],
   'scripts["check:security"]': REAL_PKG?.scripts?.["check:security"],
   'exports["."].types': REAL_PKG?.exports?.["."]?.types,
   'exports["."].import': REAL_PKG?.exports?.["."]?.import,
@@ -35,6 +36,7 @@ function validatePkg(pkg) {
   const actual = {
     "scripts.test": pkg?.scripts?.test,
     "scripts.build": pkg?.scripts?.build,
+    'scripts["check:package-scripts"]': pkg?.scripts?.["check:package-scripts"],
     'scripts["check:security"]': pkg?.scripts?.["check:security"],
     'exports["."].types': pkg?.exports?.["."]?.types,
     'exports["."].import': pkg?.exports?.["."]?.import,
@@ -84,6 +86,14 @@ describe("check-package-scripts", function () {
     const failures = validatePkg(tampered);
     assert.isAbove(failures.length, 0);
     assert.ok(failures.some(f => f.field === 'scripts["check:security"]'));
+  });
+
+  it("detects a tampered check:package-scripts script", function () {
+    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
+    tampered.scripts["check:package-scripts"] = "echo ok";
+    const failures = validatePkg(tampered);
+    assert.isAbove(failures.length, 0);
+    assert.ok(failures.some(f => f.field === 'scripts["check:package-scripts"]'));
   });
 
   it("detects a tampered exports map", function () {
