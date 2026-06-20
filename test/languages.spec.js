@@ -248,7 +248,12 @@ describe('Regular languages', function () {
 
     it('rejects subset construction on a DFA', function () {
       const dfa = singleton('a').getAutomaton();
-      expect(() => subsetConstruction(dfa)).to.throw(TypeError);
+      expect(() => subsetConstruction(dfa)).to.throw(TypeError, 'subsetConstruction requires an NFA');
+    });
+
+    it('rejects subset construction on nullish input', function () {
+      expect(() => subsetConstruction(null)).to.throw(TypeError, 'subsetConstruction received nullish input');
+      expect(() => subsetConstruction(undefined)).to.throw(TypeError, 'subsetConstruction received nullish input');
     });
   });
 

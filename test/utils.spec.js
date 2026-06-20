@@ -119,8 +119,55 @@ describe("FSAUtils test", function() {
     });
 
     it("Should fall back to constructor name in instanceOf", function() {
-      const mockNfa = { constructor: { name: "NFA" } };
+      const NFANameOnly = class NFA {};
+      const mockNfa = new NFANameOnly();
       assert(instanceOf(NFA, mockNfa) === true);
+    });
+
+    it("Should return false for nullish values in instanceOf", function() {
+      assert(instanceOf(NFA, null) === false);
+      assert(instanceOf(NFA, undefined) === false);
+    });
+
+    it("Should return false when prototype introspection throws in instanceOf", function() {
+      const proxy = new Proxy(
+        {},
+        {
+          getPrototypeOf() {
+            throw new Error("boom");
+          },
+        }
+      );
+      assert(instanceOf(NFA, proxy) === false);
+    });
+
+    it("Should return false when getConstructorName throws during prototype introspection", function() {
+      // Override Symbol.hasInstance so instanceof returns false without walking the
+      // prototype chain — this forces execution into getConstructorName(), where the
+      // proxy's getPrototypeOf trap fires and the try/catch must catch it.
+      const NFASkipInstance = class NFA {
+        static [Symbol.hasInstance](_v) { return false; }
+      };
+      const proxy = new Proxy(
+        {},
+        {
+          getPrototypeOf() {
+            throw new Error("boom");
+          },
+        }
+      );
+      assert(instanceOf(NFASkipInstance, proxy) === false);
+    });
+
+    it("Should return false when prototype constructor access throws in instanceOf", function() {
+      const throwingProto = {};
+      Object.defineProperty(throwingProto, "constructor", {
+        get() {
+          throw new Error("boom");
+        },
+      });
+      const mock = Object.create(throwingProto);
+      assert(instanceOf(NFA, mock) === false);
     });
   });
 
