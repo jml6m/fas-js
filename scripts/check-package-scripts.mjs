@@ -6,6 +6,8 @@
  * this script locks only the fields whose mutation would break the CI security
  * model — specifically the test pipeline command, the security-check command,
  * the build command, the publish-time entry-points, and the npm-pack include list.
+ * The trust boundary is the locked script + direct workflow invocation of
+ * `node scripts/check-package-scripts.mjs` (not only npm script indirection).
  *
  * If any of these fields need to change intentionally, update both package.json
  * AND the expected values below in the same PR. This script is itself locked in

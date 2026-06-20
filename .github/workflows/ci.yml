@@ -43,6 +43,8 @@ jobs:
         if: matrix.node != '18'
         run: npm install -g npm@^11.5.1
       - run: npm ci
+      # Run directly (not via npm scripts) so package.json script tampering
+      # cannot skip the integrity gate before npm test executes.
       - run: node scripts/check-package-scripts.mjs
       - run: npm test
       - name: Upload coverage to Codecov
@@ -65,6 +67,8 @@ jobs:
       # OIDC/trusted publish limitations; same upgrade used in publish path).
       - run: npm install -g npm@^11.5.1
       - run: npm ci
+      # Run directly (not via npm scripts) so package.json script tampering
+      # cannot bypass this gate before check:security runs.
       - run: node scripts/check-package-scripts.mjs
       - run: npm audit --audit-level=high
       - run: npm run build
