@@ -1,6 +1,7 @@
 {
   "patterns": [
     "test/helpers/**",
+    "src/globals/globals.ts",
     "src/modules.ts",
     "scripts/check-public-api.mjs",
     "scripts/check-protected-files.mjs",

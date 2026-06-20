@@ -33,10 +33,38 @@ export const getOrDefault = <K, V>(map: Map<K, V>, key: K, defaultValue: V): V =
   return val == null ? defaultValue : val;
 };
 
-type ConstructorLike<T extends object = object> = abstract new (...args: never[]) => T;
+const getConstructorName = (obj: object): string | undefined => {
+  try {
+    const prototype = Object.getPrototypeOf(obj) as { constructor?: unknown } | null;
+    const ctor = prototype?.constructor;
+    return typeof ctor === "function" && typeof ctor.name === "string" && ctor.name.length > 0
+      ? ctor.name
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
-export const instanceOf = <T extends object>(ctor: ConstructorLike<T>, obj: object): obj is T => {
-  return obj instanceof ctor || (Boolean(ctor.name) && ctor.name === obj.constructor.name);
+export const instanceOf = <T extends object, A extends unknown[]>(
+  ctor: abstract new (...args: A) => T,
+  obj: unknown
+): obj is T => {
+  if (obj == null || (typeof obj !== "object" && typeof obj !== "function")) return false;
+
+  try {
+    if (obj instanceof ctor) return true;
+  } catch {
+    return false;
+  }
+
+  let ctorName: string | undefined;
+  try {
+    ctorName = typeof ctor.name === "string" && ctor.name.length > 0 ? ctor.name : undefined;
+  } catch {
+    return false;
+  }
+
+  return Boolean(ctorName) && ctorName === getConstructorName(obj);
 };
 
 export const isSubsetOf = <T>(subset: Set<T>, superset: Set<T>): boolean => {

@@ -119,8 +119,37 @@ describe("FSAUtils test", function() {
     });
 
     it("Should fall back to constructor name in instanceOf", function() {
-      const mockNfa = { constructor: { name: "NFA" } };
+      const NFANameOnly = class NFA {};
+      const mockNfa = new NFANameOnly();
       assert(instanceOf(NFA, mockNfa) === true);
+    });
+
+    it("Should return false for nullish values in instanceOf", function() {
+      assert(instanceOf(NFA, null) === false);
+      assert(instanceOf(NFA, undefined) === false);
+    });
+
+    it("Should return false when prototype introspection throws in instanceOf", function() {
+      const proxy = new Proxy(
+        {},
+        {
+          getPrototypeOf() {
+            throw new Error("boom");
+          },
+        }
+      );
+      assert(instanceOf(NFA, proxy) === false);
+    });
+
+    it("Should return false when prototype constructor access throws in instanceOf", function() {
+      const throwingProto = {};
+      Object.defineProperty(throwingProto, "constructor", {
+        get() {
+          throw new Error("boom");
+        },
+      });
+      const mock = Object.create(throwingProto);
+      assert(instanceOf(NFA, mock) === false);
     });
   });
 

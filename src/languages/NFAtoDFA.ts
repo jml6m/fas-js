@@ -3,6 +3,7 @@ import type { FSA } from "../interfaces/FSA";
 import { NFA } from "../automata";
 import type { TransitionInput } from "../utils/DFAUtils";
 import { languageAlphabetSymbols } from "./fsaHelpers";
+import { instanceOf } from "../globals/globals";
 
 export type SubsetConstructionDefinition = {
   states: string[];
@@ -68,7 +69,11 @@ function subsetWitness(members: State[]): readonly string[] {
 
 /** Powerset (subset) construction with ε-closure. Requires an NFA (enforced by type and runtime class check). */
 export function subsetConstruction(nfa: NFA): SubsetConstructionResult {
-  if (!(nfa instanceof NFA)) {
+  if (nfa == null) {
+    throw new TypeError("subsetConstruction received nullish input");
+  }
+
+  if (!instanceOf(NFA, nfa)) {
     throw new TypeError("subsetConstruction requires an NFA");
   }
 
