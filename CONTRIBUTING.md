@@ -47,14 +47,15 @@ Certain paths are locked by the `lock-files` CI check (see [`.github/PROTECTED_F
 
 | Path                                | Why protected                                                         |
 | ----------------------------------- | --------------------------------------------------------------------- |
-| `test/helpers/**`                   | Contract test functions — changes break foundational test fidelity    |
+| `test/helpers/publicApiContract.js` | Public API contract helper — changes affect foundational test fidelity |
+| `src/globals/globals.ts`            | Runtime type guards used across the codebase                          |
 | `src/modules.ts`                    | Public API entry point — signature changes require major version bump |
 | `scripts/check-public-api.mjs`      | Enforces public API contract                                          |
+| `scripts/check-package-scripts.mjs` | Locks critical package.json fields used by CI/security gates          |
 | `scripts/check-protected-files.mjs` | The CI gate itself — must not be bypassed without owner review        |
 | `.github/PROTECTED_FILES.json`      | Defines the protected-path list — changes alter what is locked        |
 | `.github/workflows/lock-files.yml`  | The gate workflow — must not be weakened without owner review         |
 | `.github/workflows/publish.yml`     | Release / publish workflow — supply-chain security boundary           |
-| `package.json`                      | Version, public exports, build config                                 |
 
 **Override process** (when a protected change is intentional):
 
