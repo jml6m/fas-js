@@ -13,14 +13,14 @@
  * AND the expected values below in the same PR. This script is itself locked in
  * .github/PROTECTED_FILES.json so the expected values cannot be silently altered.
  */
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dir, "..");
+const root = resolve(__dir, '..');
 
-const raw = readFileSync(resolve(root, "package.json"), "utf8");
+const raw = readFileSync(resolve(root, 'package.json'), 'utf8');
 const pkg = JSON.parse(raw);
 
 // ---------------------------------------------------------------------------
@@ -30,8 +30,7 @@ const checks = [
   {
     field: 'scripts.test',
     actual: pkg?.scripts?.test,
-    expected:
-      'npm run typecheck && npm run lint && npm run build && npm run check:security && cross-env NODE_OPTIONS=--import=tsx c8 mocha "test/**/*.spec.js"',
+    expected: 'npm run typecheck && npm run lint && npm run build && npm run check:security && cross-env NODE_OPTIONS=--import=tsx c8 mocha "test/**/*.spec.js"',
   },
   {
     field: 'scripts.build',
@@ -40,28 +39,32 @@ const checks = [
   },
   {
     field: 'scripts["check:package-scripts"]',
-    actual: pkg?.scripts?.["check:package-scripts"],
+    actual: pkg?.scripts?.['check:package-scripts'],
     expected: 'node scripts/check-package-scripts.mjs',
   },
   {
     field: 'scripts["check:security"]',
-    actual: pkg?.scripts?.["check:security"],
-    expected:
-      'node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs',
+    actual: pkg?.scripts?.['check:security'],
+    expected: 'node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs',
+  },
+  {
+    field: 'scripts.prepublishOnly',
+    actual: pkg?.scripts?.prepublishOnly,
+    expected: 'npm run build && npm test',
   },
   {
     field: 'exports["."].types',
-    actual: pkg?.exports?.["."]?.types,
+    actual: pkg?.exports?.['.']?.types,
     expected: './lib/index.d.ts',
   },
   {
     field: 'exports["."].import',
-    actual: pkg?.exports?.["."]?.import,
+    actual: pkg?.exports?.['.']?.import,
     expected: './lib/index.js',
   },
   {
     field: 'exports["."].require',
-    actual: pkg?.exports?.["."]?.require,
+    actual: pkg?.exports?.['.']?.require,
     expected: './lib/index.cjs',
   },
   {
@@ -100,9 +103,7 @@ for (const { field, actual, expected } of checks) {
 }
 
 if (failures > 0) {
-  console.error(
-    '\n[check-package-scripts] FAIL — update scripts/check-package-scripts.mjs together with package.json'
-  );
+  console.error('\n[check-package-scripts] FAIL — update scripts/check-package-scripts.mjs together with package.json');
   process.exit(1);
 }
 
