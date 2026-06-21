@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Report incorrect FSA behavior, build failure, or test regression
-title: "[BUG]"
+title: '[BUG]'
 labels: bug
 assignees: ''
 ---
@@ -12,7 +12,7 @@ A clear description of the problem.
 
 ## Environment
 
-- **fas-js version:** (e.g., 1.3.2 from npm, or commit SHA on `main-v1-1-prep`)
+- **fas-js version:** (e.g., 1.6.0 from npm, or commit SHA on the current integration branch)
 - **Node version:** (e.g., v20.19.0)
 - **OS:** (e.g., Windows 11, Ubuntu 22.04)
 - **Install method:** (npm package / git clone / jsDelivr CDN bundle)
@@ -47,4 +47,4 @@ Paste error output here
 
 ## Additional context
 
-Screenshots, ObservableHQ demo link, or minimal code snippet if helpful.
+Screenshots, academic discussions, or minimal code snippet if helpful.

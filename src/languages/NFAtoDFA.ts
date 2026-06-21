@@ -1,9 +1,9 @@
 import { type State } from "../components/State";
-import { type FSA } from "../interfaces/FSA";
+import type { FSA } from "../interfaces/FSA";
 import { NFA } from "../automata";
-import { instanceOf } from "../globals/globals";
 import type { TransitionInput } from "../utils/DFAUtils";
 import { languageAlphabetSymbols } from "./fsaHelpers";
+import { instanceOf } from "../globals/globals";
 
 export type SubsetConstructionDefinition = {
   states: string[];
@@ -67,12 +67,12 @@ function subsetWitness(members: State[]): readonly string[] {
   return members.map(state => state.name).sort();
 }
 
-/**
- * @fas-correctness THEOREM-IMPLEMENTED
- * @fas-spec Powerset (subset) construction with ε-closure (Sipser Thm. 1.19).
- */
-/* @coverage-caveat: c8 line hits here mean fixture NFA instances were exercised — not Σ* verification */
-export function subsetConstruction(nfa: FSA): SubsetConstructionResult {
+/** Powerset (subset) construction with ε-closure. Requires an NFA (enforced by type and runtime class check). */
+export function subsetConstruction(nfa: NFA): SubsetConstructionResult {
+  if (nfa == null) {
+    throw new TypeError("subsetConstruction received nullish input");
+  }
+
   if (!instanceOf(NFA, nfa)) {
     throw new TypeError("subsetConstruction requires an NFA");
   }

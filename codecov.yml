@@ -1,0 +1,34 @@
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 1%
+        informational: true
+        if_ci_failed: error
+
+comment: false
+
+ignore:
+  - "src/interfaces/**"
+  - "src/**/index.ts"
+  - "src/demo-bundle.ts"
+
+component_management:
+  individual_components:
+    - component_id: languages
+      name: languages
+      paths:
+        - src/languages/**
+    - component_id: core
+      name: core
+      paths:
+        - src/automata/**
+        - src/components/**
+        - src/engine/**
+        - src/globals/**
+        - src/utils/**
+        - src/modules.ts

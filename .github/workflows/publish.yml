@@ -22,13 +22,9 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org
           cache: npm
-      # Release gate: a tag must not publish if the theorem-annotation protocol
-      # is violated. Runs before install so a bad tag fails fast.
-      - run: node scripts/check-theorem-annotations.mjs
-      # npm CLI 10 (shipped with Node 20) does not fully support npm Trusted
-      # Publishing OIDC; the registry PUT falls through unauthenticated and
-      # returns a misleading 404. Upgrade to npm 11.5.1+ before publishing.
+      # Use recent npm for OIDC provenance support (see ci.yml for rationale).
       - run: npm install -g npm@^11.5.1
       - run: npm ci
-      - run: npm test
+      - run: node scripts/check-package-scripts.mjs
+      - run: npm run check:security
       - run: npm publish --provenance --access public

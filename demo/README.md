@@ -28,7 +28,7 @@ npm run build   # postbuild → demo/v1.5/vendor/fas-js.bundle.js
 npm run serve:demo
 ```
 
-Open http://127.0.0.1:3000/v1.5/ (override port with `DEMO_PORT=8080`).
+Open http://127.0.0.1:3200/v1.5/ (override port with `DEMO_PORT=8080`).
 
 Use `npm run serve:demo` — not `npx serve`.
 

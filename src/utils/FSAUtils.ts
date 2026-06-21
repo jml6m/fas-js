@@ -76,7 +76,7 @@ export const FSAUtils = (() => {
 
     receiveInput(fsa: FSA, input: string, state: State | State[]): State | Set<State> {
       if (instanceOf(NFA, fsa)) {
-        if (state instanceof State) return receiveInputNFA(fsa as InstanceType<typeof NFA>, input, [state]);
+        if (instanceOf(State, state)) return receiveInputNFA(fsa as InstanceType<typeof NFA>, input, [state]);
         else return receiveInputNFA(fsa as InstanceType<typeof NFA>, input, state);
       } else {
         if (Array.isArray(state)) {

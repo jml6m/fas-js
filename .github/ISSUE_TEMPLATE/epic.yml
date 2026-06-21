@@ -13,7 +13,7 @@ body:
           1. Create child issues first (`gh issue create`).
           2. Note their numbers (`#45`, `#46`, …).
           3. Create this parent epic and paste those IDs into the task list below.
-        - **Branch:** All implementation PRs target `main-v1-1-prep` unless explicitly a stable hotfix.
+        - **Branch:** Implementation PRs target the current version integration branch (see `CONTRIBUTING.md`), not `master`, unless explicitly a stable hotfix.
   - type: textarea
     id: description
     attributes:
@@ -35,13 +35,15 @@ body:
   - type: dropdown
     id: phase
     attributes:
-      label: Phase
-      description: Which project phase does this epic belong to?
+      label: Category
+      description: Which area does this epic primarily belong to?
       options:
-        - v1.1 prep — governance
-        - v1.1 prep — toolchain audit
-        - v1.1 prep — modernization
-        - v1.1 prep — demo / docs
-        - v2 — new functionality
+        - Governance / tooling / CI
+        - Demo / UX / docs
+        - Public API — FSA operations
+        - Language algorithms — internal
+        - Test infrastructure
+        - Security / dependencies
+        - Cross-cutting / other
     validations:
       required: true

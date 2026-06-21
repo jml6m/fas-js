@@ -59,7 +59,7 @@ export const stepOnceFSA = (
   if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), w, JSON.stringify(newState));
   if (logging) console.log("Input Processing Ended");
 
-  if (newState instanceof State) return newState.name;
+  if (instanceOf(State, newState)) return newState.name;
   else {
     const retArray: string[] = [];
     for (const _s of newState) {
@@ -122,7 +122,7 @@ function simulateNFA(
   if (logging) console.log("Beginning NFA Simulation");
 
   //Accept either string or string[] for w
-  if (!(w instanceof Array)) {
+  if (!Array.isArray(w)) {
     if (typeof w === "string") {
       if (w === "") w = [""];
       else w = [...w];

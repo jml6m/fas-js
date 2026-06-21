@@ -119,8 +119,41 @@ describe("FSAUtils test", function() {
     });
 
     it("Should fall back to constructor name in instanceOf", function() {
-      const mockNfa = { constructor: { name: "NFA" } };
+      const NFANameOnly = class NFA {};
+      const mockNfa = new NFANameOnly();
       assert(instanceOf(NFA, mockNfa) === true);
+    });
+
+    it("Should return true for real class instances in instanceOf", function() {
+      assert(instanceOf(NFA, nfa) === true);
+      assert(instanceOf(DFA, dfa) === true);
+    });
+
+    it("Should return false for wrong class in instanceOf", function() {
+      // DFA is not an NFA (NFA extends DFA, not the reverse)
+      assert(instanceOf(NFA, dfa) === false);
+      // An unrelated object (State) is neither a DFA nor NFA
+      assert(instanceOf(DFA, q1) === false);
+      assert(instanceOf(NFA, q1) === false);
+    });
+
+    it("Should return false for nullish and primitive values in instanceOf", function() {
+      assert(instanceOf(NFA, null) === false);
+      assert(instanceOf(NFA, undefined) === false);
+      assert(instanceOf(NFA, "string") === false);
+      assert(instanceOf(NFA, 42) === false);
+    });
+
+    it("Should return false when instanceOf check throws (hostile proxy)", function() {
+      const proxy = new Proxy(
+        {},
+        {
+          getPrototypeOf() {
+            throw new Error("boom");
+          },
+        }
+      );
+      assert(instanceOf(NFA, proxy) === false);
     });
   });
 

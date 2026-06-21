@@ -1,5 +1,5 @@
 /**
- * Public API contract tests — must pass on every v1.1 prep PR.
+ * Public API contract tests — must pass on every PR.
  * Locks behavior of createFSA, simulateFSA, and stepOnceFSA.
  */
 import { createFSA, simulateFSA, stepOnceFSA } from "../src/modules";

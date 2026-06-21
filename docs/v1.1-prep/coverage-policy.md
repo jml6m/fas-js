@@ -10,12 +10,12 @@ Coverage is a **sanity check**, not the definition of done. Tests must prove **w
 
 | Branch | Gate (c8) |
 |--------|-----------|
-| `master` | 90% lines (legacy) |
-| `main-v1-1-prep` | **90%** lines, statements, functions, branches |
+| `master` | **90%** lines, statements, functions, branches |
+| version integration branches | **90%** lines, statements, functions, branches |
 
 Aspire toward higher coverage when it falls out naturally from meaningful tests. The floor is ~90%; there is no reward for 100% line hits without behavioral assertions.
 
-Functions tagged `@fas-correctness THEOREM-IMPLEMENTED` carry `/* @coverage-caveat */` in source: **c8 100% on those functions means fixture instances were exercised, not Σ\* verification.** See [`../function-annotation-protocol.md`](../function-annotation-protocol.md).
+High coverage on language algorithms means fixture instances were exercised, not full input-space verification. TypeScript catches structural mistakes; tests catch behavior.
 
 ## CI config
 
@@ -31,7 +31,6 @@ Only for genuinely unreachable defensive code:
 
 ## Related work
 
-- [`test-architecture.md`](./test-architecture.md) — full test layout and principles (#239)
 - #238 — prune coverage-driven tests; align docs with enforced thresholds
 - #235 — validate `lib/` artifacts, not only `src/` via tsx
 - #240 — property-based / generated DFA checks

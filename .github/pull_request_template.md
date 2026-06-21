@@ -18,14 +18,13 @@
 
 - [ ] `npm ci`
 - [ ] `npm test`
-- [ ] `npm run flow check` (if Flow sources changed)
 - [ ] Manual smoke test (if user-facing)
 
 ## Checklist
 
-- [ ] PR targets `main-v1-1-prep` (not `master`, unless an approved stable hotfix)
-- [ ] Changes are focused and minimal
+- [ ] PR targets the current version integration branch (e.g. `chore/v1.7-repo-org`), not `master`, unless this is the release merge PR or an approved stable hotfix
+- [ ] Changes are focused and optimized
 - [ ] Tests added or updated for new/changed behavior
-- [ ] Coverage maintained (100% on `main-v1-1-prep`; documented exceptions only)
-- [ ] No version bump in `package.json`
-- [ ] `AGENTS.md` / `README.md` updated if workflow or public API changed
+- [ ] Test Coverage maintained (see [.c8rc.json](../.c8rc.json))
+- [ ] No version bump in [package.json](../package.json)
+- [ ] [README.md](../README.md) if needed, but a request for approval must be made to the project admin on the PR or in the agent chat
