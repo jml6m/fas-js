@@ -27,7 +27,7 @@ jobs:
       - run: npm ci
       # Build before the security gate: check:security -> check-public-api.mjs
       # reads lib/index.d.ts, so the artifact must exist first.
-      - run: npm run build
       - run: node scripts/check-package-scripts.mjs
+      - run: npm run build
       - run: npm run check:security
       - run: npm publish --provenance --access public
