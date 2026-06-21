@@ -25,6 +25,9 @@ jobs:
       # Use recent npm for OIDC provenance support (see ci.yml for rationale).
       - run: npm install -g npm@^11.5.1
       - run: npm ci
+      # Build before the security gate: check:security -> check-public-api.mjs
+      # reads lib/index.d.ts, so the artifact must exist first.
       - run: node scripts/check-package-scripts.mjs
+      - run: npm run build
       - run: npm run check:security
       - run: npm publish --provenance --access public
