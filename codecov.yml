@@ -9,11 +9,6 @@ coverage:
         threshold: 1%
         informational: true
         if_ci_failed: error
-    patch:
-      default:
-        target: auto
-        threshold: 0%
-        informational: true
 
 comment: false
 

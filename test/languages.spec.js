@@ -1,7 +1,5 @@
 /**
  * Regular language theory — definitions, operations, closure.
- *
- * Reviewer guide: docs/languages-testing.md
  */
 import { createFSA, simulateFSA } from '../src/modules';
 import { ErrorCode } from '../src/globals/errors';

@@ -25,4 +25,6 @@ jobs:
       # Use recent npm for OIDC provenance support (see ci.yml for rationale).
       - run: npm install -g npm@^11.5.1
       - run: npm ci
+      - run: node scripts/check-package-scripts.mjs
+      - run: npm run check:security
       - run: npm publish --provenance --access public

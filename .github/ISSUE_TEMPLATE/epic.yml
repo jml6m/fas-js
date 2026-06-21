@@ -35,11 +35,15 @@ body:
   - type: dropdown
     id: phase
     attributes:
-      label: Phase
-      description: Which project phase does this epic belong to?
+      label: Category
+      description: Which area does this epic primarily belong to?
       options:
-        - v1.x release line — governance / tooling
-        - v1.x release line — demo / docs
-        - v2 — new public API / functionality
+        - Governance / tooling / CI
+        - Demo / UX / docs
+        - Public API — FSA operations
+        - Language algorithms — internal
+        - Test infrastructure
+        - Security / dependencies
+        - Cross-cutting / other
     validations:
       required: true

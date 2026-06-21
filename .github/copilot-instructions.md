@@ -80,7 +80,7 @@ npm test            # typecheck + lint + build + mocha + c8 coverage
 - **Entry**: `src/modules.ts` exports public API (`simulateFSA`, `stepOnceFSA`, `createFSA`)
 - **Languages**: `src/languages/` — abstract `Language` base class; `RegularLanguage` extends it for FSA-backed regular languages. Future non-regular types extend `Language` directly, not `RegularLanguage`. Internal to npm; demo bundle (`src/demo-bundle.ts`) exposes only the public FSA API.
 - **Build output**: `lib/index.js` (ESM), `lib/index.cjs` (CJS), `lib/bundle.js` (IIFE global `fasJs`), `lib/index.d.ts`
-- **Tests**: `test/**/*.spec.js` — Mocha + Chai + tsx loader. See `docs/v1.1-prep/test-architecture.md`.
+- **Tests**: `test/**/*.spec.js` — Mocha + Chai + tsx loader.
 - **Demo QA**: `test/demo.spec.js` (in `npm test`) — artifact + HTTP + jsdom UI checks; `npm run serve:demo` for local browser testing.
 
 Do not change the public API surface without bumping the major version (human decision).
@@ -91,11 +91,11 @@ Do not change the public API surface without bumping the major version (human de
 
 - Tests live in `test/` as `*.spec.js` files.
 - Run with `npm test` (builds first, then mocha with c8 coverage).
-- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/test-architecture.md` and `docs/v1.1-prep/coverage-policy.md`.
+- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/coverage-policy.md`.
 
 ### Types vs correctness
 
-See [`docs/types-and-correctness.md`](../docs/types-and-correctness.md). Typecheck catches structural mistakes (e.g. DFA vs NFA boundaries); tests catch behavior. Do not put bounded word-enumeration or equivalence oracles in `src/`.
+TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument types, missing fields, passing a DFA where an NFA is required. It does **not** prove that an algorithm preserves language equivalence. Tests and review cover correctness. Do not put bounded word-enumeration or equivalence oracles in `src/`.
 
 ---
 
@@ -105,7 +105,7 @@ See [`docs/types-and-correctness.md`](../docs/types-and-correctness.md). Typeche
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
 - **Stale** (`.github/workflows/stale.yml`): marks inactive issues stale after 60 days, closes after 14 more days.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
-- Actions are SHA-pinned for supply-chain security; Dependabot (weekly, `github-actions` ecosystem) auto-bumps them.
+- Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
 
 ---
 

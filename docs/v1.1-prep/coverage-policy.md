@@ -15,7 +15,7 @@ Coverage is a **sanity check**, not the definition of done. Tests must prove **w
 
 Aspire toward higher coverage when it falls out naturally from meaningful tests. The floor is ~90%; there is no reward for 100% line hits without behavioral assertions.
 
-High coverage on language algorithms means fixture instances were exercised, not full input-space verification. See [`../types-and-correctness.md`](../types-and-correctness.md).
+High coverage on language algorithms means fixture instances were exercised, not full input-space verification. TypeScript catches structural mistakes; tests catch behavior.
 
 ## CI config
 
@@ -31,7 +31,6 @@ Only for genuinely unreachable defensive code:
 
 ## Related work
 
-- [`test-architecture.md`](./test-architecture.md) — full test layout and principles (#239)
 - #238 — prune coverage-driven tests; align docs with enforced thresholds
 - #235 — validate `lib/` artifacts, not only `src/` via tsx
 - #240 — property-based / generated DFA checks
