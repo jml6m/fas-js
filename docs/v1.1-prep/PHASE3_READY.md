@@ -8,7 +8,7 @@ Use this before starting the TypeScript + tsup modernization PR stack.
 - [x] Windows `npm test` fix (#220, nyc 17)
 - [x] API contract tests (#221)
 - [x] Audit docs: dependencies, dependabot, build spec, TS plan, test runner, coverage, security
-- [x] Demo v1.1 in-repo + GitHub Pages workflow (#223) — https://jml6m.github.io/fas-js/v1.1/
+- [x] Demo v1.1 in-repo + GitHub Pages workflow (#223) — <https://jml6m.github.io/fas-js/v1.1/>
 - [x] README + demo links (#224)
 - [x] Release runbook (#225)
 

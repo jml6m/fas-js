@@ -12,25 +12,29 @@ Easily create and simulate state machines using this JS library. Import into you
 > **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ![FSA Example](img/fsa_example.png)
-###### Visualization of an FSA
+_Visualization of an FSA_
 
 ## Installation
 Add the latest version of `fas-js` to your package.json:
+
 ```
 npm install fas-js --save-dev
 ```
 
 ESM import:
+
 ```javascript
 import { createFSA, simulateFSA, stepOnceFSA } from "fas-js";
 ```
 
 CommonJS:
+
 ```javascript
 const { createFSA, simulateFSA, stepOnceFSA } = require("fas-js");
 ```
 
 Import into HTML file
+
 ```
 <script src="https://cdn.jsdelivr.net/npm/fas-js/lib/bundle.js"></script>
 ```
@@ -57,22 +61,28 @@ This library offers one method for creating an FSA. The parameters correspond to
 
 ### Inputs
 <b>Q</b> cannot be empty, and each state name must be unique
+
 ```javascript
 const states = ["q1", "q2"];
 const states2 = ["q1", "q2", "q3", "q4"];
 ```
+
 <b>Σ</b> cannot be empty, and can be passed in as one string (each character will be interpreted as a separate symbol) or a string array. Cannot contain duplicate symbols. For NFAs, you do not need to specify the empty string, it is implicitly added.
+
 ```javascript
 const alphabet = "01"; // ["0", "1"]
 const alph_array = ["0", "1", "up", "down", "*"];
 ```
+
 <b>δ</b> is an array of objects that define the transitions between states. This object differs for DFAs and NFAs, and createFSA() will determine which to create based on the structure of this input.
+
 * For DFA: `{from: "origin_state", to: "dest_state", input: "symbol"}`
 * For NFA: `{from: "origin_state", to: "dest_state1,dest_state2,...", input: "symbol"}`
 
 Input array for DFAs must contain a transition for each alphabet symbol on each origin state. Thus, the size of δ = size of Σ x size of Q. Σ cannot contain an empty string as a symbol for DFAs.
 
 For NFAs, the `to` field can contain one or more destination states, comma separated, no spaces between state names. The `input` field can be `""`, indicating an ε (empty) transition. In JSON and simulation, always use `""` for ε; graph labels may display ε (U+03B5). Pass multi-symbol alphabets as a string array (e.g. `["0", "1", "up", "down"]`) so each entry is one symbol — including UTF-8 characters.
+
 ```javascript
 const dfa_tfunc = [
     { from: "q1", to: "q2", input: "1" },
@@ -91,22 +101,29 @@ const nfa_tfunc = [
     { from: "q4", to: "q4", input: "1" }
 ];
 ```
+
 <b>q0</b> is the start state of the FSA. The first symbol of the input string is processed on this state. It must be a member of Q.
+
 ```javascript
 const start = "q1";
 ```
+
 <b>F</b> is the set of accept states, which determine whether a given input string is "accepted" by the FSA or "rejected". This determination is made after the last symbol of the input has been read. If any of the final states are in the accepting set, that string is accepted.
 
 The set of accept states must be a subset of Q - it can also be an empty set (an FSA that always rejects). For simulation purposes, F is passed in as a string array that cannot contain duplicate states
+
 ```javascript
 const accepts = ["q1"]; // Start state can also be an accept state
 const accepts2 = ["q3", "q4"];
 ```
+
 ### Examples
+
 ```javascript
 const dfa = createFSA(states, alphabet, dfa_tfunc, start, accepts);
 const nfa = createFSA(states2, alphabet, nfa_tfunc, start, accepts2);
 ```
+
 <span style="font-size:24px"><a name="FSA" href="#FSA">#</a> <b>FSA</b></span><br />
 `createFSA()` returns an object with custom type. This object has no public properties, but does include helper methods available to the user.
 
@@ -128,7 +145,8 @@ Returns the destination state(s), based on input symbol `w` and input state `qin
 <sub>Note: In both functions above, a third `logging` parameter is available (defaults to false) which will print useful messages to the console as the simulator processes the input string. This can be used for debugging purposes or server-side logs. It is recommended to leave it defaulted to false for browser applications.
 
 ### Examples
-Both simulators require an FSA object created with createFSA(). Here we will use the FSAs created in the [Examples](#Examples) above.
+Both simulators require an FSA object created with createFSA(). Here we will use the FSAs created in the [Examples](#examples) above.
+
 ```javascript
 // DFA Simulations
 simulateFSA("0", dfa); // returns true

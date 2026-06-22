@@ -1,0 +1,23 @@
+# Lychee link-checker config. See https://lychee.cli.rs/usage/config/ for full schema.
+
+include_fragments = true
+accept = [200, 206, 429]
+max_concurrency = 8
+max_retries = 2
+retry_wait_time = 3
+timeout = 20
+
+exclude_path = [
+  "node_modules",
+  "lib",
+  "coverage",
+  "dist",
+  ".github",
+]
+
+# URLs excluded from checking (regex against the full URL; literal strings).
+# npmjs returns 403 to automated clients though package/badge links are valid.
+exclude = [
+  '^https?://(www\.)?npmjs\.(com|org)',
+  '^https?://localhost',
+]

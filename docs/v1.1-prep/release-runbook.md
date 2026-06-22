@@ -7,7 +7,7 @@ Closes [#225](https://github.com/jml6m/fas-js/issues/225).
 - [ ] All Phase 3 PRs merged to `main-v1-1-prep`
 - [ ] `npm test` passes at 100% coverage (or documented exceptions)
 - [ ] API contract tests pass
-- [ ] Demo deployed: https://jml6m.github.io/fas-js/v1.1/
+- [ ] Demo deployed: <https://jml6m.github.io/fas-js/v1.1/>
 - [ ] README updated
 - [ ] Human reviews final PR
 

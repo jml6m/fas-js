@@ -128,3 +128,8 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 - Respond to comments from the primary reviewer or when @-tagged.
 - No passive acknowledgements — make the change or explain with technical reasoning.
 - Human reviewer comments take priority over bot review threads.
+
+## Documentation conventions
+
+- **Linkable paths must be clickable links.** Any in-repo path mentioned in a Markdown file must be written as a clickable link to the target (e.g. [`src/modules.ts`](src/modules.ts)), not as bare inline code. Command examples and illustrative / non-existent paths are exempt.
+- Docs are gated by [`docs-lint.yml`](.github/workflows/docs-lint.yml): [lychee](https://lychee.cli.rs/) validates that links and `#anchors` resolve, and [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) enforces formatting per [`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml). `.github/` templates + the generated Copilot mirror are excluded. Run `markdownlint-cli2 --fix '**/*.md'` before pushing.

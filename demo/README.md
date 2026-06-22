@@ -6,9 +6,9 @@ Static demos published under `demo/` on GitHub Pages.
 
 | Path | Description | URL |
 |------|-------------|-----|
-| `v1/` | Legacy redirect to the [ObservableHQ notebook](https://observablehq.com/@jml6m/state-machine-simulator) | https://jml6m.github.io/fas-js/v1/ |
-| `v1.1/` | Redirect to v1.5 (preserves old links) | https://jml6m.github.io/fas-js/v1.1/ |
-| `v1.5/` | **Current** — DFA/NFA simulator with prebuilt examples + optional custom JSON | https://jml6m.github.io/fas-js/v1.5/ |
+| `v1/` | Legacy redirect to the [ObservableHQ notebook](https://observablehq.com/@jml6m/state-machine-simulator) | <https://jml6m.github.io/fas-js/v1/> |
+| `v1.1/` | Redirect to v1.5 (preserves old links) | <https://jml6m.github.io/fas-js/v1.1/> |
+| `v1.5/` | **Current** — DFA/NFA simulator with prebuilt examples + optional custom JSON | <https://jml6m.github.io/fas-js/v1.5/> |
 
 ### v1.5+ — Self-hosted (current)
 
@@ -28,7 +28,7 @@ npm run build   # postbuild → demo/v1.5/vendor/fas-js.bundle.js
 npm run serve:demo
 ```
 
-Open http://127.0.0.1:3200/v1.5/ (override port with `DEMO_PORT=8080`).
+Open <http://127.0.0.1:3200/v1.5/> (override port with `DEMO_PORT=8080`).
 
 Use `npm run serve:demo` — not `npx serve`.
 
@@ -53,4 +53,4 @@ npm run test:demo
 
 [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs on pushes to `master` when `demo/**`, `src/**`, or `package.json` change.
 
-Public URL: **https://jml6m.github.io/fas-js/v1.5/**
+Public URL: **<https://jml6m.github.io/fas-js/v1.5/>**
