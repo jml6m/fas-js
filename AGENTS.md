@@ -40,6 +40,7 @@ For unsupervised runs (e.g. automated fixes):
 | `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
 | topic branches on top                              | Short-lived branches → PR into the **current version integration branch**                           |
 
+- **No direct-to-master commits** — all work, including minor chore/docs fixes, must flow through a topic branch → integration branch → `master`. There is no "small enough to skip the branch" exception.
 - While a release (e.g. v1.7) is in flight, stack topic work on that integration branch (e.g. `chore/v1.7-repo-org`).
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.

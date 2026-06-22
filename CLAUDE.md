@@ -12,4 +12,4 @@ The authoritative agent guidelines for this repo live in **[AGENTS.md](./AGENTS.
 - `npm test` runs the full gate (typecheck → lint → build → check:security → c8 mocha). Coverage floor on `master`/integration branches is **90%**.
 - **Do not** bump `package.json` version, run `npm publish`, or `git push` as part of routine agent work — publishing is tag-triggered OIDC only, and version bumps are human-initiated (see AGENTS.md §2–§3).
 - **Protected files** (see [`.github/PROTECTED_FILES.json`](./.github/PROTECTED_FILES.json)) are guarded by the `lock-files` gate with **no automated bypass** — touching them requires the owner to manually relax the ruleset. The release process and these gates are being hardened under the release epic.
-- `master` is the default branch; releases flow topic → version integration branch (`chore/vX.Y-*`) → `master` → `v*.*.*` tag.
+- `master` is the default branch; releases flow topic → version integration branch (`chore/vX.Y-*`) → `master` → `v*.*.*` tag. **All work — including minor chore/docs PRs — must target the current integration branch, never `master` directly.**
