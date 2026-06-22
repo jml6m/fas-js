@@ -1,0 +1,31 @@
+name: Release Base Guard
+
+# Enforces the branch policy: topic work never targets `master` directly.
+# Only the integration → master release PR (head `chore/v*` / `v*`) — plus
+# Dependabot action bumps — may target `master`. Topic work belongs on the
+# current version integration branch. See AGENTS.md §4 and RELEASING.md.
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only integration/release branches may target master
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            chore/v* | v* | dependabot/*)
+              echo "OK: '$HEAD_REF' is allowed to target master." ;;
+            *)
+              echo "::error::PRs into 'master' must come from a version integration/release branch (chore/v*, v*). Topic work belongs on the current integration branch, not master. Got head '$HEAD_REF'."
+              exit 1 ;;
+          esac
