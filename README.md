@@ -57,7 +57,7 @@ A **Deterministic Finite Automaton (DFA)** has exactly one transition for each s
 ## Creation
 This library offers one method for creating an FSA. The parameters correspond to the definition above:
 
-<span style="font-size:20px"><a name="createFSA" href="#createFSA">#</a> <b>createFSA</b>(<i>Q</i>: string[], <i>Σ</i>: string | string[], <i>δ</i>: Object[], <i>q0</i>: string, <i>F</i>: string[]): FSA [<>](https://github.com/jml6m/fas-js/blob/master/src/utils/FSAUtils.js#L125 "Source")</span>
+<span style="font-size:20px"><a name="createFSA" href="#createFSA">#</a> <b>createFSA</b>(<i>Q</i>: string[], <i>Σ</i>: string | string[], <i>δ</i>: Object[], <i>q0</i>: string, <i>F</i>: string[]): FSA [<>](https://github.com/jml6m/fas-js/blob/master/src/utils/FSAUtils.ts "Source")</span>
 
 ### Inputs
 <b>Q</b> cannot be empty, and each state name must be unique
@@ -134,11 +134,11 @@ const nfa = createFSA(states2, alphabet, nfa_tfunc, start, accepts2);
 ## Simulation
 There are two simulation options available:<br />
 
-<span style="font-size:18px"><a name="simulateFSA" href="#simulateFSA">#</a> <b>simulateFSA</b>(<i>w</i>: string | string[], <i>fsa</i>: FSA, <i>logging</i>: boolean = false, <i>returnEndState</i>: boolean = false) [<>](https://github.com/jml6m/fas-js/blob/master/src/engine/Simulators.js#L10 "Source")</span>
+<span style="font-size:18px"><a name="simulateFSA" href="#simulateFSA">#</a> <b>simulateFSA</b>(<i>w</i>: string | string[], <i>fsa</i>: FSA, <i>logging</i>: boolean = false, <i>returnEndState</i>: boolean = false) [<>](https://github.com/jml6m/fas-js/blob/master/src/engine/Simulators.ts "Source")</span>
 
 Runs the entire input `w` through the `fsa`. `w` must only contain symbols from the alphabet defined in `fsa`. By default, the function returns a boolean signifying whether `w` was accepted by the `fsa`. If `returnEndState` is set to true, the function will instead return the final state (string) or the final array of states (string[]), depending on whether `fsa` is a DFA or NFA.
 
-<span style="font-size:18px"><a name="stepOnceFSA" href="#stepOnceFSA">#</a> <b>stepOnceFSA</b>(w: string, qin: string | string[], fsa: FSA, logging: boolean = false) [<>](https://github.com/jml6m/fas-js/blob/master/src/engine/Simulators.js#L23 "Source")</span>
+<span style="font-size:18px"><a name="stepOnceFSA" href="#stepOnceFSA">#</a> <b>stepOnceFSA</b>(w: string, qin: string | string[], fsa: FSA, logging: boolean = false) [<>](https://github.com/jml6m/fas-js/blob/master/src/engine/Simulators.ts "Source")</span>
 
 Returns the destination state(s), based on input symbol `w` and input state `qin`, as defined by δ of `fsa`. `w` must match a symbol from the alphabet defined in `fsa` (can also be the empty string). `qin` must be a state in Q. Use this function if you'd like to iterate through an input string step-by-step.
 

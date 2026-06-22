@@ -16,8 +16,9 @@ exclude_path = [
 ]
 
 # URLs excluded from checking (regex against the full URL; literal strings).
-# npmjs returns 403 to automated clients though package/badge links are valid.
 exclude = [
-  '^https?://(www\.)?npmjs\.(com|org)',
-  '^https?://localhost',
+  '^https?://(www\.)?npmjs\.(com|org)',          # 403s automated clients
+  '^https?://badge\.fury\.io',                    # badge host 403s bots
+  '^https?://localhost',                          # local dev-server refs
+  '^https?://127\.0\.0\.1',                       # local dev-server refs
 ]
