@@ -32,17 +32,16 @@ npm version X.Y.Z --no-git-tag-version   # updates package.json + package-lock.j
 
 Open a PR from `chore/vX.Y-*` into `master`. [`release-base-guard`](./.github/workflows/release-base-guard.yml) confirms the head is an integration/release branch.
 
-## 4. Approve without relaxing the ruleset
+## 4. Merge the release PR (owner bypass — no self-approve, no toggle)
 
-The `main` ruleset requires **1 approving review** (no self-approve, no bypass). Instead of disabling the rule:
+The `main` ruleset requires **1 approving review**. Because release PRs are authored under the owner's account, the owner cannot self-approve — so the rule is satisfied another way **without ever relaxing it**:
 
-- A maintainer applies the **`release`** label to the PR.
-- [`release-auto-approve`](./.github/workflows/release-auto-approve.yml) submits an approving review via a trusted GitHub App.
-- Required status checks (`test (18/20/22)`, `lock-files`) still gate the merge.
+- The `main` ruleset lists the repository **owner / admin role as a `bypass_actors`** entry, in **"pull requests" bypass mode** (can merge a PR that lacks the required approval; cannot push directly to `master`).
+- The owner squash-merges the integration → `master` release PR directly once all **required status checks** (`test (18/20/22)`, `lock-files`) are green.
 
-> **One-time setup:** create a GitHub App with `Pull requests: write`, install it on the repo, and store `RELEASE_APPROVER_APP_ID` + `RELEASE_APPROVER_APP_KEY` as repo secrets. The App identity must differ from the PR author. Until this exists, the workflow is inert and the label has no effect.
+This keeps the approval requirement fully in force for **every non-owner PR** to `master` (Dependabot, Copilot, contributors — the owner approves those normally, since they aren't self-authored), while letting the sole maintainer ship a release without a self-approve, a second account, a bot App, or a temporary ruleset toggle.
 
-Squash-merge the release PR once green + approved.
+> **One-time ruleset setup:** on the `main` ruleset, add the Repository **admin** role (or `jml6m`) to the **Bypass list** with mode **"Pull requests"**. This is the only standing relaxation and it is scoped to the owner — not a global approval-count change.
 
 ## 5. Tag and publish
 

@@ -46,7 +46,7 @@ For unsupervised runs (e.g. automated fixes):
 **Branch policy (enforced):**
 
 - **Topic work never targets `master` directly.** Every change lands on a short-lived topic branch that PRs into the **current version integration branch** (`chore/vX.Y-*`). `master` only ever receives the single **integration → `master`** release PR (plus Dependabot action bumps). Enforced by [`release-base-guard`](./workflows/release-base-guard.yml): a PR into `master` whose head is not `chore/v*`, `v*`, or `dependabot/*` fails.
-- The integration → `master` release PR is **approved automatically** by a trusted GitHub App when a maintainer applies the **`release`** label — see [`release-auto-approve`](./workflows/release-auto-approve.yml) and [`RELEASING.md`](../RELEASING.md). This satisfies the `main` ruleset's required approval **without a self-approve and without relaxing the ruleset**; required status checks still gate the merge.
+- The integration → `master` release PR is merged by the **repository owner via a scoped `bypass_actors` entry** on the `main` ruleset (bypass mode: pull requests) — so the owner's own release PR doesn't need an approving review it cannot self-grant. **Every non-owner PR to `master` still requires 1 approving review**, and **required status checks still gate every merge**. No App, no self-approve, no temporary ruleset toggle. See [`RELEASING.md`](../RELEASING.md).
 
 **Ref & tag hygiene:**
 
