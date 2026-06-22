@@ -43,6 +43,13 @@ For unsupervised runs (e.g. automated fixes):
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
 - See [`CONTRIBUTING.md`](../CONTRIBUTING.md) for contributor-facing details.
 
+**Ref & tag hygiene:**
+
+- **Auto-delete on merge** is enabled — merged topic branches are removed automatically. Keep them short-lived; delete abandoned ones.
+- **`master` is force-push- and deletion-protected** by the `main` ruleset (linear history + required reviews/checks). Never force-push or delete it.
+- **Tags are permanent and immutable.** A published `vX.Y.Z` tag is never moved or deleted (the `v*` ruleset blocks force-update/deletion, and re-pointing would break npm provenance). Fix a post-tag mistake with a **new patch tag**, never by retagging — formalized in the release-hardening epic.
+- **Stale-branch sweep** (manual, report-only — never auto-delete beyond the merge cleanup): list with `git for-each-ref --sort=committerdate --format='%(committerdate:short) %(refname:short)' refs/remotes/origin`, cross-reference `gh pr list --state open`, and delete only stale, merged, PR-less branches deliberately (keep the active integration branch).
+
 ### 5. GitHub Issue Workflow
 
 Before non-trivial work, check open issues for related tasks. Reference issues in PRs (`Closes #123`).
@@ -103,7 +110,6 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 - **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via `CODECOV_TOKEN`.
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
-- **Stale** (`.github/workflows/stale.yml`): marks inactive issues stale after 60 days, closes after 14 more days.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
 
