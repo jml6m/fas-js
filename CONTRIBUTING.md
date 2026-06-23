@@ -53,6 +53,9 @@ Certain paths are locked by the `lock-files` CI check (see [`.github/PROTECTED_F
 | `scripts/check-public-api.mjs`      | Enforces public API contract                                          |
 | `scripts/check-package-scripts.mjs` | Locks critical package.json fields used by CI/security gates          |
 | `scripts/check-protected-files.mjs` | The CI gate itself — must not be bypassed without owner review        |
+| `scripts/check-npm-pack.mjs`        | Locks the published npm surface (exact tarball manifest)              |
+| `scripts/postbuild.mjs`             | Controls which build artifacts land in `lib/` (and thus the tarball)  |
+| `tsup.config.ts`                    | Build config — governs emitted artifacts (entries, sourcemaps)        |
 | `.github/PROTECTED_FILES.json`      | Defines the protected-path list — changes alter what is locked        |
 | `.github/workflows/lock-files.yml`  | The gate workflow — must not be weakened without owner review         |
 | `.github/workflows/publish.yml`     | Release / publish workflow — supply-chain security boundary           |
@@ -67,6 +70,16 @@ Any PR touching a protected path will fail the `lock-files` check. To land such 
 4. The project owner (`@jml6m`) reviews the change, then temporarily disables the `lock-files` required status check in the branch protection ruleset, merges the PR, and re-enables the check.
 
 There is no automated bypass path — even owner-authored PRs go through this process. The intent is that every change to the protected set is explicitly reviewed and approved by a human before it lands.
+
+### Published package surface
+
+The npm tarball is kept to the minimal distributable surface and is locked the same way source is:
+
+- `package.json` `"files"` is an explicit allowlist (no `lib/` wildcard): runtime `index.js`/`index.cjs`, the `index.d.ts`/`index.d.cts` types, and the `./bundle` IIFE. No sourcemaps, no demo bundle, no `.gitkeep`.
+- `scripts/check-npm-pack.mjs` (run in `check:security` and again in `publish.yml` before `npm publish`) asserts the tarball matches that set **exactly** — an extra or missing file fails the build and blocks publish.
+- The files that decide what ships — `scripts/check-npm-pack.mjs`, `scripts/postbuild.mjs`, `tsup.config.ts` — are protected, so widening the surface follows the override process above. `package.json` itself is intentionally **not** protected, so version bumps and dependency changes flow freely; the manifest is guarded by the locked checker, not by locking `package.json`.
+
+To change what ships: update `package.json` `"files"`, the `EXPECTED_LIB_FILES` set in `check-npm-pack.mjs`, and the `files` expectation in `check-package-scripts.mjs` together, then land it via the protected-file override process.
 
 ### Locked Files in the Development Lifecycle
 

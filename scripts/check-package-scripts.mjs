@@ -85,7 +85,13 @@ const checks = [
   {
     field: 'files',
     actual: JSON.stringify(pkg?.files),
-    expected: JSON.stringify(['lib']),
+    expected: JSON.stringify([
+      'lib/index.js',
+      'lib/index.cjs',
+      'lib/index.d.ts',
+      'lib/index.d.cts',
+      'lib/bundle.js',
+    ]),
   },
 ];
 // ---------------------------------------------------------------------------

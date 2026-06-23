@@ -29,3 +29,12 @@ if (fs.existsSync(demoBundle)) {
   fs.mkdirSync(path.dirname(demoVendorBundle), { recursive: true });
   fs.copyFileSync(demoBundle, demoVendorBundle);
 }
+
+// The demo bundle is consumed only via the demo vendor copy above; it is not a
+// library entry point, so keep it out of lib/ (and therefore out of the npm
+// tarball). Sweep any demo artifacts the build may have emitted.
+for (const stale of fs.readdirSync("lib")) {
+  if (stale.startsWith("demo-bundle")) {
+    fs.rmSync(path.join("lib", stale), { force: true });
+  }
+}
