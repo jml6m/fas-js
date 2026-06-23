@@ -41,7 +41,7 @@ New **public API** features are scheduled for **v2**; release branches ship demo
 
 ### Coverage
 
-- **Coverage floor**: **90%** on lines, statements, functions, and branches (c8). Tests target workflows and contracts, not line-hit goals. See [`docs/v1.1-prep/coverage-policy.md`](docs/v1.1-prep/coverage-policy.md).
+- **Coverage floor**: **90%** on lines, statements, functions, and branches (c8). Tests target workflows and contracts, not line-hit goals. See [`docs/coverage-policy.md`](docs/coverage-policy.md).
 
 ### Protected Files
 

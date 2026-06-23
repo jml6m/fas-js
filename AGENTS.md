@@ -84,7 +84,7 @@ npm test            # typecheck + lint + build + mocha + c8 coverage
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
-- Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). Tests target workflows and contracts, not line-hit goals. See `docs/v1.1-prep/coverage-policy.md`.
+- Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). Tests target workflows and contracts, not line-hit goals. See [`docs/coverage-policy.md`](docs/coverage-policy.md).
 
 ---
 
@@ -105,7 +105,7 @@ Do not change the public API surface without bumping the major version (human de
 
 - Tests live in `test/` as `*.spec.js` files.
 - Run with `npm test` (builds first, then mocha with c8 coverage).
-- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/coverage-policy.md`.
+- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See [`docs/coverage-policy.md`](docs/coverage-policy.md).
 
 ### Types vs correctness
 
@@ -133,3 +133,4 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 - **Linkable paths must be clickable links.** Any in-repo path mentioned in a Markdown file must be written as a clickable link to the target (e.g. [`src/modules.ts`](src/modules.ts)), not as bare inline code. Command examples and illustrative / non-existent paths are exempt.
 - Docs are gated by [`docs-lint.yml`](.github/workflows/docs-lint.yml): [lychee](https://lychee.cli.rs/) validates that links and `#anchors` resolve, and [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) enforces formatting per [`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml). `.github/` templates + the generated Copilot mirror are excluded. Run `markdownlint-cli2 --fix '**/*.md'` before pushing.
+- **Docs are an as-is snapshot of the current version, not an archive.** We do not keep per-release documentation history in the repo — backward compatibility is handled in code on a best-effort basis, but old-release specs, runbooks, and `docs/<version>-prep/` working files are not maintained here. Promote durable decisions into this file, [`CONTRIBUTING.md`](CONTRIBUTING.md), or [`RELEASING.md`](RELEASING.md) and delete the scratch; the canonical release runbook is [`RELEASING.md`](RELEASING.md).

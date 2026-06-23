@@ -1,4 +1,4 @@
-# Coverage Policy — Workflow-First (v1.1)
+# Coverage Policy — Workflow-First
 
 Closes [#219](https://github.com/jml6m/fas-js/issues/219). Revised per maintainer direction in epic [#241](https://github.com/jml6m/fas-js/issues/241).
 
