@@ -6,9 +6,9 @@ Static demos published under `demo/` on GitHub Pages.
 
 | Path | Description | URL |
 |------|-------------|-----|
-| `v1/` | Legacy redirect to the [ObservableHQ notebook](https://observablehq.com/@jml6m/state-machine-simulator) | <https://jml6m.github.io/fas-js/v1/> |
-| `v1.1/` | Redirect to v1.5 (preserves old links) | <https://jml6m.github.io/fas-js/v1.1/> |
-| `v1.5/` | **Current** — DFA/NFA simulator with prebuilt examples + optional custom JSON | <https://jml6m.github.io/fas-js/v1.5/> |
+| [`v1/`](./v1/) | Legacy redirect to the [ObservableHQ notebook](https://observablehq.com/@jml6m/state-machine-simulator) | <https://jml6m.github.io/fas-js/v1/> |
+| [`v1.1/`](./v1.1/) | Redirect to v1.5 (preserves old links) | <https://jml6m.github.io/fas-js/v1.1/> |
+| [`v1.5/`](./v1.5/) | **Current** — DFA/NFA simulator with prebuilt examples + optional custom JSON | <https://jml6m.github.io/fas-js/v1.5/> |
 
 ### v1.5+ — Self-hosted (current)
 
