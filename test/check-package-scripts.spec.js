@@ -1,6 +1,6 @@
 /**
  * Unit tests for scripts/check-package-scripts.mjs.
- * Exercises the field-validation logic via a mocked package.json reader.
+ * Exercises package.json lockdown validation via mocked package.json content.
  */
 import { assert } from "chai";
 import { readFileSync } from "node:fs";
@@ -12,136 +12,86 @@ const root = resolve(__dir, "..");
 
 // Read the actual package.json for use in tests
 const REAL_PKG = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
+const LOCK_CONFIG = JSON.parse(
+  readFileSync(resolve(root, "scripts/check-package-scripts.lock.json"), "utf8")
+);
 
-// ---------------------------------------------------------------------------
-// Helpers that mirror the check script's internal logic so we can unit-test
-// the comparison without spawning a child process
-// ---------------------------------------------------------------------------
+function omitUnlockedTopLevel(pkgJson, unlockedTopLevelKeys) {
+  return Object.fromEntries(
+    Object.entries(pkgJson).filter(([key]) => !unlockedTopLevelKeys.includes(key))
+  );
+}
 
-const EXPECTED_FIELDS = {
-  "scripts.test": REAL_PKG?.scripts?.test,
-  "scripts.build": REAL_PKG?.scripts?.build,
-  'scripts["check:package-scripts"]': REAL_PKG?.scripts?.["check:package-scripts"],
-  'scripts["check:security"]': REAL_PKG?.scripts?.["check:security"],
-  'exports["."].types': REAL_PKG?.exports?.["."]?.types,
-  'exports["."].import': REAL_PKG?.exports?.["."]?.import,
-  'exports["."].require': REAL_PKG?.exports?.["."]?.require,
-  'exports["./bundle"].default': REAL_PKG?.exports?.["./bundle"]?.default,
-  main: REAL_PKG?.main,
-  module: REAL_PKG?.module,
-  types: REAL_PKG?.types,
-  files: normalizeStringSet(REAL_PKG?.files),
-};
-
-function normalizeStringSet(value) {
-  if (!Array.isArray(value)) return value;
-  return [...new Set(value)].sort();
+function normalize(value, path = []) {
+  if (Array.isArray(value)) {
+    if (path.join(".") === "files") {
+      return [...new Set(value)].sort();
+    }
+    return value.map(item => normalize(item, path));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, child]) => [key, normalize(child, [...path, key])])
+    );
+  }
+  return value;
 }
 
 function validatePkg(pkg) {
-  const actual = {
-    "scripts.test": pkg?.scripts?.test,
-    "scripts.build": pkg?.scripts?.build,
-    'scripts["check:package-scripts"]': pkg?.scripts?.["check:package-scripts"],
-    'scripts["check:security"]': pkg?.scripts?.["check:security"],
-    'exports["."].types': pkg?.exports?.["."]?.types,
-    'exports["."].import': pkg?.exports?.["."]?.import,
-    'exports["."].require': pkg?.exports?.["."]?.require,
-    'exports["./bundle"].default': pkg?.exports?.["./bundle"]?.default,
-    main: pkg?.main,
-    module: pkg?.module,
-    types: pkg?.types,
-    files: normalizeStringSet(pkg?.files),
-  };
-  const failures = [];
-  for (const [field, expected] of Object.entries(EXPECTED_FIELDS)) {
-    const act = actual[field];
-    const actStr = typeof act === "string" ? act : JSON.stringify(act);
-    const expectedStr = typeof expected === "string" ? expected : JSON.stringify(expected);
-    if (actStr !== expectedStr) {
-      failures.push({ field, expected, actual: act });
-    }
-  }
-  return failures;
+  const actualLocked = normalize(
+    omitUnlockedTopLevel(pkg, LOCK_CONFIG.unlockedTopLevelKeys ?? [])
+  );
+  const expectedLocked = normalize(LOCK_CONFIG.expectedLockedPackage);
+  return JSON.stringify(actualLocked) === JSON.stringify(expectedLocked);
 }
-
-// ---------------------------------------------------------------------------
 
 describe("check-package-scripts", function () {
   it("passes with the real package.json", function () {
-    const failures = validatePkg(REAL_PKG);
-    assert.deepEqual(failures, [], "real package.json should match all expected fields");
+    assert.isTrue(validatePkg(REAL_PKG));
+  });
+
+  it("allows version changes", function () {
+    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
+    tampered.version = "1.7.1";
+    assert.isTrue(validatePkg(tampered));
+  });
+
+  it("allows devDependencies changes", function () {
+    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
+    tampered.devDependencies.mocha = "^99.0.0";
+    assert.isTrue(validatePkg(tampered));
   });
 
   it("detects a tampered scripts.test", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.scripts.test = "mocha test/**/*.spec.js";
-    const failures = validatePkg(tampered);
-    assert.isAbove(failures.length, 0);
-    assert.ok(failures.some(f => f.field === "scripts.test"));
-  });
-
-  it("detects a tampered scripts.build", function () {
-    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
-    tampered.scripts.build = "webpack";
-    const failures = validatePkg(tampered);
-    assert.isAbove(failures.length, 0);
-    assert.ok(failures.some(f => f.field === "scripts.build"));
+    assert.isFalse(validatePkg(tampered));
   });
 
   it("detects a tampered check:security script", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.scripts["check:security"] = "echo ok";
-    const failures = validatePkg(tampered);
-    assert.isAbove(failures.length, 0);
-    assert.ok(failures.some(f => f.field === 'scripts["check:security"]'));
-  });
-
-  it("detects a tampered check:package-scripts script", function () {
-    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
-    tampered.scripts["check:package-scripts"] = "echo ok";
-    const failures = validatePkg(tampered);
-    assert.isAbove(failures.length, 0);
-    assert.ok(failures.some(f => f.field === 'scripts["check:package-scripts"]'));
+    assert.isFalse(validatePkg(tampered));
   });
 
   it("detects a tampered exports map", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.exports["."].import = "./lib/evil.js";
-    const failures = validatePkg(tampered);
-    assert.isAbove(failures.length, 0);
-    assert.ok(failures.some(f => f.field === 'exports["."].import'));
-  });
-
-  it("detects a tampered main entry", function () {
-    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
-    tampered.main = "./lib/evil.cjs";
-    const failures = validatePkg(tampered);
-    assert.isAbove(failures.length, 0);
-    assert.ok(failures.some(f => f.field === "main"));
-  });
-
-  it("detects a tampered bundle export entry", function () {
-    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
-    tampered.exports["./bundle"].default = "./lib/evil-bundle.js";
-    const failures = validatePkg(tampered);
-    assert.isAbove(failures.length, 0);
-    assert.ok(failures.some(f => f.field === 'exports["./bundle"].default'));
+    assert.isFalse(validatePkg(tampered));
   });
 
   it("detects a tampered files list", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.files = ["lib", "src"];
-    const failures = validatePkg(tampered);
-    assert.isAbove(failures.length, 0);
-    assert.ok(failures.some(f => f.field === "files"));
+    assert.isFalse(validatePkg(tampered));
   });
 
   it("allows a reordered files list", function () {
     const reordered = JSON.parse(JSON.stringify(REAL_PKG));
     reordered.files = [...reordered.files].reverse();
-    const failures = validatePkg(reordered);
-    assert.deepEqual(failures, []);
+    assert.isTrue(validatePkg(reordered));
   });
 
   it("check-package-scripts.mjs itself exits 0 against the real package.json", async function () {

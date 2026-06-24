@@ -1,18 +1,3 @@
-/**
- * CI gate: critical package.json fields must not silently change.
- *
- * Rationale: package.json cannot be split into sub-files, so we cannot lock the
- * whole file (version bumps, new devDependencies, etc. must flow freely). Instead
- * this script locks only the fields whose mutation would break the CI security
- * model — specifically the test pipeline command, the security-check command,
- * the build command, the publish-time entry-points, and the npm-pack include list.
- * The trust boundary is the locked script + direct workflow invocation of
- * `node scripts/check-package-scripts.mjs` (not only npm script indirection).
- *
- * If any of these fields need to change intentionally, update both package.json
- * AND the expected values below in the same PR. This script is itself locked in
- * .github/PROTECTED_FILES.json so the expected values cannot be silently altered.
- */
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,107 +7,42 @@ const root = resolve(__dir, '..');
 
 const raw = readFileSync(resolve(root, 'package.json'), 'utf8');
 const pkg = JSON.parse(raw);
+const lockConfigRaw = readFileSync(resolve(root, 'scripts/check-package-scripts.lock.json'), 'utf8');
+const lockConfig = JSON.parse(lockConfigRaw);
 
-function normalizeStringSet(value) {
-  if (!Array.isArray(value)) return value;
-  return [...new Set(value)].sort();
+function omitUnlockedTopLevel(pkgJson, unlockedTopLevelKeys) {
+  return Object.fromEntries(
+    Object.entries(pkgJson).filter(([key]) => !unlockedTopLevelKeys.includes(key)),
+  );
 }
 
-const EXPECTED_FILES = normalizeStringSet([
-  'lib/index.js',
-  'lib/index.cjs',
-  'lib/index.d.ts',
-  'lib/index.d.cts',
-  'lib/bundle.js',
-]);
-
-// ---------------------------------------------------------------------------
-// Expected values — update these together with package.json when intentional
-// ---------------------------------------------------------------------------
-const checks = [
-  {
-    field: 'scripts.test',
-    actual: pkg?.scripts?.test,
-    expected: 'npm run typecheck && npm run lint && npm run build && npm run check:security && cross-env NODE_OPTIONS=--import=tsx c8 mocha "test/**/*.spec.js"',
-  },
-  {
-    field: 'scripts.build',
-    actual: pkg?.scripts?.build,
-    expected: 'tsup',
-  },
-  {
-    field: 'scripts["check:package-scripts"]',
-    actual: pkg?.scripts?.['check:package-scripts'],
-    expected: 'node scripts/check-package-scripts.mjs',
-  },
-  {
-    field: 'scripts["check:security"]',
-    actual: pkg?.scripts?.['check:security'],
-    expected: 'node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs',
-  },
-  {
-    field: 'scripts.prepublishOnly',
-    actual: pkg?.scripts?.prepublishOnly,
-    expected: 'npm run build && npm test',
-  },
-  {
-    field: 'exports["."].types',
-    actual: pkg?.exports?.['.']?.types,
-    expected: './lib/index.d.ts',
-  },
-  {
-    field: 'exports["."].import',
-    actual: pkg?.exports?.['.']?.import,
-    expected: './lib/index.js',
-  },
-  {
-    field: 'exports["."].require',
-    actual: pkg?.exports?.['.']?.require,
-    expected: './lib/index.cjs',
-  },
-  {
-    field: 'exports["./bundle"].default',
-    actual: pkg?.exports?.['./bundle']?.default,
-    expected: './lib/bundle.js',
-  },
-  {
-    field: 'main',
-    actual: pkg?.main,
-    expected: './lib/index.cjs',
-  },
-  {
-    field: 'module',
-    actual: pkg?.module,
-    expected: './lib/index.js',
-  },
-  {
-    field: 'types',
-    actual: pkg?.types,
-    expected: './lib/index.d.ts',
-  },
-  {
-    field: 'files',
-    actual: normalizeStringSet(pkg?.files),
-    expected: EXPECTED_FILES,
-  },
-];
-// ---------------------------------------------------------------------------
-
-let failures = 0;
-for (const { field, actual, expected } of checks) {
-  const actualStr = typeof actual === 'string' ? actual : JSON.stringify(actual);
-  const expectedStr = typeof expected === 'string' ? expected : JSON.stringify(expected);
-  if (actualStr !== expectedStr) {
-    console.error(`[check-package-scripts] MISMATCH in ${field}`);
-    console.error(`  expected: ${expectedStr}`);
-    console.error(`  actual:   ${actualStr}`);
-    failures++;
+function normalize(value, path = []) {
+  if (Array.isArray(value)) {
+    if (path.join('.') === 'files') {
+      return [...new Set(value)].sort();
+    }
+    return value.map(item => normalize(item, path));
   }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, child]) => [key, normalize(child, [...path, key])]),
+    );
+  }
+  return value;
 }
 
-if (failures > 0) {
-  console.error('\n[check-package-scripts] FAIL — update scripts/check-package-scripts.mjs together with package.json');
+const actualLocked = normalize(omitUnlockedTopLevel(pkg, lockConfig.unlockedTopLevelKeys ?? []));
+const expectedLocked = normalize(lockConfig.expectedLockedPackage);
+
+const actualStr = JSON.stringify(actualLocked);
+const expectedStr = JSON.stringify(expectedLocked);
+
+if (actualStr !== expectedStr) {
+  console.error('[check-package-scripts] FAIL — locked package.json content changed');
+  console.error('Update scripts/check-package-scripts.lock.json if this change is intentional.');
   process.exit(1);
 }
 
-console.log('[check-package-scripts] OK — critical package.json fields match expected values');
+console.log('[check-package-scripts] OK — locked package.json content matches expected snapshot');

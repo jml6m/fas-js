@@ -1,0 +1,85 @@
+{
+  "unlockedTopLevelKeys": [
+    "version",
+    "dependencies",
+    "devDependencies",
+    "peerDependencies",
+    "optionalDependencies",
+    "overrides"
+  ],
+  "expectedLockedPackage": {
+    "name": "fas-js",
+    "description": "Finate State Automata JS Solutions",
+    "type": "module",
+    "main": "./lib/index.cjs",
+    "module": "./lib/index.js",
+    "types": "./lib/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./lib/index.d.ts",
+        "import": "./lib/index.js",
+        "require": "./lib/index.cjs"
+      },
+      "./bundle": {
+        "default": "./lib/bundle.js"
+      }
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/jml6m/fas-js.git"
+    },
+    "scripts": {
+      "build": "tsup",
+      "prebuild": "node scripts/prebuild.mjs",
+      "postbuild": "node scripts/postbuild.mjs",
+      "clean": "node scripts/prebuild.mjs",
+      "prepublishOnly": "npm run build && npm test",
+      "typecheck": "tsc --noEmit",
+      "lint": "eslint src",
+      "lint:fix": "eslint src --fix",
+      "free-port": "node scripts/free-port.mjs 3200",
+      "preserve:demo": "node scripts/free-port.mjs 3200",
+      "serve:demo": "node scripts/serve-demo.mjs",
+      "test:demo": "npm run build && cross-env NODE_OPTIONS=--import=tsx mocha \"test/demo.spec.js\"",
+      "test:presets": "cross-env NODE_OPTIONS=--import=tsx mocha \"test/demo-presets-golden.spec.js\"",
+      "test:languages": "cross-env NODE_OPTIONS=--import=tsx mocha \"test/languages.spec.js\"",
+      "test": "npm run typecheck && npm run lint && npm run build && npm run check:security && cross-env NODE_OPTIONS=--import=tsx c8 mocha \"test/**/*.spec.js\"",
+      "audit:ci": "npm audit --audit-level=high",
+      "check:package-scripts": "node scripts/check-package-scripts.mjs",
+      "check:security": "node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs",
+      "git:reset": "git reset --hard HEAD && git clean -fd",
+      "npm:reinstall": "node scripts/reinstall.js"
+    },
+    "author": "Joseph Lewkovich",
+    "license": "GPL-3.0-or-later",
+    "files": [
+      "lib/index.js",
+      "lib/index.cjs",
+      "lib/index.d.ts",
+      "lib/index.d.cts",
+      "lib/bundle.js"
+    ],
+    "bugs": {
+      "url": "https://github.com/jml6m/fas-js/issues"
+    },
+    "homepage": "https://github.com/jml6m/fas-js#readme",
+    "directories": {
+      "lib": "lib",
+      "test": "test"
+    },
+    "keywords": [
+      "state-machine",
+      "fsa",
+      "finite",
+      "state",
+      "automata",
+      "automaton",
+      "dfa",
+      "ndfa",
+      "turing"
+    ],
+    "engines": {
+      "node": ">=18"
+    }
+  }
+}
