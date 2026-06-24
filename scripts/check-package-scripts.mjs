@@ -28,6 +28,14 @@ function normalizeStringSet(value) {
   return [...new Set(value)].sort();
 }
 
+const EXPECTED_FILES = normalizeStringSet([
+  'lib/index.js',
+  'lib/index.cjs',
+  'lib/index.d.ts',
+  'lib/index.d.cts',
+  'lib/bundle.js',
+]);
+
 // ---------------------------------------------------------------------------
 // Expected values — update these together with package.json when intentional
 // ---------------------------------------------------------------------------
@@ -95,13 +103,7 @@ const checks = [
   {
     field: 'files',
     actual: normalizeStringSet(pkg?.files),
-    expected: normalizeStringSet([
-      'lib/index.js',
-      'lib/index.cjs',
-      'lib/index.d.ts',
-      'lib/index.d.cts',
-      'lib/bundle.js',
-    ]),
+    expected: EXPECTED_FILES,
   },
 ];
 // ---------------------------------------------------------------------------

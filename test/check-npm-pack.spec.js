@@ -52,8 +52,8 @@ describe("check-npm-pack", function () {
     });
 
     it("rejects missing required lib files", function () {
-      const missing = validEntries.filter((entry) => entry !== "package/lib/index.d.cts");
-      assert.throws(() => validatePackEntries(missing), /missing required lib files/);
+      const entriesWithMissingFile = validEntries.filter((entry) => entry !== "package/lib/index.d.cts");
+      assert.throws(() => validatePackEntries(entriesWithMissingFile), /missing required lib files/);
     });
   });
 });

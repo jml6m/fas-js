@@ -11,7 +11,7 @@
  */
 import { execSync } from "node:child_process";
 import { rmSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
@@ -126,6 +126,9 @@ export function runCheck() {
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  normalize(resolve(process.argv[1])) === normalize(fileURLToPath(import.meta.url))
+) {
   runCheck();
 }
