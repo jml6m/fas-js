@@ -77,11 +77,11 @@ There is no automated bypass path — even owner-authored PRs go through this pr
 
 The npm tarball is kept to the minimal distributable surface and is locked the same way source is:
 
-- `package.json` `"files"` is an explicit allowlist (no `lib/` wildcard): runtime `index.js`/`index.cjs`, the `index.d.ts`/`index.d.cts` types, and the `./bundle` IIFE. No sourcemaps, no demo bundle, no `.gitkeep`.
-- `scripts/check-npm-pack.mjs` (run in `check:security` and again in `publish.yml` before `npm publish`) asserts the tarball matches that set **exactly** — an extra or missing file fails the build and blocks publish.
-- The files that decide what ships — `scripts/check-npm-pack.mjs`, `scripts/postbuild.mjs`, `tsup.config.ts` — are protected, so widening the surface follows the override process above. `package.json` itself is intentionally **not** protected, so version bumps and dependency changes flow freely; the manifest is guarded by the locked checker, not by locking `package.json`.
+- [`package.json`](package.json) `"files"` is an explicit allowlist (no `lib/` wildcard): runtime `index.js`/`index.cjs`, the `index.d.ts`/`index.d.cts` types, and the `./bundle` IIFE. No sourcemaps, no demo bundle, no [`lib/.gitkeep`](lib/.gitkeep).
+- [`scripts/check-npm-pack.mjs`](scripts/check-npm-pack.mjs) (run in `check:security` and again in [`publish.yml`](.github/workflows/publish.yml) before `npm publish`) asserts the tarball matches that set **exactly** — an extra or missing file fails the build and blocks publish.
+- The files that decide what ships — [`scripts/check-npm-pack.mjs`](scripts/check-npm-pack.mjs), [`scripts/postbuild.mjs`](scripts/postbuild.mjs), [`tsup.config.ts`](tsup.config.ts) — are protected, so widening the surface follows the override process above. `package.json` itself is intentionally **not** protected, so version bumps and dependency changes flow freely; the manifest is guarded by the locked checker, not by locking `package.json`.
 
-To change what ships: update `package.json` `"files"`, the `EXPECTED_LIB_FILES` set in `check-npm-pack.mjs`, and the `files` expectation in `check-package-scripts.mjs` together, then land it via the protected-file override process.
+To change what ships: update [`package.json`](package.json) `"files"`, the `EXPECTED_LIB_FILES` set in [`check-npm-pack.mjs`](scripts/check-npm-pack.mjs), and the `files` expectation in [`check-package-scripts.mjs`](scripts/check-package-scripts.mjs) together, then land it via the protected-file override process.
 
 ### Locked Files in the Development Lifecycle
 
