@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '**/*.md'
+      - '.github/workflows/*.yml'
       - '.lychee.toml'
       - '.markdownlint-cli2.yaml'
   workflow_dispatch:

@@ -19,6 +19,5 @@ exclude_path = [
 exclude = [
   '^https?://(www\.)?npmjs\.(com|org)',          # 403s automated clients
   '^https?://badge\.fury\.io',                    # badge host 403s bots
-  '^https?://localhost',                          # local dev-server refs
   '^https?://127\.0\.0\.1',                       # local dev-server refs
 ]

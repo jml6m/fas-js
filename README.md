@@ -12,7 +12,7 @@ Easily create and simulate state machines using this JS library. Import into you
 > **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ![FSA Example](img/fsa_example.png)
-_Visualization of an FSA_
+<h6>Visualization of an FSA</h6>
 
 ## Installation
 Add the latest version of `fas-js` to your package.json:
