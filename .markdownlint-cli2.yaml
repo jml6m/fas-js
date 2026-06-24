@@ -22,4 +22,6 @@ ignores:
   - 'lib/**'
   - 'coverage/**'
   - 'dist/**'
-  - '.github/**' # issue/PR templates + generated copilot mirror
+  - '.github/ISSUE_TEMPLATE/**'
+  - '.github/copilot-instructions.md'
+  - '.github/pull_request_template.md'

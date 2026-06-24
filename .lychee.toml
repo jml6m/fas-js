@@ -12,7 +12,9 @@ exclude_path = [
   "lib",
   "coverage",
   "dist",
-  ".github",
+  ".github/ISSUE_TEMPLATE",
+  ".github/copilot-instructions.md",
+  ".github/pull_request_template.md",
 ]
 
 # URLs excluded from checking (regex against the full URL; literal strings).
