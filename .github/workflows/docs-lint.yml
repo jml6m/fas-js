@@ -1,0 +1,37 @@
+name: Docs Lint
+
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+      - '.github/workflows/*.yml'
+      - '.lychee.toml'
+      - '.markdownlint-cli2.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Lychee link check
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2
+        with:
+          args: --no-progress --include-fragments --config ./.lychee.toml './**/*.md'
+          fail: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2@0.14.0
+
+      - name: Run markdownlint
+        run: markdownlint-cli2 '**/*.md'

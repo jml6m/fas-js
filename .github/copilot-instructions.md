@@ -82,7 +82,7 @@ npm test            # typecheck + lint + build + mocha + c8 coverage
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
-- Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See `docs/v1.1-prep/coverage-policy.md`.
+- Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
 
 ---
 
@@ -103,7 +103,7 @@ Do not change the public API surface without bumping the major version (human de
 
 - Tests live in `test/` as `*.spec.js` files.
 - Run with `npm test` (builds first, then mocha with c8 coverage).
-- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/coverage-policy.md`.
+- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
 
 ### Types vs correctness
 
