@@ -30,16 +30,18 @@ New **public API** features are scheduled for **v2**; release branches ship demo
 2. **Branch from the current version integration branch** — not from `master`, unless you are explicitly asked to hotfix stable.
 3. **Keep PRs focused** — one logical change per PR. Governance, toolchain, and feature work should not be mixed.
 4. **Run tests locally** before opening a PR:
+
    ```bash
    npm ci
    npm test
    ```
+
 5. **Open a PR** targeting the current version integration branch (or `master` for the release merge PR) using the PR template.
 6. **Wait for CI** — all checks must pass. CI runs on Node 18, 20, and 22.
 
 ### Coverage
 
-- **Coverage floor**: **90%** on lines, statements, functions, and branches (c8). Tests target workflows and contracts, not line-hit goals. See [`docs/v1.1-prep/coverage-policy.md`](docs/v1.1-prep/coverage-policy.md).
+- **Coverage floor**: **90%** on lines, statements, functions, and branches (c8). Tests target workflows and contracts, not line-hit goals. See [`docs/coverage-policy.md`](docs/coverage-policy.md).
 
 ### Protected Files
 

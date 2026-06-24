@@ -4,7 +4,7 @@
 
 Please **do not** open a public issue for security problems.
 Use GitHub's private vulnerability reporting:
-https://github.com/jml6m/fas-js/security/advisories/new
+<https://github.com/jml6m/fas-js/security/advisories/new>
 
 You will get an acknowledgement within 7 days.
 
