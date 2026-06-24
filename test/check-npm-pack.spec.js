@@ -15,6 +15,11 @@ describe("check-npm-pack", function () {
       assert.equal(parseTarballNameFromPackOutput(output), "fas-js-1.8.0+meta.tgz");
     });
 
+    it("parses Windows-style path prefixes", function () {
+      const output = "npm notice prep\nC:\\temp\\fas-js-1.8.0-rc.1.tgz\n";
+      assert.equal(parseTarballNameFromPackOutput(output), "fas-js-1.8.0-rc.1.tgz");
+    });
+
     it("throws when no tarball filename is present", function () {
       assert.throws(
         () => parseTarballNameFromPackOutput("npm notice done\n"),
