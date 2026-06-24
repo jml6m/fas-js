@@ -10,7 +10,7 @@
  * how source files are locked. Keep this list in sync with package.json "files".
  */
 import { execSync } from "node:child_process";
-import { readdirSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,31 +40,24 @@ const EXPECTED_LIB_FILES = new Set([
 
 const FORBIDDEN_PREFIXES = ["package/src/", "package/test/", "package/demo/"];
 
-let tarball = "";
-
-try {
-  const output = execSync("npm pack --pack-destination .", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  const match = output.match(/fas-js-[\d.]+\.tgz/);
-  if (!match) {
+export function parseTarballNameFromPackOutput(output) {
+  const lines = String(output)
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
+  const tarballLine = [...lines].reverse().find(line => line.endsWith(".tgz"));
+  if (!tarballLine) {
     throw new Error(`npm pack did not report tarball name: ${output}`);
   }
-  const tarballName = match[0];
-  tarball = resolve(root, tarballName);
+  return tarballLine.replace(/^.*[\\/]/, "");
+}
 
-  // Run tar from root with the bare filename: a Windows absolute path
-  // ("C:\...") is misread by GNU tar as a remote host spec.
-  const listing = execSync(`tar -tzf "${tarballName}"`, { cwd: root, encoding: "utf8" });
-  const entries = listing
-    .split("\n")
-    .map(line => line.trim())
-    .filter(Boolean)
-    .filter(entry => !entry.endsWith("/")); // drop directory entries
-
-  for (const forbidden of FORBIDDEN_PREFIXES) {
+export function validatePackEntries(entries, {
+  expectedLibFiles = EXPECTED_LIB_FILES,
+  allowedRootFiles = ALLOWED_ROOT_FILES,
+  forbiddenPrefixes = FORBIDDEN_PREFIXES,
+} = {}) {
+  for (const forbidden of forbiddenPrefixes) {
     if (entries.some(entry => entry.startsWith(forbidden))) {
       throw new Error(`npm pack tarball must not include ${forbidden}`);
     }
@@ -79,10 +72,10 @@ try {
     if (!rel) continue;
 
     if (rel.startsWith("lib/")) {
-      if (!EXPECTED_LIB_FILES.has(rel)) {
+      if (!expectedLibFiles.has(rel)) {
         throw new Error(
           `forbidden lib path in npm pack tarball: ${entry}\n` +
-            `  Published surface is locked to: ${[...EXPECTED_LIB_FILES].join(", ")}\n` +
+            `  Published surface is locked to: ${[...expectedLibFiles].join(", ")}\n` +
             `  To change it, follow the protected-file override process (CONTRIBUTING.md).`
         );
       }
@@ -90,26 +83,49 @@ try {
       continue;
     }
 
-    if (ALLOWED_ROOT_FILES.has(rel)) continue;
+    if (allowedRootFiles.has(rel)) continue;
 
     throw new Error(`forbidden path in npm pack tarball: ${entry}`);
   }
 
-  const missing = [...EXPECTED_LIB_FILES].filter(f => !libFiles.has(f));
+  const missing = [...expectedLibFiles].filter(f => !libFiles.has(f));
   if (missing.length > 0) {
     throw new Error(`npm pack tarball missing required lib files: ${missing.join(", ")}`);
   }
+}
 
-  console.log(
-    `[check-npm-pack] OK — ${entries.length} paths, lib/ matches the locked manifest exactly`
-  );
-} finally {
-  if (tarball) {
-    rmSync(tarball, { force: true });
-  }
-  for (const name of readdirSync(root)) {
-    if (/^fas-js-.*\.tgz$/.test(name)) {
-      rmSync(resolve(root, name), { force: true });
+export function runCheck() {
+  let tarball = "";
+  try {
+    const output = execSync("npm pack --pack-destination .", {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const tarballName = parseTarballNameFromPackOutput(output);
+    tarball = resolve(root, tarballName);
+
+    // Run tar from root with the bare filename: a Windows absolute path
+    // ("C:\...") is misread by GNU tar as a remote host spec.
+    const listing = execSync(`tar -tzf "${tarballName}"`, { cwd: root, encoding: "utf8" });
+    const entries = listing
+      .split("\n")
+      .map(line => line.trim())
+      .filter(Boolean)
+      .filter(entry => !entry.endsWith("/")); // drop directory entries
+
+    validatePackEntries(entries);
+
+    console.log(
+      `[check-npm-pack] OK — ${entries.length} paths, lib/ matches the locked manifest exactly`
+    );
+  } finally {
+    if (tarball) {
+      rmSync(tarball, { force: true });
     }
   }
+}
+
+if (resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+  runCheck();
 }

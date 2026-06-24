@@ -23,6 +23,11 @@ const root = resolve(__dir, '..');
 const raw = readFileSync(resolve(root, 'package.json'), 'utf8');
 const pkg = JSON.parse(raw);
 
+function normalizeStringSet(value) {
+  if (!Array.isArray(value)) return value;
+  return [...new Set(value)].sort();
+}
+
 // ---------------------------------------------------------------------------
 // Expected values — update these together with package.json when intentional
 // ---------------------------------------------------------------------------
@@ -68,6 +73,11 @@ const checks = [
     expected: './lib/index.cjs',
   },
   {
+    field: 'exports["./bundle"].default',
+    actual: pkg?.exports?.['./bundle']?.default,
+    expected: './lib/bundle.js',
+  },
+  {
     field: 'main',
     actual: pkg?.main,
     expected: './lib/index.cjs',
@@ -84,8 +94,8 @@ const checks = [
   },
   {
     field: 'files',
-    actual: JSON.stringify(pkg?.files),
-    expected: JSON.stringify([
+    actual: normalizeStringSet(pkg?.files),
+    expected: normalizeStringSet([
       'lib/index.js',
       'lib/index.cjs',
       'lib/index.d.ts',

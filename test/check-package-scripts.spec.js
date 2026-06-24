@@ -26,11 +26,17 @@ const EXPECTED_FIELDS = {
   'exports["."].types': REAL_PKG?.exports?.["."]?.types,
   'exports["."].import': REAL_PKG?.exports?.["."]?.import,
   'exports["."].require': REAL_PKG?.exports?.["."]?.require,
+  'exports["./bundle"].default': REAL_PKG?.exports?.["./bundle"]?.default,
   main: REAL_PKG?.main,
   module: REAL_PKG?.module,
   types: REAL_PKG?.types,
-  files: JSON.stringify(REAL_PKG?.files),
+  files: normalizeStringSet(REAL_PKG?.files),
 };
+
+function normalizeStringSet(value) {
+  if (!Array.isArray(value)) return value;
+  return [...new Set(value)].sort();
+}
 
 function validatePkg(pkg) {
   const actual = {
@@ -41,15 +47,18 @@ function validatePkg(pkg) {
     'exports["."].types': pkg?.exports?.["."]?.types,
     'exports["."].import': pkg?.exports?.["."]?.import,
     'exports["."].require': pkg?.exports?.["."]?.require,
+    'exports["./bundle"].default': pkg?.exports?.["./bundle"]?.default,
     main: pkg?.main,
     module: pkg?.module,
     types: pkg?.types,
-    files: JSON.stringify(pkg?.files),
+    files: normalizeStringSet(pkg?.files),
   };
   const failures = [];
   for (const [field, expected] of Object.entries(EXPECTED_FIELDS)) {
     const act = actual[field];
-    if (act !== expected) {
+    const actStr = typeof act === "string" ? act : JSON.stringify(act);
+    const expectedStr = typeof expected === "string" ? expected : JSON.stringify(expected);
+    if (actStr !== expectedStr) {
       failures.push({ field, expected, actual: act });
     }
   }
@@ -112,12 +121,27 @@ describe("check-package-scripts", function () {
     assert.ok(failures.some(f => f.field === "main"));
   });
 
+  it("detects a tampered bundle export entry", function () {
+    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
+    tampered.exports["./bundle"].default = "./lib/evil-bundle.js";
+    const failures = validatePkg(tampered);
+    assert.isAbove(failures.length, 0);
+    assert.ok(failures.some(f => f.field === 'exports["./bundle"].default'));
+  });
+
   it("detects a tampered files list", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.files = ["lib", "src"];
     const failures = validatePkg(tampered);
     assert.isAbove(failures.length, 0);
     assert.ok(failures.some(f => f.field === "files"));
+  });
+
+  it("allows a reordered files list", function () {
+    const reordered = JSON.parse(JSON.stringify(REAL_PKG));
+    reordered.files = [...reordered.files].reverse();
+    const failures = validatePkg(reordered);
+    assert.deepEqual(failures, []);
   });
 
   it("check-package-scripts.mjs itself exits 0 against the real package.json", async function () {
