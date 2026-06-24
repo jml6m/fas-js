@@ -7,7 +7,7 @@ import {
 describe("check-npm-pack", function () {
   describe("parseTarballNameFromPackOutput", function () {
     it("parses standard npm pack output", function () {
-      assert.equal(parseTarballNameFromPackOutput("fas-js-1.8.0-rc.1.tgz\n"), "fas-js-1.8.0-rc.1.tgz");
+      assert.equal(parseTarballNameFromPackOutput("fas-js-0.0.0-test.tgz\n"), "fas-js-0.0.0-test.tgz");
     });
 
     it("parses output with extra lines and path prefixes", function () {

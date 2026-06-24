@@ -45,10 +45,12 @@ export function parseTarballNameFromPackOutput(output) {
     .split(/\r?\n/)
     .map(line => line.trim())
     .filter(Boolean);
-  const tarballLine = [...lines].reverse().find(line => line.endsWith(".tgz"));
+  const tarballLine = lines.findLast(line => line.endsWith(".tgz"));
   if (!tarballLine) {
     throw new Error(`npm pack did not report tarball name: ${output}`);
   }
+  // Strip any leading path component (Unix "/" or Windows "\") and keep only
+  // the emitted tarball filename from npm pack output.
   return tarballLine.replace(/^.*[\\/]/, "");
 }
 
