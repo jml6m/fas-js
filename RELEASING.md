@@ -10,7 +10,7 @@ See [`AGENTS.md`](./AGENTS.md) §4 for the branch policy this enforces.
 topic branch ──PR──▶ version integration branch (chore/vX.Y-*) ──release PR──▶ master ──tag vX.Y.Z──▶ npm
 ```
 
-- **One active integration branch per release**, branched from `master`, named `chore/vX.Y-*` (e.g. `chore/v1.8-hygiene`). Per [`AGENTS.md`](./AGENTS.md) §4, minor lines ship UX, tests, docs, and internal tooling; public API features are reserved for v2.
+- **One active integration branch per release**, branched from `master`, named `chore/vX.Y-*`. Per [`AGENTS.md`](./AGENTS.md) §4, minor lines ship UX, tests, docs, and internal tooling; public API features are reserved for v2.
 - **Topic work never targets `master` directly** — it PRs into the current integration branch. Enforced by [`release-base-guard`](./.github/workflows/release-base-guard.yml).
 - PRs into the integration branch require passing `test (18/20/22)` + `lock-files` but **no approval** (the `next-version-prep-branch` ruleset), so day-to-day work merges without friction.
 
@@ -61,4 +61,4 @@ Published `vX.Y.Z` tags are **permanent and immutable** — never move or delete
 
 - **Bot-authored PRs** (e.g. Copilot) get workflow runs stuck in `action_required` until a maintainer clicks "Approve and run workflows" — an un-run gate is **not** a pass.
 - **`publish.yml` must `npm run build` before `check:security`** (it reads `lib/index.d.ts`).
-- This runbook is the override-free counterpart to the v1.7 process; remaining hardening is tracked in the release epic (#282).
+- Remaining release-hardening work is tracked in the release epic (#282).
