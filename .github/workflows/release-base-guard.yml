@@ -1,9 +1,10 @@
 name: Release Base Guard
 
-# Enforces the branch policy: topic work never targets `master` directly.
-# Only the integration → master release PR (head `chore/v*` / `v*`) — plus
-# Dependabot action bumps — may target `master`. Topic work belongs on the
-# current version integration branch. See AGENTS.md §4 and RELEASING.md.
+# Branch-policy gate. A PR may target `master` only when its head branch is:
+#   - a version integration/release branch (`chore/v*` or `v*`), or
+#   - a Dependabot GitHub Actions bump (`dependabot/github_actions/*`).
+# Any other (topic) branch is rejected — that work belongs on the current
+# version integration branch instead. See AGENTS.md §4 and RELEASING.md.
 
 on:
   pull_request:

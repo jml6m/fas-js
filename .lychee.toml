@@ -13,7 +13,6 @@ exclude_path = [
   "coverage",
   "dist",
   ".github/ISSUE_TEMPLATE",
-  ".github/copilot-instructions.md",
   ".github/pull_request_template.md",
 ]
 

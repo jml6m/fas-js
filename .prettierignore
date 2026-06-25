@@ -1,0 +1,13 @@
+# Markdown is owned by markdownlint (see .markdownlint-cli2.yaml), not prettier.
+**/*.md
+
+# Build output / generated
+lib/
+coverage/
+dist/
+
+# Vendored demo bundles
+demo/**/vendor/
+
+# Lockfile
+package-lock.json

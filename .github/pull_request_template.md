@@ -22,9 +22,9 @@
 
 ## Checklist
 
-- [ ] PR targets the current version integration branch (e.g. `chore/v1.7-repo-org`), not `master`, unless this is the release merge PR or an approved stable hotfix
+- [ ] PR targets the current version integration branch (`chore/vX.Y-*`), not `master`, unless this is the release merge PR or an approved stable hotfix
 - [ ] Changes are focused and optimized
 - [ ] Tests added or updated for new/changed behavior
 - [ ] Test Coverage maintained (see [.c8rc.json](../.c8rc.json))
 - [ ] No version bump in [package.json](../package.json)
-- [ ] [README.md](../README.md) if needed, but a request for approval must be made to the project admin on the PR or in the agent chat
+- [ ] [README.md](../README.md) updated if needed — but any README change requires project-admin approval, requested on the PR or in the agent chat

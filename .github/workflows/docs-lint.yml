@@ -2,11 +2,14 @@ name: Docs Lint
 
 on:
   pull_request:
+    # Only paths that affect this job's result: the docs themselves, the two
+    # lint configs, and this workflow file. (The job lints Markdown only — it
+    # does not validate other workflows, so it need not run for them.)
     paths:
       - '**/*.md'
-      - '.github/workflows/*.yml'
       - '.lychee.toml'
       - '.markdownlint-cli2.yaml'
+      - '.github/workflows/docs-lint.yml'
   workflow_dispatch:
 
 permissions:

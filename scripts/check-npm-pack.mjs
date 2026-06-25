@@ -6,7 +6,7 @@
  * tarball must match it exactly: an extra file (e.g. a demo bundle, sourcemap,
  * or stray artifact) fails, and a missing entry point fails. Because this script
  * is listed in .github/PROTECTED_FILES.json, widening the published surface
- * requires the owner-approved override process (see CONTRIBUTING.md) — mirroring
+ * requires the owner-approved override process (see AGENTS.md) — mirroring
  * how source files are locked. Keep this list in sync with package.json "files".
  */
 import { execSync } from "node:child_process";
@@ -78,7 +78,7 @@ export function validatePackEntries(entries, {
         throw new Error(
           `forbidden lib path in npm pack tarball: ${entry}\n` +
             `  Published surface is locked to: ${[...expectedLibFiles].join(", ")}\n` +
-            `  To change it, follow the protected-file override process (CONTRIBUTING.md).`
+            `  To change it, follow the protected-file override process (AGENTS.md).`
         );
       }
       libFiles.add(rel);

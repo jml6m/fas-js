@@ -40,10 +40,9 @@ For unsupervised runs (e.g. automated fixes):
 | `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
 | topic branches on top                              | Short-lived branches → PR into the **current version integration branch**                           |
 
-- While a release (e.g. v1.7) is in flight, stack topic work on that integration branch (e.g. `chore/v1.7-repo-org`).
+- While a release is in flight, stack topic work on its version integration branch (`chore/vX.Y-*`).
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
-- See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contributor-facing details.
 
 **Branch policy (enforced):**
 
@@ -79,8 +78,12 @@ npm ci              # install
 npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/index.d.ts
 npm run typecheck   # TypeScript type check (no emit)
 npm run lint        # ESLint on src/
+npm run docs:lint   # markdownlint on **/*.md — matches the docs-lint CI gate
 npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
+
+- **Code** formatting is Prettier, run **on save in-editor** ([`.vscode/settings.json`](.vscode/settings.json) + [`.prettierrc.json`](.prettierrc.json)) — there is no CLI `format` script by design.
+- **Markdown** is owned by **markdownlint** ([`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml)), not Prettier (which is barred from `.md` via [`.prettierignore`](.prettierignore) and the editor config). Run `npm run docs:lint:fix` before pushing docs. The lychee link/anchor check runs in CI only (it's a Rust binary, not an npm dep).
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
@@ -119,7 +122,61 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
-- The `lock-files` gate protects the project's stable foundation (see `CONTRIBUTING.md` → "Protected Files" and "Locked Files in the Development Lifecycle"). Most development adds new code; modifications to locked paths are intentionally rare and heavily gated. **There is no automated bypass** — even owner-authored or agent-authored PRs that touch protected paths must wait for the project owner to manually disable the `lock-files` required status check in the ruleset, merge, and re-enable it.
+- The `lock-files` gate protects the project's stable foundation (see the **Protected Files** section below). Most development adds new code; modifications to locked paths are intentionally rare and heavily gated. **There is no automated bypass** — even owner-authored or agent-authored PRs that touch protected paths must wait for the project owner to manually disable the `lock-files` required status check in the ruleset, merge, and re-enable it.
+
+---
+
+## 🔒 Protected Files
+
+Certain paths are locked by the `lock-files` CI check (see [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json)). Changing them requires explicit owner approval via the override process below.
+
+| Path | Why protected |
+| ---- | ------------- |
+| [`test/helpers/publicApiContract.js`](test/helpers/publicApiContract.js) | Public API contract helper — changes affect foundational test fidelity |
+| [`src/globals/globals.ts`](src/globals/globals.ts) | Runtime type guards used across the codebase |
+| [`src/modules.ts`](src/modules.ts) | Public API entry point — signature changes require major version bump |
+| [`scripts/check-public-api.mjs`](scripts/check-public-api.mjs) | Enforces public API contract |
+| [`scripts/check-package-scripts.mjs`](scripts/check-package-scripts.mjs) | Locks critical package.json fields used by CI/security gates |
+| [`scripts/check-protected-files.mjs`](scripts/check-protected-files.mjs) | The CI gate itself — must not be bypassed without owner review |
+| [`scripts/check-npm-pack.mjs`](scripts/check-npm-pack.mjs) | Locks the published npm surface (exact tarball manifest) |
+| [`scripts/postbuild.mjs`](scripts/postbuild.mjs) | Controls which build artifacts land in `lib/` (and thus the tarball) |
+| [`tsup.config.ts`](tsup.config.ts) | Build config — governs emitted artifacts (entries, sourcemaps) |
+| [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) | Defines the protected-path list — changes alter what is locked |
+| [`.github/workflows/lock-files.yml`](.github/workflows/lock-files.yml) | The gate workflow — must not be weakened without owner review |
+| [`.github/workflows/publish.yml`](.github/workflows/publish.yml) | Release / publish workflow — supply-chain security boundary |
+
+**Override process** (when a protected change is intentional):
+
+1. Open a PR with a clear explanation of why the protected file must change.
+2. The `lock-files` check will fail — that failure is expected.
+3. Request review and tag `@jml6m`.
+4. The owner (`@jml6m`) reviews, then temporarily disables the `lock-files` required status check in the ruleset, merges, and re-enables it.
+
+There is no automated bypass — even owner- or agent-authored PRs go through this process, so every change to the protected set is explicitly human-reviewed before it lands.
+
+### Published package surface
+
+The npm tarball is kept to the minimal distributable surface and is locked the same way source is:
+
+- [`package.json`](package.json) `"files"` is an explicit allowlist (no `lib/` wildcard): runtime `index.js`/`index.cjs`, the `index.d.ts`/`index.d.cts` types, and the `./bundle` IIFE. No sourcemaps, no demo bundle, no [`lib/.gitkeep`](lib/.gitkeep).
+- [`scripts/check-npm-pack.mjs`](scripts/check-npm-pack.mjs) (run in `check:security` and again in [`publish.yml`](.github/workflows/publish.yml) before `npm publish`) asserts the tarball matches that set **exactly** — an extra or missing file fails the build and blocks publish.
+- The files that decide what ships — [`scripts/check-npm-pack.mjs`](scripts/check-npm-pack.mjs), [`scripts/postbuild.mjs`](scripts/postbuild.mjs), [`tsup.config.ts`](tsup.config.ts) — are protected, so widening the surface follows the override process above. `package.json` itself is intentionally **not** protected, so version bumps and dependency changes flow freely; the manifest is guarded by the locked checker, not by locking `package.json`.
+
+To change what ships: update [`package.json`](package.json) `"files"`, the `EXPECTED_LIB_FILES` set in [`check-npm-pack.mjs`](scripts/check-npm-pack.mjs), and the `files` expectation in [`check-package-scripts.mjs`](scripts/check-package-scripts.mjs) together, then land it via the override process.
+
+### Locked files in the development lifecycle
+
+The `lock-files` gate + [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) define the project's **stable foundation** (the "trusted core").
+
+As the codebase matures — especially toward v2 — files that become reliable, comprehensively tested, and foundational may be added to the locked set. The philosophy:
+
+- **Prefer adding new files/folders** rather than modifying locked ones.
+- Locked code is a stable base that new functionality is built _on top of_.
+- A new component (a language module, a critical utility, an additional gate) can be proposed for inclusion once it has proven itself and matches the spirit of the "Why protected" table above.
+
+**How the locked set evolves:** a component demonstrates long-term stability under contract-level tests → a PR adds its path to [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) and the table above → because the list itself is locked, that PR follows the override process → thereafter the new path requires the same owner-level approval.
+
+This keeps most day-to-day work (features, experiments, non-core refactors) flowing on integration branches while shielding core contracts, test helpers, the public API surface, and the protection mechanisms themselves from accidental or lightly-reviewed change.
 
 ---
 
@@ -132,5 +189,5 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 ## Documentation conventions
 
 - **Linkable paths must be clickable links.** Any in-repo path mentioned in a Markdown file must be written as a clickable link to the target (e.g. [`src/modules.ts`](src/modules.ts)), not as bare inline code. Command examples and illustrative / non-existent paths are exempt.
-- Docs are gated by [`docs-lint.yml`](.github/workflows/docs-lint.yml): [lychee](https://lychee.cli.rs/) validates that links and `#anchors` resolve, and [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) enforces formatting per [`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml). Only [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/), [`.github/pull_request_template.md`](.github/pull_request_template.md), and the generated [`.github/copilot-instructions.md`](.github/copilot-instructions.md) are excluded. Run `markdownlint-cli2 --fix '**/*.md'` before pushing.
-- **Docs are an as-is snapshot of the current version, not an archive.** We do not keep per-release documentation history in the repo — backward compatibility is handled in code on a best-effort basis, but old-release specs, runbooks, and `docs/<version>-prep/` working files are not maintained here. Promote durable decisions into this file, [`CONTRIBUTING.md`](CONTRIBUTING.md), or [`RELEASING.md`](RELEASING.md) and delete the scratch; the canonical release runbook is [`RELEASING.md`](RELEASING.md).
+- Docs are gated by [`docs-lint.yml`](.github/workflows/docs-lint.yml): [lychee](https://lychee.cli.rs/) validates that links and `#anchors` resolve, and [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) enforces formatting per [`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml). Only the GitHub form templates — [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/) and [`.github/pull_request_template.md`](.github/pull_request_template.md) — are excluded (their template syntax isn't plain prose). The [`.github/copilot-instructions.md`](.github/copilot-instructions.md) mirror **is** linted, so it stays formatted and in sync with this file. Run `npm run docs:lint:fix` before pushing. Prettier does **not** format Markdown (see [`.prettierignore`](.prettierignore)) — markdownlint is the sole Markdown authority.
+- **Docs are an as-is snapshot of the current version, not an archive.** We do not keep per-release documentation history in the repo — backward compatibility is handled in code on a best-effort basis, but old-release specs, runbooks, and `docs/<version>-prep/` working files are not maintained here. Promote durable decisions into this file or [`RELEASING.md`](RELEASING.md) and delete the scratch; the canonical release runbook is [`RELEASING.md`](RELEASING.md).

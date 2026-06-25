@@ -9,8 +9,6 @@
 
 Easily create and simulate state machines using this JS library. Import into your own server side or browser based JS application.
 
-> **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ![FSA Example](img/fsa_example.png)
 <h6>Visualization of an FSA</h6>
 
