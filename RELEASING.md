@@ -49,7 +49,7 @@ This keeps the approval requirement fully in force for **every non-owner PR** to
 git tag vX.Y.Z origin/master && git push origin vX.Y.Z
 ```
 
-The tag push fires [`publish.yml`](./.github/workflows/publish.yml): OIDC trusted publishing, gated by the `npm` GitHub environment (**requires manual `jml6m` approval** in the Actions UI — branch `workflow_dispatch` is rejected; it must be a tag). Verify success in the CI **publish-step log** (`+ fas-js@X.Y.Z`), not local `npm view` (CDN/proxy lag).
+The tag push fires [`publish.yml`](./.github/workflows/publish.yml): OIDC trusted publishing, gated by the `npm` GitHub environment (**requires manual `jml6m` approval** in the Actions UI). Avoid running `workflow_dispatch` for publishing unless `publish.yml` is updated to hard-reject non-tag refs. Verify success in the CI **publish-step log** (`+ fas-js@X.Y.Z`), not local `npm view` (CDN/proxy lag).
 
 Then: `gh release create vX.Y.Z --target master --generate-notes`.
 

@@ -23,9 +23,9 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
         run: |
           case "$HEAD_REF" in
-            chore/v* | v* | dependabot/*)
+            chore/v* | v* | dependabot/github_actions/* | dependabot/github-actions/*)
               echo "OK: '$HEAD_REF' is allowed to target master." ;;
             *)
-              echo "::error::PRs into 'master' must come from a version integration/release branch (chore/v*, v*). Topic work belongs on the current integration branch, not master. Got head '$HEAD_REF'."
+              echo "::error::PRs into 'master' must come from a version integration/release branch (chore/v*, v*) or a Dependabot GitHub Actions branch (dependabot/github_actions/*). Topic work belongs on the current integration branch, not master. Got head '$HEAD_REF'."
               exit 1 ;;
           esac
