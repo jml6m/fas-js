@@ -78,12 +78,12 @@ npm ci              # install
 npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/index.d.ts
 npm run typecheck   # TypeScript type check (no emit)
 npm run lint        # ESLint on src/
-npm run format      # Prettier on code (Markdown is excluded — see .prettierignore)
 npm run docs:lint   # markdownlint on **/*.md — matches the docs-lint CI gate
 npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
 
-- Markdown formatting is owned by **markdownlint** (`.markdownlint-cli2.yaml`), not Prettier — run `npm run docs:lint:fix` before pushing docs. The lychee link/anchor check runs in CI only (it's a Rust binary, not an npm dep).
+- **Code** formatting is Prettier, run **on save in-editor** ([`.vscode/settings.json`](.vscode/settings.json) + [`.prettierrc.json`](.prettierrc.json)) — there is no CLI `format` script by design.
+- **Markdown** is owned by **markdownlint** ([`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml)), not Prettier (which is barred from `.md` via [`.prettierignore`](.prettierignore) and the editor config). Run `npm run docs:lint:fix` before pushing docs. The lychee link/anchor check runs in CI only (it's a Rust binary, not an npm dep).
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
