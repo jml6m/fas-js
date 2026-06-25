@@ -37,10 +37,10 @@ For unsupervised runs (e.g. automated fixes):
 | Branch | Purpose |
 |--------|---------|
 | `master` | Stable / public — protected; what npm and badges reflect |
-| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
-| topic branches on top | Short-lived branches → PR into the **current version integration branch** |
+| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master`. **These name patterns are RESERVED** for this single branch. |
+| `topic/<name>` (topic work) | Short-lived branches → PR into the **current version integration branch**. Must **not** use a reserved version-integration pattern. |
 
-- While a release is in flight, stack topic work on its version integration branch (`chore/vX.Y-*`).
+- While a release is in flight, stack topic work on `topic/<name>` branches off the version integration branch and PR them back into it.
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
 
@@ -48,6 +48,8 @@ For unsupervised runs (e.g. automated fixes):
 
 - **Topic work never targets `master` directly.** Every change lands on a short-lived topic branch that PRs into the **current version integration branch** (`chore/vX.Y-*`). `master` only ever receives the single **integration → `master`** release PR (plus Dependabot GitHub Actions bumps). Enforced by [`release-base-guard`](./workflows/release-base-guard.yml): a PR into `master` whose head is not `chore/v*`, `v*`, or `dependabot/github_actions/*` fails.
 - The integration → `master` release PR is merged by the **repository owner via a scoped `bypass_actors` entry** on the `main` ruleset (bypass mode: pull requests) — so the owner's own release PR doesn't need an approving review it cannot self-grant. **Every non-owner PR to `master` still requires 1 approving review**, and **required status checks still gate every merge**. No App, no self-approve, no temporary ruleset toggle. See [`RELEASING.md`](../RELEASING.md).
+
+**Reserved branch names:** the patterns **`vX.Y-*`, `vX-*`, `chore/vX.Y-*`, `chore/vX-*`** are the targeting criteria of the `next-version-prep-branch` ruleset and are **reserved for the single version-integration branch only**. Naming any other branch with one of them silently subjects it to that ruleset (PR-required, linear history, strict checks) and breaks normal flow. All non-integration work uses the **`topic/<name>`** prefix (a version reference that doesn't reproduce a reserved pattern in one segment is fine — `topic/v1.8-foo` and `chore/v1.8/foo` are safe; `chore/v1.8-foo` is not). The current integration branch is recorded in [`.github/INTEGRATION_BRANCH`](./INTEGRATION_BRANCH). A committed `pre-push` hook (auto-installed via `core.hooksPath .githooks`) blocks reserved-name pushes from non-integration branches and runs the fast static gate; bypass with `git push --no-verify`.
 
 **Ref & tag hygiene:**
 

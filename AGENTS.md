@@ -37,10 +37,10 @@ For unsupervised runs (e.g. automated fixes):
 | Branch                                             | Purpose                                                                                             |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `master`                                           | Stable / public — protected; what npm and badges reflect                                            |
-| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
-| topic branches on top                              | Short-lived branches → PR into the **current version integration branch**                           |
+| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master`. **These name patterns are RESERVED** for this single branch (see "Reserved branch names" below). |
+| `topic/<name>` (topic work)                        | Short-lived branches → PR into the **current version integration branch**. Must **not** use a reserved version-integration pattern. |
 
-- While a release is in flight, stack topic work on its version integration branch (`chore/vX.Y-*`).
+- While a release is in flight, stack topic work on `topic/<name>` branches off the version integration branch and PR them back into it.
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
 
@@ -48,6 +48,12 @@ For unsupervised runs (e.g. automated fixes):
 
 - **Topic work never targets `master` directly.** Every change lands on a short-lived topic branch that PRs into the **current version integration branch** (`chore/vX.Y-*`). `master` only ever receives the single **integration → `master`** release PR (plus Dependabot GitHub Actions bumps). Enforced by [`release-base-guard`](.github/workflows/release-base-guard.yml): a PR into `master` whose head is not `chore/v*`, `v*`, or `dependabot/github_actions/*` fails.
 - The integration → `master` release PR is merged by the **repository owner via a scoped `bypass_actors` entry** on the `main` ruleset (bypass mode: pull requests) — so the owner's own release PR doesn't need an approving review it cannot self-grant. **Every non-owner PR to `master` still requires 1 approving review** (the owner approves those normally — they aren't self-authored), and **required status checks still gate every merge**. No App, no self-approve, no temporary ruleset toggle. See [`RELEASING.md`](RELEASING.md).
+
+**Reserved branch names (do not reuse for topic work):**
+
+- The branch-name patterns **`vX.Y-*`, `vX-*`, `chore/vX.Y-*`, `chore/vX-*`** are the targeting criteria of the [`next-version-prep-branch`](https://github.com/jml6m/fas-js/rules) ruleset (which grants the no-approval + `test`/`lock-files` gate that lets day-to-day work merge into the integration branch). **They are reserved for the single per-release version-integration branch — nothing else.** Naming an enhancement/topic/fix/chore branch with one of these patterns silently puts it under that ruleset (PR-required, linear history, strict status checks), which breaks normal push/merge flow. **All non-integration work uses the `topic/<name>` prefix** (e.g. `topic/lean-verify`, `topic/branch-guardrails`). A version reference is fine as long as it doesn't reproduce a reserved pattern within one path segment — `topic/v1.8-foo` and `chore/v1.8/foo` are safe; `chore/v1.8-foo` is **not**.
+- The current integration branch is recorded in [`.github/INTEGRATION_BRANCH`](.github/INTEGRATION_BRANCH) (one line). When a release ships and a new line opens, update that file to the new integration branch name.
+- **Local pushes are guarded** by a committed `pre-push` hook (installed automatically on `npm install` via `core.hooksPath .githooks`). Before any push from a dev machine it (1) **blocks** pushing a branch whose name matches a reserved pattern unless it equals the name in `.github/INTEGRATION_BRANCH`, and (2) runs the **fast static gate** (`typecheck` → `lint` → `docs:lint`). This catches mistakes that agents normally avoid (they branch correctly and let PR workflows gate) but a human committing locally can make. Bypass for an exceptional push with `git push --no-verify`.
 
 **Ref & tag hygiene:**
 
