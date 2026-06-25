@@ -61,7 +61,11 @@
     "typescript-eslint": "^8.61.0"
   },
   "files": [
-    "lib"
+    "lib/index.js",
+    "lib/index.cjs",
+    "lib/index.d.ts",
+    "lib/index.d.cts",
+    "lib/bundle.js"
   ],
   "bugs": {
     "url": "https://github.com/jml6m/fas-js/issues"
