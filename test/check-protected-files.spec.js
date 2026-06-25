@@ -225,7 +225,7 @@ describe("runCheck", function () {
     assert.isTrue(cap.errors.some((e) => e.includes("[lock-files] VIOLATION")));
     assert.isTrue(cap.errors.some((e) => e.includes(`Base SHA: ${sha}`)));
     assert.isTrue(cap.errors.some((e) => e.includes("package.json")));
-    assert.isTrue(cap.errors.some((e) => e.includes("CONTRIBUTING.md")));
+    assert.isTrue(cap.errors.some((e) => e.includes("AGENTS.md")));
   });
 
   it("lists every violation file individually", function () {
