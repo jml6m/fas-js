@@ -19,7 +19,7 @@ High coverage on language algorithms means fixture instances were exercised, not
 
 ## CI config
 
-See `.c8rc.json` — all four metrics at 90%. Interface-only files and barrel `index.ts` re-exports are excluded.
+See [`.c8rc.json`](../.c8rc.json) — all four metrics at 90%. Interface-only files and barrel `index.ts` re-exports are excluded.
 
 ## Exception process
 

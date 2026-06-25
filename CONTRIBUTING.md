@@ -1,8 +1,13 @@
 # Contributing to fas-js
 
-Thank you for your interest in contributing. This repository is a public npm package with active viewers, so we follow a strict branch workflow per release.
+`fas-js` is a public npm package **maintained by a single author** (`@jml6m`). Code is authored and merged by the owner — assisted by AI coding agents — under the strict, gated workflow described below; it is not an open-contribution project. That said, **outside input is welcome**:
 
-> **Authority**: See [`AGENTS.md`](AGENTS.md) for agent protocols, build commands, and coding standards. This document covers human and contributor workflow.
+- **Bug reports, feature requests, and questions** — open an issue using the [templates](.github/ISSUE_TEMPLATE/) (blank issues are disabled). See [Issues](#issues).
+- **Security vulnerabilities** — report privately, never in a public issue. See [Security](#security) and [`SECURITY.md`](SECURITY.md).
+
+Unsolicited code PRs from outside the project are generally not the path forward — open an issue first to discuss. The rest of this document is the **owner + agent** working reference: branch model, releases, and the protected-file policy.
+
+> **Authority**: See [`AGENTS.md`](AGENTS.md) for agent protocols, build commands, and coding standards. This document covers the human/agent contributor workflow.
 
 ---
 
@@ -14,7 +19,7 @@ Thank you for your interest in contributing. This repository is a public npm pac
 | Version integration branch           | **One branch off `master` per active release** (e.g. `chore/v1.7-repo-org` for v1.7). Naming must match `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, or `vX-*` (enforced by branch ruleset). Release PRs merge into `master`. |
 | `feat/*`, `chore/*`, `fix/*` (topic) | Short-lived branches stacked **on the current version integration branch**.                                            |
 
-**Active release (v1.7):** integration branch `chore/v1.7-repo-org` — repo organization, template hardening, dead-asset cleanup. Topic PRs target this branch (not `master`).
+**Active release (v1.8):** integration branch `chore/v1.8-hygiene` — release hygiene, docs-lint, dependency bumps, governance polish. Topic PRs target this branch (not `master`).
 
 ### Releases
 
@@ -24,7 +29,9 @@ New **public API** features are scheduled for **v2**; release branches ship demo
 
 ---
 
-## How to contribute
+## Working in this repo (owner + agents)
+
+This is the workflow for the owner and AI agents authoring changes:
 
 1. **Check open issues** — avoid duplicating planned work. Reference issues in PR descriptions (`Closes #123`).
 2. **Branch from the current version integration branch** — not from `master`, unless you are explicitly asked to hotfix stable.

@@ -15,6 +15,7 @@
 ### 1. Loop Prevention
 
 For unsupervised runs (e.g. automated fixes):
+
 - If the same error persists after **3 attempts**: **STOP**, revert to last working state, mark with `// FIXME: Agent failed`, and report.
 
 ### 2. Versioning & Release Policy
@@ -26,6 +27,7 @@ For unsupervised runs (e.g. automated fixes):
 ### 3. Command Execution Safety
 
 **STRICTLY PROHIBITED for agents:**
+
 - `npm publish`
 - `git push` (agents propose; CI/humans push)
 - Bumping `version` in `package.json`
@@ -38,7 +40,7 @@ For unsupervised runs (e.g. automated fixes):
 | `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
 | topic branches on top | Short-lived branches → PR into the **current version integration branch** |
 
-- While a release (e.g. v1.7) is in flight, stack topic work on that integration branch (e.g. `chore/v1.7-repo-org`).
+- While a release (e.g. v1.8) is in flight, stack topic work on that integration branch (e.g. `chore/v1.8-hygiene`).
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
 - See [`CONTRIBUTING.md`](../CONTRIBUTING.md) for contributor-facing details.

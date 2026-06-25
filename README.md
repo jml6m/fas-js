@@ -9,8 +9,6 @@
 
 Easily create and simulate state machines using this JS library. Import into your own server side or browser based JS application.
 
-> **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ![FSA Example](img/fsa_example.png)
 <h6>Visualization of an FSA</h6>
 
@@ -191,6 +189,10 @@ Interactive demos visualize FSAs as you simulate input strings.
 | **v1** (legacy) | [ObservableHQ](https://observablehq.com/@jml6m/state-machine-simulator) | Original notebook |
 
 See [demo/README.md](demo/README.md) for version history, local development (`npm run serve:demo` on port 3200), automated tests, and deployment details.
+
+## Contributing
+
+`fas-js` is maintained by a single author; code is authored and merged by the owner under a strict, gated release workflow. **Bug reports, feature requests, and questions are welcome** via the [issue templates](https://github.com/jml6m/fas-js/issues/new/choose); please report security issues privately (see [SECURITY.md](SECURITY.md)). For the branch model, release process, and protected-file policy, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 This library is distributed under the GPL 3.0 license found in the [LICENSE](https://github.com/jml6m/fas-js/blob/master/LICENSE) file.
