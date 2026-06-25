@@ -10,6 +10,11 @@ import { fileURLToPath } from 'node:url';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dir, '..');
+const __file = fileURLToPath(import.meta.url);
+
+function toComparableString(value) {
+  return typeof value === 'string' ? value : JSON.stringify(value);
+}
 
 export function normalizeStringSet(value) {
   if (!Array.isArray(value)) return value;
@@ -95,9 +100,7 @@ export function validatePackageJson(pkg) {
   ];
 
   return checks.filter(({ actual, expected }) => {
-    const actualStr = typeof actual === 'string' ? actual : JSON.stringify(actual);
-    const expectedStr = typeof expected === 'string' ? expected : JSON.stringify(expected);
-    return actualStr !== expectedStr;
+    return toComparableString(actual) !== toComparableString(expected);
   });
 }
 
@@ -107,8 +110,8 @@ export function runCheck({ log = console.log, error = console.error, exit = proc
   const failures = validatePackageJson(pkg);
 
   for (const { field, actual, expected } of failures) {
-    const actualStr = typeof actual === 'string' ? actual : JSON.stringify(actual);
-    const expectedStr = typeof expected === 'string' ? expected : JSON.stringify(expected);
+    const actualStr = toComparableString(actual);
+    const expectedStr = toComparableString(expected);
     error(`[check-package-scripts] MISMATCH in ${field}`);
     error(`  expected: ${expectedStr}`);
     error(`  actual:   ${actualStr}`);
@@ -124,6 +127,6 @@ export function runCheck({ log = console.log, error = console.error, exit = proc
   exit(0);
 }
 
-if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && resolve(process.argv[1]) === __file) {
   runCheck();
 }
