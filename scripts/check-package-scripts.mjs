@@ -127,6 +127,7 @@ export function runCheck({ log = console.log, error = console.error, exit = proc
   exit(0);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === __file) {
+const invokedAsScript = typeof process.argv[1] === 'string' && resolve(process.argv[1]) === __file;
+if (invokedAsScript) {
   runCheck();
 }

@@ -13,59 +13,59 @@ const root = resolve(__dir, "..");
 
 // Read the actual package.json for use in tests
 const REAL_PKG = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
-const isValid = pkg => validatePackageJson(pkg).length === 0;
+const isPackageJsonValid = pkg => validatePackageJson(pkg).length === 0;
 
 describe("check-package-scripts", function () {
   it("passes with the real package.json", function () {
-    assert.isTrue(isValid(REAL_PKG));
+    assert.isTrue(isPackageJsonValid(REAL_PKG));
   });
 
   it("allows version changes", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.version = "1.7.1";
-    assert.isTrue(isValid(tampered));
+    assert.isTrue(isPackageJsonValid(tampered));
   });
 
   it("allows devDependencies changes", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.devDependencies.mocha = "^99.0.0";
-    assert.isTrue(isValid(tampered));
+    assert.isTrue(isPackageJsonValid(tampered));
   });
 
   it("detects a tampered scripts.test", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.scripts.test = "mocha test/**/*.spec.js";
-    assert.isFalse(isValid(tampered));
+    assert.isFalse(isPackageJsonValid(tampered));
   });
 
   it("detects a tampered check:security script", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.scripts["check:security"] = "echo ok";
-    assert.isFalse(isValid(tampered));
+    assert.isFalse(isPackageJsonValid(tampered));
   });
 
   it("detects a tampered exports map", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.exports["."].import = "./lib/evil.js";
-    assert.isFalse(isValid(tampered));
+    assert.isFalse(isPackageJsonValid(tampered));
   });
 
   it("detects a tampered files list", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.files = ["lib", "src"];
-    assert.isFalse(isValid(tampered));
+    assert.isFalse(isPackageJsonValid(tampered));
   });
 
   it("allows a reordered files list", function () {
     const reordered = JSON.parse(JSON.stringify(REAL_PKG));
     reordered.files = [...reordered.files].reverse();
-    assert.isTrue(isValid(reordered));
+    assert.isTrue(isPackageJsonValid(reordered));
   });
 
   it("detects removal of scripts.build", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     delete tampered.scripts.build;
-    assert.isFalse(isValid(tampered));
+    assert.isFalse(isPackageJsonValid(tampered));
   });
 
   it("check-package-scripts.mjs itself exits 0 against the real package.json", async function () {
