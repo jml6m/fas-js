@@ -12,6 +12,7 @@
 // branch is being pushed.
 
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const ZERO = "0000000000000000000000000000000000000000";
 
@@ -72,4 +73,4 @@ function main() {
   return 1;
 }
 
-process.exit(main());
+if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(main());
