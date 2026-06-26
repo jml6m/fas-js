@@ -67,7 +67,7 @@ describe("isReservedName", function () {
   describe("allowed names (return false)", function () {
     const allowed = [
       "topic/my-feature",
-      "topic/v1.8-foo",     // v-prefixed segment but under topic/, not chore/
+      "topic/v1.8-foo",     // v-prefixed with dash but allowed: topic/ is not chore/, so slash check stops it
       "master",
       "main",
       "feature/add-stuff",
@@ -75,7 +75,7 @@ describe("isReservedName", function () {
       "chore/update-deps",  // no v-prefix
       "v1.8",               // no dash
       "v1",                 // no dash
-      "hotfix/v1.8-patch",  // non-chore prefix with slash → fails slash check
+      "hotfix/v1.8-patch",  // non-chore prefix: slash present in full name → allowed (not a chore/ segment)
       "fix/v2-something",   // non-chore prefix with slash
     ];
     for (const name of allowed) {
