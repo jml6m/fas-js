@@ -21,8 +21,6 @@
     "url": "git+https://github.com/jml6m/fas-js.git"
   },
   "scripts": {
-    "prepare": "node scripts/install-hooks.mjs",
-    "hooks:install": "node scripts/install-hooks.mjs",
     "build": "tsup",
     "prebuild": "node scripts/prebuild.mjs",
     "postbuild": "node scripts/postbuild.mjs",

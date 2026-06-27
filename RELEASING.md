@@ -11,7 +11,7 @@ topic/<name> branch ──PR──▶ version integration branch (chore/vX.Y-*) 
 ```
 
 - **One active integration branch per release**, branched from `master`, named `chore/vX.Y-*`. Per [`AGENTS.md`](./AGENTS.md) §4, minor lines ship UX, tests, docs, and internal tooling; public API features are reserved for v2.
-- The `chore/vX.Y-*` / `vX.Y-*` / `vX-*` patterns are **reserved for that integration branch only** — topic work uses the `topic/<name>` prefix and never a reserved pattern (a local `pre-push` hook enforces this). See [`AGENTS.md`](./AGENTS.md) §4 → "Reserved branch names".
+- The `chore/vX.Y-*` / `vX.Y-*` / `vX-*` patterns are **reserved for that integration branch only** — topic work uses the `topic/<name>` prefix and never a reserved pattern (enforced by the `next-version-prep-branch` GitHub ruleset). See [`AGENTS.md`](./AGENTS.md) §4 → "Reserved branch names".
 - **Topic work never targets `master` directly** — it PRs into the current integration branch. Enforced by [`release-base-guard`](./.github/workflows/release-base-guard.yml).
 - PRs into the integration branch require passing `test (18/20/22)` + `lock-files` but **no approval** (the `next-version-prep-branch` ruleset), so day-to-day work merges without friction.
 

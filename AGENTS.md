@@ -49,10 +49,42 @@ For unsupervised runs (e.g. automated fixes):
 - **Topic work never targets `master` directly.** Every change lands on a short-lived topic branch that PRs into the **current version integration branch** (`chore/vX.Y-*`). `master` only ever receives the single **integration → `master`** release PR (plus Dependabot GitHub Actions bumps). Enforced by [`release-base-guard`](.github/workflows/release-base-guard.yml): a PR into `master` whose head is not `chore/v*`, `v*`, or `dependabot/github_actions/*` fails.
 - The integration → `master` release PR is merged by the **repository owner via a scoped `bypass_actors` entry** on the `main` ruleset (bypass mode: pull requests) — so the owner's own release PR doesn't need an approving review it cannot self-grant. **Every non-owner PR to `master` still requires 1 approving review** (the owner approves those normally — they aren't self-authored), and **required status checks still gate every merge**. No App, no self-approve, no temporary ruleset toggle. See [`RELEASING.md`](RELEASING.md).
 
-**Reserved branch names (do not reuse for topic work):**
+**Reserved branch names:** the patterns **`vX.Y-*`, `vX-*`, `chore/vX.Y-*`, `chore/vX-*`** are the targeting criteria of the [`next-version-prep-branch`](https://github.com/jml6m/fas-js/rules) ruleset and are **reserved for the single version-integration branch only**. Naming any other branch with one of them silently subjects it to that ruleset (PR-required, linear history, strict checks) and breaks normal flow. All non-integration work uses the **`topic/<name>`** prefix (a version reference that doesn't reproduce a reserved pattern in one segment is fine — `topic/v1.8-foo` and `chore/v1.8/foo` are safe; `chore/v1.8-foo` is **not**). A committed `pre-push` hook (auto-installed via `core.hooksPath .githooks`) blocks reserved-name pushes from non-integration branches (the designated integration branch is auto-detected from the remote — no config file required) and runs the fast static gate; bypass with `git push --no-verify`.
 
-- The branch-name patterns **`vX.Y-*`, `vX-*`, `chore/vX.Y-*`, `chore/vX-*`** are the targeting criteria of the [`next-version-prep-branch`](https://github.com/jml6m/fas-js/rules) ruleset (which grants the no-approval + `test`/`lock-files` gate that lets day-to-day work merge into the integration branch). **They are reserved for the single per-release version-integration branch — nothing else.** Naming an enhancement/topic/fix/chore branch with one of these patterns silently puts it under that ruleset (PR-required, linear history, strict status checks), which breaks normal push/merge flow. **All non-integration work uses the `topic/<name>` prefix** (e.g. `topic/lean-verify`, `topic/branch-guardrails`). A version reference is fine as long as it doesn't reproduce a reserved pattern within one path segment — `topic/v1.8-foo` and `chore/v1.8/foo` are safe; `chore/v1.8-foo` is **not**.
-- **Local pushes are guarded** by a committed `pre-push` hook (installed automatically on `npm install` via `core.hooksPath .githooks`). Before any push from a dev machine it (1) **blocks** pushing a branch whose name matches a reserved pattern unless it is already established on the remote (the designated integration branch is auto-detected from the remote — no config file required), and (2) runs the **fast static gate** (`typecheck` → `lint` → `docs:lint`). This catches mistakes that agents normally avoid (they branch correctly and let PR workflows gate) but a human committing locally can make. Bypass for an exceptional push with `git push --no-verify`.
+**Ruleset enforcement (branch naming):** the `next-version-prep-branch` GitHub ruleset is the primary enforcement mechanism for reserved names — any branch that accidentally matches the pattern gets strict integration-branch rules applied (PR required, linear history, `test`/`lock-files` gates), which breaks normal topic-branch flow and surfaces the mistake. Verify the active rulesets with:
+
+```bash
+gh api repos/jml6m/fas-js/rulesets --jq '.[].name'
+```
+
+To inspect a specific ruleset (e.g. `next-version-prep-branch`) and confirm its branch targeting patterns:
+
+```bash
+gh api repos/jml6m/fas-js/rulesets \
+  --jq '.[] | select(.name=="next-version-prep-branch") | {name,conditions}'
+```
+
+**Admin push gate (project owner only):** for local pushes from the project admin's dev machine, a personal `pre-push` hook running `typecheck → lint → docs:lint` is recommended. Use Git's global template directory so the hook applies without being committed to the repository:
+
+```bash
+# One-time setup on the admin's machine:
+mkdir -p ~/.git_templates/hooks
+cat > ~/.git_templates/hooks/pre-push << 'EOF'
+#!/usr/bin/env sh
+set -e
+echo "pre-push: running fast static gate (typecheck -> lint -> docs:lint)…"
+npm run --silent typecheck
+npm run --silent lint
+npm run --silent docs:lint
+echo "pre-push: checks passed."
+EOF
+chmod +x ~/.git_templates/hooks/pre-push
+git config --global init.templateDir ~/.git_templates
+# For existing clones, copy the hook manually:
+# cp ~/.git_templates/hooks/pre-push .git/hooks/pre-push
+```
+
+Bypass an exceptional push with `git push --no-verify`.
 
 **Ref & tag hygiene:**
 
