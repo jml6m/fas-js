@@ -49,42 +49,58 @@ For unsupervised runs (e.g. automated fixes):
 - **Topic work never targets `master` directly.** Every change lands on a short-lived topic branch that PRs into the **current version integration branch** (`chore/vX.Y-*`). `master` only ever receives the single **integration → `master`** release PR (plus Dependabot GitHub Actions bumps). Enforced by [`release-base-guard`](.github/workflows/release-base-guard.yml): a PR into `master` whose head is not `chore/v*`, `v*`, or `dependabot/github_actions/*` fails.
 - The integration → `master` release PR is merged by the **repository owner via a scoped `bypass_actors` entry** on the `main` ruleset (bypass mode: pull requests) — so the owner's own release PR doesn't need an approving review it cannot self-grant. **Every non-owner PR to `master` still requires 1 approving review** (the owner approves those normally — they aren't self-authored), and **required status checks still gate every merge**. No App, no self-approve, no temporary ruleset toggle. See [`RELEASING.md`](RELEASING.md).
 
-**Reserved branch names:** the patterns **`vX.Y-*`, `vX-*`, `chore/vX.Y-*`, `chore/vX-*`** are the targeting criteria of the [`next-version-prep-branch`](https://github.com/jml6m/fas-js/rules) ruleset and are **reserved for the single version-integration branch only**. Naming any other branch with one of them silently subjects it to that ruleset (PR-required, linear history, strict checks) and breaks normal flow. All non-integration work uses the **`topic/<name>`** prefix (a version reference that doesn't reproduce a reserved pattern in one segment is fine — `topic/v1.8-foo` and `chore/v1.8/foo` are safe; `chore/v1.8-foo` is **not**).
+**Reserved branch names — the rule:** the patterns **`vX.Y-*`, `vX-*`, `chore/vX.Y-*`, `chore/vX-*`** are the targeting conditions of the [`next-version-prep-branch`](https://github.com/jml6m/fas-js/rules) ruleset and are **reserved for the single per-release version-integration branch**:
 
-**Ruleset enforcement (branch naming):** the `next-version-prep-branch` GitHub ruleset is the primary enforcement mechanism for reserved names — any branch that accidentally matches the pattern gets strict integration-branch rules applied (PR required, linear history, `test`/`lock-files` gates), which breaks normal topic-branch flow and surfaces the mistake. Verify the active rulesets with:
+- A branch carrying a reserved pattern *is* the integration branch — only one should exist per release line.
+- **Every other branch** (topic, fix, chore, experiment) must use a **non-reserved** name; the convention is **`topic/<name>`**. A version reference is fine as long as it does not reproduce a reserved pattern inside a single path segment — `topic/v1.8-foo` and `chore/v1.8/foo` are safe; `chore/v1.8-foo` is **not**.
+
+Naming a topic branch with a reserved pattern silently subjects it to the integration-branch ruleset (PR-required, linear history, `test`/`lock-files` gates) and breaks normal push/merge flow — which is exactly what the ruleset's creation rule prevents.
+
+**Ruleset enforcement (no committed code):** branch naming is managed entirely through two repository rulesets.
+
+| Ruleset | Targets | Naming effect |
+| --- | --- | --- |
+| `main` | `~DEFAULT_BRANCH` (`master`) | `master` is creation/deletion/non-fast-forward protected; PRs + required checks gate every change. |
+| `next-version-prep-branch` | `chore/v*.*-*`, `v*.*-*`, `v*-*`, `chore/v*-*` | Its **Restrict creations** rule blocks anyone *without bypass* from creating a reserved-named branch, so only the admin-created integration branch can hold a reserved name. Also applies the no-approval `test`+`lock-files` gate to PRs into it. |
+
+Bypass is scoped to the **Repository admin** role (`next-version-prep-branch`: mode **Always**; `main`: mode **Pull requests**). The admin — and agents acting under the admin account — therefore *can* create a reserved-named branch: that is intentional (the admin creates the integration branch) and is why the **admin push gate** below exists as the self-discipline layer.
+
+> Rulesets gate **ref names, not a branch's git ancestor.** "Branch off `master` only for the integration branch / off the integration branch for topic work" is a convention; the enforceable guarantee is the name reservation above.
+
+Inspect / verify the live rulesets:
 
 ```bash
 gh api repos/jml6m/fas-js/rulesets --jq '.[].name'
-```
-
-To inspect a specific ruleset (e.g. `next-version-prep-branch`) and confirm its branch targeting patterns:
-
-```bash
 gh api repos/jml6m/fas-js/rulesets \
-  --jq '.[] | select(.name=="next-version-prep-branch") | {name,conditions}'
+  --jq '.[] | select(.name=="next-version-prep-branch")
+        | {name, targets:.conditions.ref_name.include, rules:[.rules[].type],
+           bypass:[.bypass_actors[]|{actor_id,actor_type,bypass_mode}]}'
 ```
 
-**Admin push gate (project owner only):** for local pushes from the project admin's dev machine, a personal `pre-push` hook running `typecheck → lint → docs:lint` is recommended. Use Git's global template directory so the hook applies without being committed to the repository:
+To set/adjust them: **Settings → Rules → Rulesets** (or `gh api --method PUT repos/jml6m/fas-js/rulesets/<id>` with the full ruleset JSON). The two settings that make the reservation work are **Restrict creations = on** on `next-version-prep-branch`, with the **Repository admin** role on its **Bypass list** (mode *Always*).
+
+**Admin push gate (project owner's machine only):** local pushes from the admin's dev box run a personal `pre-push` hook so a hand-made local commit cannot push code that fails the same static gates CI runs. It is **never committed to the repo** — install it via Git's global template dir:
 
 ```bash
-# One-time setup on the admin's machine:
+# one-time, on the admin's machine
 mkdir -p ~/.git_templates/hooks
 cat > ~/.git_templates/hooks/pre-push << 'EOF'
 #!/usr/bin/env sh
+# Blocks the push if any static gate fails. Bypass intentionally with `git push --no-verify`.
 set -e
-echo "pre-push: running fast static gate (typecheck -> lint -> docs:lint)…"
-npm run --silent typecheck
-npm run --silent lint
-npm run --silent docs:lint
-echo "pre-push: checks passed."
+echo "pre-push: typecheck → lint → docs:lint"
+npm run --silent typecheck                 # fails on any type error
+npm run --silent lint -- --max-warnings=0  # fails on any ESLint error OR warning
+npm run --silent docs:lint                 # fails on any markdownlint violation
+echo "pre-push: passed."
 EOF
 chmod +x ~/.git_templates/hooks/pre-push
 git config --global init.templateDir ~/.git_templates
-# For existing clones, copy the hook manually:
-# cp ~/.git_templates/hooks/pre-push .git/hooks/pre-push
+# the template only applies to NEW clones; for an existing clone copy it in once:
+#   cp ~/.git_templates/hooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 ```
 
-Bypass an exceptional push with `git push --no-verify`.
+**When it fails:** the push is blocked **iff a step exits non-zero** — a TypeScript type error, an ESLint error *or* warning (we pass `--max-warnings=0` so warnings aren't silently allowed), or any markdownlint violation. A step that succeeds with only informational output does not block. Bypass an exceptional push with `git push --no-verify`.
 
 **Ref & tag hygiene:**
 
@@ -208,7 +224,7 @@ The `lock-files` gate + [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES
 As the codebase matures — especially toward v2 — files that become reliable, comprehensively tested, and foundational may be added to the locked set. The philosophy:
 
 - **Prefer adding new files/folders** rather than modifying locked ones.
-- Locked code is a stable base that new functionality is built _on top of_.
+- Locked code is a stable base that new functionality is built *on top of*.
 - A new component (a language module, a critical utility, an additional gate) can be proposed for inclusion once it has proven itself and matches the spirit of the "Why protected" table above.
 
 **How the locked set evolves:** a component demonstrates long-term stability under contract-level tests → a PR adds its path to [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) and the table above → because the list itself is locked, that PR follows the override process → thereafter the new path requires the same owner-level approval.
