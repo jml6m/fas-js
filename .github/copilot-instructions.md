@@ -1,7 +1,7 @@
 # 🤖 Agent & AI Protocols
 
 **Project:** fas-js
-**Runtime:** Node.js (>=18)
+**Runtime:** Node.js (>=18.13)
 **Testing:** Mocha + c8 (coverage)
 **Build:** tsup → `lib/index.js`, `lib/index.cjs`, `lib/bundle.js`
 **Types:** TypeScript (strict)

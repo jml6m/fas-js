@@ -44,6 +44,18 @@ describe("check-package-scripts", function () {
     assert.isFalse(isPackageJsonValid(tampered));
   });
 
+  it("detects a tampered check:package-scripts script", function () {
+    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
+    tampered.scripts["check:package-scripts"] = "echo ok";
+    assert.isFalse(isPackageJsonValid(tampered));
+  });
+
+  it("detects a tampered prepublishOnly script", function () {
+    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
+    tampered.scripts.prepublishOnly = "npm run build";
+    assert.isFalse(isPackageJsonValid(tampered));
+  });
+
   it("detects a tampered exports map", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.exports["."].import = "./lib/evil.js";

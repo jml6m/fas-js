@@ -90,7 +90,7 @@
     "turing"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=18.13"
   },
   "overrides": {
     "diff": "^8.0.3",
