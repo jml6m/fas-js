@@ -29,6 +29,8 @@ npm version X.Y.Z --no-git-tag-version   # updates package.json + package-lock.j
 
 `package.json` is not in the protected-files set, so this does not trip `lock-files`. PR it into the integration branch and merge.
 
+> **Enforced, not just convention:** the release PR (step 3) is gated by the required [`verify-release-version`](./.github/workflows/verify-release-version.yml) check, which **fails the merge unless `package.json` increases vs `master`**. A forgotten or clobbered bump (the v1.7.0 "shipped as 1.6.0" failure) therefore blocks the release rather than slipping through — so the bump's commit *order* doesn't matter, only that the version is correct at merge time.
+
 ## 3. Open the release PR (integration → master)
 
 Open a PR from `chore/vX.Y-*` into `master`. [`release-base-guard`](./.github/workflows/release-base-guard.yml) confirms the head is an integration/release branch.
@@ -38,11 +40,11 @@ Open a PR from `chore/vX.Y-*` into `master`. [`release-base-guard`](./.github/wo
 The `main` ruleset requires **1 approving review**. Because release PRs are authored under the owner's account, the owner cannot self-approve — so the rule is satisfied another way **without ever relaxing it**:
 
 - The `main` ruleset lists the repository **owner / admin role as a `bypass_actors`** entry, in **"pull requests" bypass mode** (can merge a PR that lacks the required approval; cannot push directly to `master`).
-- The owner squash-merges the integration → `master` release PR directly once all **required status checks** (`test (18/20/22)`, `lock-files`) are green.
+- The owner squash-merges the integration → `master` release PR directly once all **required status checks** (`test (18/20/22)`, `lock-files`, `verify-release-version`) are green.
 
 This keeps the approval requirement fully in force for **every non-owner PR** to `master` (Dependabot, Copilot, contributors — the owner approves those normally, since they aren't self-authored), while letting the sole maintainer ship a release without a self-approve, a second account, a bot App, or a temporary ruleset toggle.
 
-> **One-time ruleset setup:** on the `main` ruleset, add the Repository **admin** role (or `jml6m`) to the **Bypass list** with mode **"Pull requests"**. This is the only standing relaxation and it is scoped to the owner — not a global approval-count change.
+> **One-time ruleset setup:** on the `main` ruleset, (1) add the Repository **admin** role (or `jml6m`) to the **Bypass list** with mode **"Pull requests"** — the only standing relaxation, scoped to the owner, not a global approval-count change; and (2) add **`verify-release-version`** to the required status checks so the version-increase gate cannot be bypassed.
 
 ## 5. Tag and publish
 
@@ -50,7 +52,7 @@ This keeps the approval requirement fully in force for **every non-owner PR** to
 git tag vX.Y.Z origin/master && git push origin vX.Y.Z
 ```
 
-The tag push fires [`publish.yml`](./.github/workflows/publish.yml): OIDC trusted publishing, gated by the `npm` GitHub environment (**requires manual `jml6m` approval** in the Actions UI). Avoid running `workflow_dispatch` for publishing unless `publish.yml` is updated to hard-reject non-tag refs. Verify success in the CI **publish-step log** (`+ fas-js@X.Y.Z`), not local `npm view` (CDN/proxy lag).
+The tag push fires [`publish.yml`](./.github/workflows/publish.yml): OIDC trusted publishing, gated by the `npm` GitHub environment (**requires manual `jml6m` approval** in the Actions UI). Before publishing, the workflow **asserts the tag equals `package.json`'s version and hard-rejects any non-tag trigger** (so a `workflow_dispatch` run cannot silently publish a branch, and a tag/manifest mismatch fails fast). Verify success in the CI **publish-step log** (`+ fas-js@X.Y.Z`), not local `npm view` (CDN/proxy lag).
 
 Then: `gh release create vX.Y.Z --target master --generate-notes`.
 
