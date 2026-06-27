@@ -10,7 +10,7 @@ name: Verify Release Version
 
 on:
   pull_request:
-    types: [opened, reopened, edited, synchronize]
+    types: [opened, synchronize]
     branches: [master]
 
 permissions:
