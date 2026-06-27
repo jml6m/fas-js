@@ -1,0 +1,50 @@
+name: Verify Release Version
+
+# Fail-closed release gate. A release PR (integration/release branch → master) must
+# INCREASE the published version vs `master`. This prevents shipping a stale or
+# unchanged version — the v1.7.0 failure where a reverted bump shipped master as 1.6.0.
+#
+# Required status check on the `main` ruleset → not coverable by the owner's
+# pull-request bypass, so there is no bypass path. Non-release PRs (e.g. Dependabot
+# GitHub Actions bumps) don't change the package version and are skipped (pass).
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-release-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Release PR must increase the version vs master
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          # Only release branches carry a version bump; skip everything else.
+          case "$HEAD_REF" in
+            chore/v* | v*) ;;
+            *)
+              echo "Head '$HEAD_REF' is not a release branch — no version bump expected. Skipping."
+              exit 0 ;;
+          esac
+
+          git fetch --no-tags --depth=1 origin master
+          HEAD_VER="$(node -p "require('./package.json').version")"
+          BASE_VER="$(git show FETCH_HEAD:package.json | node -p "JSON.parse(require('node:fs').readFileSync(0,'utf8')).version")"
+          export HEAD_VER BASE_VER
+
+          node -e '
+            const parse = (v) => v.split("-")[0].split(".").map(Number);
+            const [h, b] = [parse(process.env.HEAD_VER), parse(process.env.BASE_VER)];
+            const cmp = (h[0] - b[0]) || (h[1] - b[1]) || (h[2] - b[2]);
+            if (cmp <= 0) {
+              console.error(`::error::Release must increase the version. master=${process.env.BASE_VER}, release=${process.env.HEAD_VER} is not an increase. Bump package.json before merging the release PR.`);
+              process.exit(1);
+            }
+            console.log(`OK: ${process.env.BASE_VER} -> ${process.env.HEAD_VER}`);
+          '
