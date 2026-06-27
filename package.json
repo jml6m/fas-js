@@ -1,7 +1,7 @@
 {
   "name": "fas-js",
   "description": "Finate State Automata JS Solutions",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "type": "module",
   "main": "./lib/index.cjs",
   "module": "./lib/index.js",
@@ -29,6 +29,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "docs:lint": "markdownlint-cli2 \"**/*.md\"",
+    "docs:lint:fix": "markdownlint-cli2 --fix \"**/*.md\"",
     "free-port": "node scripts/free-port.mjs 3200",
     "preserve:demo": "node scripts/free-port.mjs 3200",
     "serve:demo": "node scripts/serve-demo.mjs",
@@ -53,6 +55,7 @@
     "cross-env": "^7.0.3",
     "eslint": "^9.39.4",
     "jsdom": "^26.1.0",
+    "markdownlint-cli2": "0.22.1",
     "mocha": "^11.7.1",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
@@ -61,7 +64,11 @@
     "typescript-eslint": "^8.61.0"
   },
   "files": [
-    "lib"
+    "lib/index.js",
+    "lib/index.cjs",
+    "lib/index.d.ts",
+    "lib/index.d.cts",
+    "lib/bundle.js"
   ],
   "bugs": {
     "url": "https://github.com/jml6m/fas-js/issues"
@@ -83,7 +90,7 @@
     "turing"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=18.13"
   },
   "overrides": {
     "diff": "^8.0.3",

@@ -22,6 +22,21 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org
           cache: npm
+      # Fail-closed publish guard: only a v*.*.* tag push may publish, and the tag
+      # must equal package.json's version. Blocks the v1.7.0-class mismatch (tag and
+      # manifest disagree) and the workflow_dispatch path silently publishing a branch.
+      - name: Verify tag matches package.json version
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" != "push" ] || [ "${GITHUB_REF_TYPE}" != "tag" ]; then
+            echo "::error::Publish must be triggered by a v*.*.* tag push, not ${GITHUB_EVENT_NAME} ${GITHUB_REF_TYPE} '${GITHUB_REF_NAME}'."
+            exit 1
+          fi
+          PKG_VER="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_NAME}" != "v${PKG_VER}" ]; then
+            echo "::error::Tag '${GITHUB_REF_NAME}' does not match package.json version 'v${PKG_VER}'."
+            exit 1
+          fi
+          echo "OK: publishing v${PKG_VER} from tag ${GITHUB_REF_NAME}."
       # Use recent npm for OIDC provenance support (see ci.yml for rationale).
       - run: npm install -g npm@^11.5.1
       - run: npm ci

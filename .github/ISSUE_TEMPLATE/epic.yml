@@ -13,7 +13,7 @@ body:
           1. Create child issues first (`gh issue create`).
           2. Note their numbers (`#45`, `#46`, …).
           3. Create this parent epic and paste those IDs into the task list below.
-        - **Branch:** Implementation PRs target the current version integration branch (see `CONTRIBUTING.md`), not `master`, unless explicitly a stable hotfix.
+        - **Branch:** Implementation PRs target the current version integration branch (see `AGENTS.md`), not `master`, unless explicitly a stable hotfix.
   - type: textarea
     id: description
     attributes:

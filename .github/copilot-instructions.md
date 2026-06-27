@@ -1,7 +1,7 @@
 # 🤖 Agent & AI Protocols
 
 **Project:** fas-js
-**Runtime:** Node.js (>=18)
+**Runtime:** Node.js (>=18.13)
 **Testing:** Mocha + c8 (coverage)
 **Build:** tsup → `lib/index.js`, `lib/index.cjs`, `lib/bundle.js`
 **Types:** TypeScript (strict)
@@ -15,6 +15,7 @@
 ### 1. Loop Prevention
 
 For unsupervised runs (e.g. automated fixes):
+
 - If the same error persists after **3 attempts**: **STOP**, revert to last working state, mark with `// FIXME: Agent failed`, and report.
 
 ### 2. Versioning & Release Policy
@@ -26,6 +27,7 @@ For unsupervised runs (e.g. automated fixes):
 ### 3. Command Execution Safety
 
 **STRICTLY PROHIBITED for agents:**
+
 - `npm publish`
 - `git push` (agents propose; CI/humans push)
 - Bumping `version` in `package.json`
@@ -35,13 +37,26 @@ For unsupervised runs (e.g. automated fixes):
 | Branch | Purpose |
 |--------|---------|
 | `master` | Stable / public — protected; what npm and badges reflect |
-| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master` |
-| topic branches on top | Short-lived branches → PR into the **current version integration branch** |
+| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | Branched from `master`; release PRs target `master`. **These name patterns are RESERVED** for this single branch. |
+| `topic/<name>` (topic work) | Short-lived branches → PR into the **current version integration branch**. Must **not** use a reserved version-integration pattern. |
 
-- While a release (e.g. v1.7) is in flight, stack topic work on that integration branch (e.g. `chore/v1.7-repo-org`).
+- While a release is in flight, stack topic work on `topic/<name>` branches off the version integration branch and PR them back into it.
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
-- See [`CONTRIBUTING.md`](../CONTRIBUTING.md) for contributor-facing details.
+
+**Branch policy (enforced):**
+
+- **Topic work never targets `master` directly.** Every change lands on a short-lived topic branch that PRs into the **current version integration branch** (`chore/vX.Y-*`). `master` only ever receives the single **integration → `master`** release PR (plus Dependabot GitHub Actions bumps). Enforced by [`release-base-guard`](./workflows/release-base-guard.yml): a PR into `master` whose head is not `chore/v*`, `v*`, or `dependabot/github_actions/*` fails.
+- The integration → `master` release PR is merged by the **repository owner via a scoped `bypass_actors` entry** on the `main` ruleset (bypass mode: pull requests) — so the owner's own release PR doesn't need an approving review it cannot self-grant. **Every non-owner PR to `master` still requires 1 approving review**, and **required status checks still gate every merge**. No App, no self-approve, no temporary ruleset toggle. See [`RELEASING.md`](../RELEASING.md).
+
+**Reserved branch names:** the patterns **`vX.Y-*`, `vX-*`, `chore/vX.Y-*`, `chore/vX-*`** are the targeting conditions of the `next-version-prep-branch` ruleset and are **reserved for the single per-release version-integration branch**. Every other branch (topic, fix, chore, experiment) must use a **non-reserved** name — convention `topic/<name>` (a version reference that doesn't reproduce a reserved pattern in one path segment is fine: `topic/v1.8-foo` and `chore/v1.8/foo` are safe; `chore/v1.8-foo` is not). Enforcement is via GitHub rulesets, no committed code: the `next-version-prep-branch` ruleset's **Restrict creations** rule blocks anyone without bypass from creating a reserved-named branch (bypass is scoped to the repository admin role, so only the admin-created integration branch holds a reserved name). Rulesets gate ref **names**, not git ancestry. The project admin additionally runs a personal `pre-push` hook (git templates, `~/.git_templates/hooks/`, never committed) that fails the push on any `typecheck`/`lint --max-warnings=0`/`docs:lint` non-zero exit; bypass with `git push --no-verify`. See [`AGENTS.md`](../AGENTS.md) §4 for the rule table, the `gh` inspect/set commands, and the full hook.
+
+**Ref & tag hygiene:**
+
+- **Auto-delete on merge** is enabled — merged topic branches are removed automatically. Keep them short-lived; delete abandoned ones.
+- **`master` is force-push- and deletion-protected** by the `main` ruleset (linear history + required reviews/checks). Never force-push or delete it.
+- **Tags are permanent and immutable.** A published `vX.Y.Z` tag is never moved or deleted (the `v*` ruleset blocks force-update/deletion, and re-pointing would break npm provenance). Fix a post-tag mistake with a **new patch tag**, never by retagging — formalized in the release-hardening epic.
+- **Stale-branch sweep** (manual, report-only — never auto-delete beyond the merge cleanup): list with `git for-each-ref --sort=committerdate --format='%(committerdate:short) %(refname:short)' refs/remotes/origin`, cross-reference `gh pr list --state open`, and delete only stale, merged, PR-less branches deliberately (keep the active integration branch).
 
 ### 5. GitHub Issue Workflow
 
@@ -70,7 +85,7 @@ npm test            # typecheck + lint + build + mocha + c8 coverage
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
-- Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See `docs/v1.1-prep/coverage-policy.md`.
+- Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
 
 ---
 
@@ -91,7 +106,7 @@ Do not change the public API surface without bumping the major version (human de
 
 - Tests live in `test/` as `*.spec.js` files.
 - Run with `npm test` (builds first, then mocha with c8 coverage).
-- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See `docs/v1.1-prep/coverage-policy.md`.
+- On `master` and integration branches: maintain **90%** coverage (lines, statements, functions, branches). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
 
 ### Types vs correctness
 
@@ -103,7 +118,6 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 - **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via `CODECOV_TOKEN`.
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
-- **Stale** (`.github/workflows/stale.yml`): marks inactive issues stale after 60 days, closes after 14 more days.
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
 

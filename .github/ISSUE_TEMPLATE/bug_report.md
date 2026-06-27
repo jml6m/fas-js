@@ -12,7 +12,7 @@ A clear description of the problem.
 
 ## Environment
 
-- **fas-js version:** (e.g., 1.6.0 from npm, or commit SHA on the current integration branch)
+- **fas-js version:** (the `version` from `package.json`, or a commit SHA)
 - **Node version:** (e.g., v20.19.0)
 - **OS:** (e.g., Windows 11, Ubuntu 22.04)
 - **Install method:** (npm package / git clone / jsDelivr CDN bundle)

@@ -1,15 +1,24 @@
 /**
- * CI gate: npm publish tarball contains only distributable artifacts.
+ * CI / pre-publish gate: the npm tarball ships EXACTLY the minimal published
+ * surface — no more, no less.
+ *
+ * This is the manifest lock. The published file set is enumerated below and the
+ * tarball must match it exactly: an extra file (e.g. a demo bundle, sourcemap,
+ * or stray artifact) fails, and a missing entry point fails. Because this script
+ * is listed in .github/PROTECTED_FILES.json, widening the published surface
+ * requires the owner-approved override process (see AGENTS.md) — mirroring
+ * how source files are locked. Keep this list in sync with package.json "files".
  */
 import { execSync } from "node:child_process";
-import { readdirSync, rmSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { rmSync } from "node:fs";
+import { resolve, dirname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dir, "..");
 
-const ALLOWED_PACKAGE_FILES = new Set([
+// npm always includes these regardless of "files"; accept the common casings.
+const ALLOWED_ROOT_FILES = new Set([
   "package.json",
   "README.md",
   "readme.md",
@@ -19,30 +28,44 @@ const ALLOWED_PACKAGE_FILES = new Set([
   "license.md",
 ]);
 
-let tarball = "";
+// The exact set of lib/ artifacts permitted in the tarball. Mirror of the
+// package.json "files" allowlist. No sourcemaps, no demo bundle, no .gitkeep.
+const EXPECTED_LIB_FILES = new Set([
+  "lib/index.js",
+  "lib/index.cjs",
+  "lib/index.d.ts",
+  "lib/index.d.cts",
+  "lib/bundle.js",
+]);
 
-try {
-  const output = execSync("npm pack --pack-destination .", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  const match = output.match(/fas-js-[\d.]+\.tgz/);
-  if (!match) {
-    throw new Error(`npm pack did not report tarball name: ${output}`);
-  }
-  tarball = resolve(root, match[0]);
+const FORBIDDEN_PREFIXES = ["package/src/", "package/test/", "package/demo/"];
 
-  const listing = execSync(`tar -tzf "${tarball}"`, { encoding: "utf8" });
-  const entries = listing
-    .split("\n")
+export function parseTarballNameFromPackOutput(output) {
+  const lines = String(output)
+    .split(/\r?\n/)
     .map(line => line.trim())
     .filter(Boolean);
+  const tarballLine = lines.findLast(line => line.endsWith(".tgz"));
+  if (!tarballLine) {
+    throw new Error(`npm pack did not report tarball name: ${output}`);
+  }
+  // Strip any leading path component (Unix "/" or Windows "\") and keep only
+  // the emitted tarball filename from npm pack output.
+  return tarballLine.replace(/^.*[\\/]/, "");
+}
 
-  if (!entries.some(entry => entry === "package/lib/index.js")) {
-    throw new Error("npm pack tarball missing package/lib/index.js");
+export function validatePackEntries(entries, {
+  expectedLibFiles = EXPECTED_LIB_FILES,
+  allowedRootFiles = ALLOWED_ROOT_FILES,
+  forbiddenPrefixes = FORBIDDEN_PREFIXES,
+} = {}) {
+  for (const forbidden of forbiddenPrefixes) {
+    if (entries.some(entry => entry.startsWith(forbidden))) {
+      throw new Error(`npm pack tarball must not include ${forbidden}`);
+    }
   }
 
+  const libFiles = new Set();
   for (const entry of entries) {
     if (!entry.startsWith("package/")) {
       throw new Error(`unexpected tarball root entry: ${entry}`);
@@ -50,26 +73,64 @@ try {
     const rel = entry.slice("package/".length);
     if (!rel) continue;
 
-    if (rel.startsWith("lib/")) continue;
-    if (ALLOWED_PACKAGE_FILES.has(rel)) continue;
+    if (rel.startsWith("lib/")) {
+      if (!expectedLibFiles.has(rel)) {
+        throw new Error(
+          `forbidden lib path in npm pack tarball: ${entry}\n` +
+            `  Published surface is locked to: ${[...expectedLibFiles].join(", ")}\n` +
+            `  To change it, follow the protected-file override process (AGENTS.md).`
+        );
+      }
+      libFiles.add(rel);
+      continue;
+    }
+
+    if (allowedRootFiles.has(rel)) continue;
 
     throw new Error(`forbidden path in npm pack tarball: ${entry}`);
   }
 
-  for (const forbidden of ["package/src/", "package/test/", "package/demo/"]) {
-    if (entries.some(entry => entry.startsWith(forbidden))) {
-      throw new Error(`npm pack tarball must not include ${forbidden}`);
-    }
+  const missing = [...expectedLibFiles].filter(f => !libFiles.has(f));
+  if (missing.length > 0) {
+    throw new Error(`npm pack tarball missing required lib files: ${missing.join(", ")}`);
   }
+}
 
-  console.log(`[check-npm-pack] OK — ${entries.length} paths, package/lib/ only`);
-} finally {
-  if (tarball) {
-    rmSync(tarball, { force: true });
-  }
-  for (const name of readdirSync(root)) {
-    if (/^fas-js-.*\.tgz$/.test(name)) {
-      rmSync(resolve(root, name), { force: true });
+export function runCheck() {
+  let tarball = "";
+  try {
+    const output = execSync("npm pack --pack-destination .", {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const tarballName = parseTarballNameFromPackOutput(output);
+    tarball = resolve(root, tarballName);
+
+    // Run tar from root with the bare filename: a Windows absolute path
+    // ("C:\...") is misread by GNU tar as a remote host spec.
+    const listing = execSync(`tar -tzf "${tarballName}"`, { cwd: root, encoding: "utf8" });
+    const entries = listing
+      .split("\n")
+      .map(line => line.trim())
+      .filter(Boolean)
+      .filter(entry => !entry.endsWith("/")); // drop directory entries
+
+    validatePackEntries(entries);
+
+    console.log(
+      `[check-npm-pack] OK — ${entries.length} paths, lib/ matches the locked manifest exactly`
+    );
+  } finally {
+    if (tarball) {
+      rmSync(tarball, { force: true });
     }
   }
+}
+
+if (
+  process.argv[1] &&
+  normalize(resolve(process.argv[1])) === normalize(fileURLToPath(import.meta.url))
+) {
+  runCheck();
 }

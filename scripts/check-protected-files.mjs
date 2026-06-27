@@ -108,7 +108,7 @@ export function runCheck({
   for (const file of violations) {
     error(`  - ${file}`);
   }
-  error("See CONTRIBUTING.md \"Protected Files\" for the override process.");
+  error("See AGENTS.md \"Protected Files\" for the override process.");
   exit(1);
 }
 

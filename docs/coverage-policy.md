@@ -1,4 +1,4 @@
-# Coverage Policy — Workflow-First (v1.1)
+# Coverage Policy — Workflow-First
 
 Closes [#219](https://github.com/jml6m/fas-js/issues/219). Revised per maintainer direction in epic [#241](https://github.com/jml6m/fas-js/issues/241).
 
@@ -19,7 +19,7 @@ High coverage on language algorithms means fixture instances were exercised, not
 
 ## CI config
 
-See `.c8rc.json` — all four metrics at 90%. Interface-only files and barrel `index.ts` re-exports are excluded.
+See [`.c8rc.json`](../.c8rc.json) — all four metrics at 90%. Interface-only files and barrel `index.ts` re-exports are excluded.
 
 ## Exception process
 

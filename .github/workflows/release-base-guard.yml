@@ -1,0 +1,32 @@
+name: Release Base Guard
+
+# Branch-policy gate. A PR may target `master` only when its head branch is:
+#   - a version integration/release branch (`chore/v*` or `v*`), or
+#   - a Dependabot GitHub Actions bump (`dependabot/github_actions/*`).
+# Any other (topic) branch is rejected — that work belongs on the current
+# version integration branch instead. See AGENTS.md §4 and RELEASING.md.
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only integration/release branches may target master
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            chore/v* | v* | dependabot/github_actions/* | dependabot/github-actions/*)
+              echo "OK: '$HEAD_REF' is allowed to target master." ;;
+            *)
+              echo "::error::PRs into 'master' must come from a version integration/release branch (chore/v*, v*) or a Dependabot GitHub Actions branch (dependabot/github_actions/*). Topic work belongs on the current integration branch, not master. Got head '$HEAD_REF'."
+              exit 1 ;;
+          esac

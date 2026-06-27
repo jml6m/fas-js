@@ -1,0 +1,27 @@
+# markdownlint-cli2 config. See https://github.com/DavidAnson/markdownlint-cli2 for schema.
+
+config:
+  MD013: false
+  MD022: false
+  MD024:
+    siblings_only: true
+  MD033: false
+  MD036: false
+  MD040: false
+  MD060: false
+  MD041: true
+  MD025: true
+  MD034: true
+  MD042: true
+  MD051: true
+  MD053: true
+  MD056: true
+  MD058: true
+
+ignores:
+  - 'node_modules/**'
+  - 'lib/**'
+  - 'coverage/**'
+  - 'dist/**'
+  - '.github/ISSUE_TEMPLATE/**'
+  - '.github/pull_request_template.md'

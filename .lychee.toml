@@ -1,0 +1,24 @@
+# Lychee link-checker config. See https://lychee.cli.rs/usage/config/ for full schema.
+
+include_fragments = true
+accept = [200, 206, 429]
+max_concurrency = 8
+max_retries = 2
+retry_wait_time = 3
+timeout = 20
+
+exclude_path = [
+  "node_modules",
+  "lib",
+  "coverage",
+  "dist",
+  ".github/ISSUE_TEMPLATE",
+  ".github/pull_request_template.md",
+]
+
+# URLs excluded from checking (regex against the full URL; literal strings).
+exclude = [
+  '^https?://(www\.)?npmjs\.(com|org)',          # 403s automated clients
+  '^https?://badge\.fury\.io',                    # badge host 403s bots
+  '^https?://127\.0\.0\.1',                       # local dev-server refs
+]
