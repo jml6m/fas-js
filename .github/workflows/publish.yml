@@ -27,8 +27,8 @@ jobs:
       # manifest disagree) and the workflow_dispatch path silently publishing a branch.
       - name: Verify tag matches package.json version
         run: |
-          if [ "${GITHUB_REF_TYPE}" != "tag" ]; then
-            echo "::error::Publish must be triggered by a v*.*.* tag push, not ${GITHUB_REF_TYPE} '${GITHUB_REF_NAME}'."
+          if [ "${GITHUB_EVENT_NAME}" != "push" ] || [ "${GITHUB_REF_TYPE}" != "tag" ]; then
+            echo "::error::Publish must be triggered by a v*.*.* tag push, not ${GITHUB_EVENT_NAME} ${GITHUB_REF_TYPE} '${GITHUB_REF_NAME}'."
             exit 1
           fi
           PKG_VER="$(node -p "require('./package.json').version")"
