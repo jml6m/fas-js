@@ -2,14 +2,14 @@ name: Docs Lint
 
 on:
   pull_request:
-    # Only paths that affect this job's result: the docs themselves, the two
-    # lint configs, and this workflow file. (The job lints Markdown only — it
-    # does not validate other workflows, so it need not run for them.)
+    # Run when docs change, and also when commonly linked targets (like workflow files)
+    # change so lychee can catch broken in-repo links after renames/deletes.
     paths:
       - '**/*.md'
       - '.lychee.toml'
       - '.markdownlint-cli2.yaml'
-      - '.github/workflows/docs-lint.yml'
+      - '.github/workflows/*.yml'
+      - '.github/workflows/*.yaml'
   workflow_dispatch:
 
 permissions:
