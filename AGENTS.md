@@ -37,7 +37,7 @@ For unsupervised runs (e.g. automated fixes):
 | Branch                                             | Purpose                                                                                             |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `master`                                           | Stable / public — protected; what npm and badges reflect                                            |
-| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | **One active integration branch per release** — branched from `master`; release PRs target `master`. **These name patterns are RESERVED** for this single branch (see "Reserved branch names" below). |
+| `chore/vX.Y-*`, `chore/vX-*`, `vX.Y-*`, `vX-*` (version integration) | Branched from `master`; release PRs target `master`. **These name patterns are RESERVED** for this single branch (see "Reserved branch names" below). |
 | `topic/<name>` (topic work)                        | Short-lived branches → PR into the **current version integration branch**. Must **not** use a reserved version-integration pattern. |
 
 - While a release is in flight, stack topic work on `topic/<name>` branches off the version integration branch and PR them back into it.
