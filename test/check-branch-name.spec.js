@@ -224,7 +224,7 @@ describe("runCheck", function () {
     // Remote unreachable → hook does not block
     const code = runCheck({
       payload: singlePush("chore/v1.8-anything"),
-      getRemoteIntegrationBranchesFn: () => { throw new Error("network error"); },
+      getRemoteIntegrationBranchesFn: () => { throw new Error(); },
       error: () => {},
     });
     assert.equal(code, 0);

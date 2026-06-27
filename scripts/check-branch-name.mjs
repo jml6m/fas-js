@@ -40,7 +40,10 @@ export function getRemoteIntegrationBranches(remote = "origin") {
     const out = execSync(`git ls-remote --heads ${remote}`, { encoding: "utf8" });
     return out
       .split("\n")
-      .map((l) => { const m = l.match(/\trefs\/heads\/(.+)/); return m ? m[1].trim() : null; })
+      .map((l) => {
+        const m = l.match(/\trefs\/heads\/(.+)/);
+        return m ? m[1].trim() : null;
+      })
       .filter((n) => n && isReservedName(n));
   } catch {
     return []; // fail open
