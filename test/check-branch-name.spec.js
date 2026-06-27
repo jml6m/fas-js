@@ -1,13 +1,18 @@
 /**
  * Unit tests for scripts/check-branch-name.mjs.
- * Tests isReservedName() directly and the full script via subprocess with piped stdin.
+ *
+ * Most tests use dependency injection (fast, no subprocess, no network).
+ * A small number of subprocess smoke tests validate the CLI end-to-end.
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assert } from "chai";
-import { isReservedName } from "../scripts/check-branch-name.mjs";
+import {
+  isReservedName,
+  isAllowedReservedPush,
+  runCheck,
+} from "../scripts/check-branch-name.mjs";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dir, "..");
@@ -15,30 +20,25 @@ const root = resolve(__dir, "..");
 const ZERO = "0000000000000000000000000000000000000000";
 const SHA = "a".repeat(40);
 
-/** Read the designated integration branch from .github/INTEGRATION_BRANCH. */
-const integrationBranch = readFileSync(
-  resolve(root, ".github/INTEGRATION_BRANCH"),
-  "utf8",
-).trim();
-
-/** Format a single pre-push payload line: <localRef> <localSha> <remoteRef> <remoteSha> */
+/** Format a single pre-push payload line. */
 function pushLine(localRef, localSha, remoteRef, remoteSha) {
   return `${localRef} ${localSha} ${remoteRef} ${remoteSha}\n`;
 }
 
-/** Run check-branch-name.mjs with the given stdin payload. Returns { status, stderr }. */
-function runScript(stdinPayload) {
-  try {
-    execFileSync("node", ["scripts/check-branch-name.mjs"], {
-      cwd: root,
-      input: stdinPayload,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-    return { status: 0, stderr: "" };
-  } catch (err) {
-    return { status: err.status ?? 1, stderr: err.stderr ?? "" };
-  }
+/** Build a payload with a single branch push (shorthand). */
+function singlePush(branch) {
+  return pushLine(`refs/heads/${branch}`, SHA, `refs/heads/${branch}`, ZERO);
+}
+
+/** Capture errors emitted by runCheck. */
+function captureErrors(payloadStr, remoteReserved) {
+  const errors = [];
+  const code = runCheck({
+    payload: payloadStr,
+    getRemoteIntegrationBranchesFn: () => remoteReserved,
+    error: (m) => errors.push(m),
+  });
+  return { code, errors };
 }
 
 // ---------------------------------------------------------------------------
@@ -87,122 +87,181 @@ describe("isReservedName", function () {
 });
 
 // ---------------------------------------------------------------------------
-// check-branch-name script — stdin payload parsing (subprocess)
+// isAllowedReservedPush
 // ---------------------------------------------------------------------------
 
-describe("check-branch-name script (subprocess)", function () {
-  it("exits 0 for an empty stdin payload", function () {
-    assert.equal(runScript("").status, 0);
+describe("isAllowedReservedPush", function () {
+  it("allows when the branch already exists on the remote (established integration branch)", function () {
+    assert.isTrue(isAllowedReservedPush("chore/v1.8-hygiene", ["chore/v1.8-hygiene"]));
   });
 
-  it("exits 0 for a whitespace-only stdin payload", function () {
-    assert.equal(runScript("   \n\n  \n").status, 0);
+  it("allows when no reserved branches exist on the remote (opening a new release line)", function () {
+    assert.isTrue(isAllowedReservedPush("chore/v1.9-next", []));
   });
 
-  it("exits 0 for a topic/* branch push", function () {
-    const line = pushLine(
-      "refs/heads/topic/my-feature",
-      SHA,
-      "refs/heads/topic/my-feature",
-      ZERO,
+  it("blocks when a different reserved branch already exists on the remote", function () {
+    assert.isFalse(isAllowedReservedPush("chore/v1.8-oops", ["chore/v1.8-hygiene"]));
+  });
+
+  it("blocks when multiple different reserved branches exist on the remote", function () {
+    assert.isFalse(
+      isAllowedReservedPush("v2.0-bad", ["chore/v1.8-hygiene", "chore/v1.9-next"]),
     );
-    assert.equal(runScript(line).status, 0);
   });
 
-  it("exits 0 for a branch deletion (zero local SHA)", function () {
-    // Deletions should never be blocked regardless of branch name
+  it("allows one of several existing remote reserved branches when it matches exactly", function () {
+    // Edge case: if somehow two integration branches exist, the one being pushed is the known one
+    assert.isTrue(
+      isAllowedReservedPush("chore/v1.8-hygiene", ["chore/v1.8-hygiene", "chore/v1.9-next"]),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// runCheck — core logic via DI (fast, no subprocess, no network)
+// ---------------------------------------------------------------------------
+
+describe("runCheck", function () {
+  // Simulate remote with one integration branch
+  const ONE_INTEGRATION = ["chore/v1.8-hygiene"];
+
+  it("returns 0 for empty payload", function () {
+    assert.equal(captureErrors("", ONE_INTEGRATION).code, 0);
+  });
+
+  it("returns 0 for whitespace-only payload", function () {
+    assert.equal(captureErrors("   \n\n  \n", ONE_INTEGRATION).code, 0);
+  });
+
+  it("returns 0 for a topic/* branch push", function () {
+    assert.equal(captureErrors(singlePush("topic/my-feature"), ONE_INTEGRATION).code, 0);
+  });
+
+  it("returns 0 for a master push", function () {
+    assert.equal(captureErrors(singlePush("master"), ONE_INTEGRATION).code, 0);
+  });
+
+  it("returns 0 for a branch deletion (zero local SHA)", function () {
+    // Deletions must never be blocked regardless of branch name
     const line = pushLine(
       "refs/heads/chore/v1.8-unauthorized",
       ZERO,
       "refs/heads/chore/v1.8-unauthorized",
       SHA,
     );
-    assert.equal(runScript(line).status, 0);
+    assert.equal(captureErrors(line, ONE_INTEGRATION).code, 0);
   });
 
-  it("exits 0 for a non-refs/heads/ ref (e.g. a tag)", function () {
+  it("returns 0 for a non-refs/heads/ ref (e.g. a tag)", function () {
     const line = pushLine("refs/tags/v1.8.0", SHA, "refs/tags/v1.8.0", ZERO);
-    assert.equal(runScript(line).status, 0);
+    assert.equal(captureErrors(line, ONE_INTEGRATION).code, 0);
   });
 
-  it("exits 0 when pushing the designated integration branch", function () {
-    const line = pushLine(
-      `refs/heads/${integrationBranch}`,
-      SHA,
-      `refs/heads/${integrationBranch}`,
-      ZERO,
-    );
-    assert.equal(runScript(line).status, 0);
+  it("returns 0 when pushing the established integration branch (already on remote)", function () {
+    assert.equal(captureErrors(singlePush("chore/v1.8-hygiene"), ONE_INTEGRATION).code, 0);
   });
 
-  it("exits 0 for master push", function () {
-    const line = pushLine("refs/heads/master", SHA, "refs/heads/master", ZERO);
-    assert.equal(runScript(line).status, 0);
+  it("returns 0 when no reserved branches exist on the remote (opening a new release line)", function () {
+    assert.equal(captureErrors(singlePush("chore/v1.9-next"), []).code, 0);
   });
 
-  it("exits 1 when pushing a reserved-named non-integration branch (chore/ prefix)", function () {
-    const { status, stderr } = runScript(
-      pushLine(
-        "refs/heads/chore/v1.8-unauthorized",
-        SHA,
-        "refs/heads/chore/v1.8-unauthorized",
-        ZERO,
-      ),
-    );
-    assert.equal(status, 1);
-    assert.include(stderr, "chore/v1.8-unauthorized");
+  it("returns 1 when pushing a reserved name that conflicts with an existing integration branch (chore/ prefix)", function () {
+    const { code, errors } = captureErrors(singlePush("chore/v1.8-oops"), ONE_INTEGRATION);
+    assert.equal(code, 1);
+    assert.isTrue(errors.some((e) => e.includes("chore/v1.8-oops")));
   });
 
-  it("exits 1 when pushing a reserved-named non-integration branch (bare v* prefix)", function () {
-    const { status, stderr } = runScript(
-      pushLine("refs/heads/v2.0-release", SHA, "refs/heads/v2.0-release", ZERO),
-    );
-    assert.equal(status, 1);
-    assert.include(stderr, "v2.0-release");
+  it("returns 1 when pushing a reserved name that conflicts (bare v* prefix)", function () {
+    const { code, errors } = captureErrors(singlePush("v2.0-release"), ONE_INTEGRATION);
+    assert.equal(code, 1);
+    assert.isTrue(errors.some((e) => e.includes("v2.0-release")));
   });
 
   it("error message includes the --no-verify bypass hint", function () {
-    const { stderr } = runScript(
-      pushLine("refs/heads/v1.9-oops", SHA, "refs/heads/v1.9-oops", ZERO),
-    );
-    assert.include(stderr, "--no-verify");
+    const { errors } = captureErrors(singlePush("v1.9-oops"), ONE_INTEGRATION);
+    assert.isTrue(errors.some((e) => e.includes("--no-verify")));
   });
 
   it("error message includes the AGENTS.md reference", function () {
-    const { stderr } = runScript(
-      pushLine("refs/heads/v1.9-oops", SHA, "refs/heads/v1.9-oops", ZERO),
-    );
-    assert.include(stderr, "AGENTS.md");
+    const { errors } = captureErrors(singlePush("v1.9-oops"), ONE_INTEGRATION);
+    assert.isTrue(errors.some((e) => e.includes("AGENTS.md")));
   });
 
-  it("exits 1 and names all offenders when multiple reserved branches are pushed", function () {
+  it("error message names the current remote integration branch", function () {
+    const { errors } = captureErrors(singlePush("v1.9-oops"), ONE_INTEGRATION);
+    assert.isTrue(errors.some((e) => e.includes("chore/v1.8-hygiene")));
+  });
+
+  it("reports all offenders when multiple reserved branches are pushed", function () {
     const payload = [
-      pushLine("refs/heads/v1.9-alpha", SHA, "refs/heads/v1.9-alpha", ZERO),
-      pushLine("refs/heads/chore/v2.0-prep", SHA, "refs/heads/chore/v2.0-prep", ZERO),
+      singlePush("v1.9-alpha"),
+      singlePush("chore/v2.0-prep"),
     ].join("");
-    const { status, stderr } = runScript(payload);
-    assert.equal(status, 1);
-    assert.include(stderr, "v1.9-alpha");
-    assert.include(stderr, "chore/v2.0-prep");
+    const { code, errors } = captureErrors(payload, ONE_INTEGRATION);
+    assert.equal(code, 1);
+    assert.isTrue(errors.some((e) => e.includes("v1.9-alpha")));
+    assert.isTrue(errors.some((e) => e.includes("chore/v2.0-prep")));
   });
 
-  it("exits 0 when a mixed payload contains only allowed branches", function () {
+  it("returns 0 for a mixed payload with only allowed branches", function () {
     const payload = [
-      pushLine("refs/heads/topic/feat-a", SHA, "refs/heads/topic/feat-a", ZERO),
+      singlePush("topic/feat-a"),
       "\n",
-      pushLine("refs/heads/master", SHA, "refs/heads/master", ZERO),
+      singlePush("master"),
     ].join("");
-    assert.equal(runScript(payload).status, 0);
+    assert.equal(captureErrors(payload, ONE_INTEGRATION).code, 0);
   });
 
-  it("exits 1 for a mixed payload that contains one reserved branch", function () {
-    const payload = [
-      pushLine("refs/heads/topic/ok", SHA, "refs/heads/topic/ok", ZERO),
-      pushLine("refs/heads/v1.9-blocked", SHA, "refs/heads/v1.9-blocked", ZERO),
-    ].join("");
-    const { status, stderr } = runScript(payload);
+  it("returns 1 for a mixed payload containing one blocked reserved branch", function () {
+    const payload = [singlePush("topic/ok"), singlePush("v1.9-blocked")].join("");
+    const { code, errors } = captureErrors(payload, ONE_INTEGRATION);
+    assert.equal(code, 1);
+    assert.isTrue(errors.some((e) => e.includes("v1.9-blocked")));
+    assert.isFalse(errors.some((e) => e.includes("topic/ok")));
+  });
+
+  it("fails open (returns 0) when getRemoteIntegrationBranchesFn throws", function () {
+    // Remote unreachable → hook does not block
+    const code = runCheck({
+      payload: singlePush("chore/v1.8-anything"),
+      getRemoteIntegrationBranchesFn: () => { throw new Error("network error"); },
+      error: () => {},
+    });
+    assert.equal(code, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CLI smoke tests (subprocess) — validate the executable end-to-end
+// ---------------------------------------------------------------------------
+
+describe("check-branch-name CLI (subprocess)", function () {
+  function runScript(stdinPayload) {
+    try {
+      execFileSync("node", ["scripts/check-branch-name.mjs"], {
+        cwd: root,
+        input: stdinPayload,
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      return { status: 0, stderr: "" };
+    } catch (err) {
+      return { status: err.status ?? 1, stderr: err.stderr ?? "" };
+    }
+  }
+
+  it("exits 0 for empty stdin", function () {
+    assert.equal(runScript("").status, 0);
+  });
+
+  it("exits 0 for a topic/* branch push", function () {
+    assert.equal(runScript(singlePush("topic/my-feature")).status, 0);
+  });
+
+  it("exits 1 for a reserved-named branch that is not the current integration branch", function () {
+    // chore/v1.8-unauthorized is not on the remote; chore/v1.8-hygiene is → blocked
+    const { status, stderr } = runScript(singlePush("chore/v1.8-unauthorized"));
     assert.equal(status, 1);
-    assert.include(stderr, "v1.9-blocked");
-    assert.notInclude(stderr, "topic/ok");
+    assert.include(stderr, "chore/v1.8-unauthorized");
   });
 });
