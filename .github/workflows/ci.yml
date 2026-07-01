@@ -73,3 +73,8 @@ jobs:
       - run: npm audit --audit-level=high
       - run: npm run build
       - run: npm run check:security
+      # Dead-code / unused-file detection. Non-blocking here (warning surface on
+      # PRs into the integration branch); the hard failure is at publish time
+      # (publish.yml runs `health:dead:strict`). See issue #309.
+      - name: Dead-code check (warn)
+        run: npm run health:dead || echo "::warning::knip reported dead code or unused files (see log); this is non-blocking on PRs but blocks publish."

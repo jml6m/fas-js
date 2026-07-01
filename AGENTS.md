@@ -142,8 +142,11 @@ npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/i
 npm run typecheck   # TypeScript type check (no emit)
 npm run lint        # ESLint on src/
 npm run docs:lint   # markdownlint on **/*.md — matches the docs-lint CI gate
+npm run health:dead # knip — unused files/exports/deps (files are fatal; see below)
 npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
+
+- **Dead-code / unused-file detection** is run by [`knip`](https://knip.dev) via `npm run health:dead` (config in [`knip.json`](knip.json)). It is **escalating-severity by design**: an unused *file* is fatal (`rules.files: "error"`), while unused exports/types/deps surface as warnings on PRs. On PRs into the integration branch the CI step is **non-blocking** (a visible warning); at publish it is a **hard gate** — `npm run health:dead:strict` (`knip --production --strict`, scoped to the shipped `src/modules.ts` entry) runs in [`publish.yml`](.github/workflows/publish.yml) and **`--strict` escalates warnings to failures**, so any unused export or dependency also blocks publish. Entry points are `src/modules.ts`/`src/demo-bundle.ts` (auto-detected from `package.json`/[`tsup.config.ts`](tsup.config.ts)) plus `scripts/` and `test/`.
 
 - **Code** formatting is Prettier, run **on save in-editor** ([`.vscode/settings.json`](.vscode/settings.json) + [`.prettierrc.json`](.prettierrc.json)) — there is no CLI `format` script by design.
 - **Markdown** is owned by **markdownlint** ([`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml)), not Prettier (which is barred from `.md` via [`.prettierignore`](.prettierignore) and the editor config). Run `npm run docs:lint:fix` before pushing docs. The lychee link/anchor check runs in CI only (it's a Rust binary, not an npm dep).
@@ -183,6 +186,7 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 - **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via repository secret `CODECOV_TOKEN`.
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
+- **Dead-code check**: the `security` job runs `npm run health:dead` (knip) **non-blocking** — an unused file/export is surfaced as a warning on PRs. The **hard** dead-code failure lives in [`publish.yml`](.github/workflows/publish.yml) (`npm run health:dead:strict`), so dead code cannot ship even though it does not block day-to-day integration merges. See [`knip.json`](knip.json).
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
 - The `lock-files` gate protects the project's stable foundation (see the **Protected Files** section below). Most development adds new code; modifications to locked paths are intentionally rare and heavily gated. **There is no automated bypass** — even owner-authored or agent-authored PRs that touch protected paths must wait for the project owner to manually disable the `lock-files` required status check in the ruleset, merge, and re-enable it.
