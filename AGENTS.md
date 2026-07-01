@@ -37,8 +37,8 @@ For unsupervised runs (e.g. automated fixes):
 **Permitted for agents (delegated execution):**
 
 - Push `topic/<name>` branches and open PRs into the current version integration branch (`chore/vX.Y-*`)
-- Merge those topic PRs into the integration branch once CI is green — the integration branch is a **permissive staging area** (0-approval; protected-file changes are allowed here and only face the gate at the `master` release)
-- Request review (assign/@mention Copilot, `gh pr edit --add-reviewer`)
+- Merge those topic PRs into the integration branch once CI is green. A PR that edits a **Locked** path shows `lock-files` **red** — this is expected on the integration branch (a permissive staging area); merge it with admin privileges (`gh pr merge --admin`). The *same* red on a `master` release PR is cleared **only** by the admin's manual `lock-files` toggle, never by an agent.
+- Request review by posting an `@copilot` review-request **comment** on the PR (note: `gh pr edit --add-reviewer copilot` does **not** resolve the Copilot bot)
 - Accumulate an entire milestone on the integration branch, then **stop and leave the admin a single final step**: review the integration branch, then merge → `master`, tag, publish. Surface any blocker or design decision instead of guessing.
 
 ### 4. Branch Workflow
