@@ -196,31 +196,55 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 ## 🔒 Protected Files
 
-Certain paths are locked by the `lock-files` CI check (see [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json)). Changing them requires explicit owner approval via the override process below.
+The `lock-files` CI check (see [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json)) locks the project's **proven, pre-v2 foundation**. The list enumerates **exact paths, not globs** — so **new files are Open (free) by default** and only a listed path that changes trips the gate. That is deliberate: v2 adds RegEx/GNFA support as *new files* against this frozen base without fighting the lock. Changing a listed path is intentionally rare and follows the override process below.
 
-| Path | Why protected |
-| ---- | ------------- |
-| [`test/helpers/publicApiContract.js`](test/helpers/publicApiContract.js) | Public API contract helper — changes affect foundational test fidelity |
-| [`src/globals/globals.ts`](src/globals/globals.ts) | Runtime type guards used across the codebase |
-| [`src/modules.ts`](src/modules.ts) | Public API entry point — signature changes require major version bump |
-| [`scripts/check-public-api.mjs`](scripts/check-public-api.mjs) | Enforces public API contract |
-| [`scripts/check-package-scripts.mjs`](scripts/check-package-scripts.mjs) | Locks critical package.json fields used by CI/security gates |
-| [`scripts/check-protected-files.mjs`](scripts/check-protected-files.mjs) | The CI gate itself — must not be bypassed without owner review |
-| [`scripts/check-npm-pack.mjs`](scripts/check-npm-pack.mjs) | Locks the published npm surface (exact tarball manifest) |
-| [`scripts/postbuild.mjs`](scripts/postbuild.mjs) | Controls which build artifacts land in `lib/` (and thus the tarball) |
-| [`tsup.config.ts`](tsup.config.ts) | Build config — governs emitted artifacts (entries, sourcemaps) |
-| [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) | Defines the protected-path list — changes alter what is locked |
-| [`.github/workflows/lock-files.yml`](.github/workflows/lock-files.yml) | The gate workflow — must not be weakened without owner review |
-| [`.github/workflows/publish.yml`](.github/workflows/publish.yml) | Release / publish workflow — supply-chain security boundary |
+### Two categories: Locked / Open
 
-**Override process** (when a protected change is intentional):
+> **Notation:** the brace-expansion shorthand below (e.g. `src/automata/{DFA,NFA}.ts`) is *illustrative shorthand for readability only* — the `lock-files` gate does **no** brace/glob expansion. The **canonical, exact-path list is [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json)** (a flat array of literal paths); this table summarizes it. Because entries are literal paths, a new file never matches until its exact path is added.
 
-1. Open a PR with a clear explanation of why the protected file must change.
+**🔒 Locked** — the trusted core. Grouped (the canonical exact paths live in [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json)):
+
+| Group | Paths | Why locked |
+| ----- | ----- | ---------- |
+| Proven core impls | `src/automata/{DFA,NFA}.ts`, `src/components/{Alphabet,NFATransition,State,Transition}.ts`, [`src/engine/Simulators.ts`](src/engine/Simulators.ts), `src/globals/{globals,errors}.ts`, [`src/interfaces/FSA.ts`](src/interfaces/FSA.ts), `src/languages/{Language,LanguageOperations,NFAtoDFA,RegularLanguage,fsaHelpers}.ts`, `src/utils/{DFAUtils,FSAUtils,NFAUtils}.ts` | The regular-language algorithm code, comprehensively tested and stable before v2 |
+| Behavioral tests | `test/{components,dfa,nfa,simulators,utils,languages,error-codes,workflows,digraph-cli}.spec.js`, [`test/fixtures/digraph-large-ring.expected.dot`](test/fixtures/digraph-large-ring.expected.dot), `test/helpers/{dfaLanguageEqual,membershipAssertions,subsetWitnessAssertions}.js` | The behavioral contract for the proven core — weakening these silently would erode fidelity |
+| Guard group | `scripts/{check-protected-files,check-public-api,check-npm-pack,check-package-scripts,check-guard-tests}.mjs` + their `test/check-*.spec.js` | The gates themselves and their tests — must not be weakened or left untested |
+| Machinery | [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) | Defines the locked set — locking it makes every change to the set owner-reviewed |
+| Workflows (all) | `.github/workflows/{ci,docs-lint,pages,auto-link-issue,lock-files,publish,release-base-guard,verify-release-version}.yml` | CI/CD + supply-chain boundary |
+| Build | [`tsup.config.ts`](tsup.config.ts), [`scripts/postbuild.mjs`](scripts/postbuild.mjs) | Govern the emitted artifacts / published surface |
+| Legal | [`LICENSE`](LICENSE) | Legal terms |
+| Docs (single file) | [`docs/coverage-policy.md`](docs/coverage-policy.md) | Durable policy — note: `docs/**` is **not** locked; new docs are Open |
+
+**🟢 Open** — deliberately *not* locked, so day-to-day work flows without friction:
+
+- **API surface** — governed by the api-contract check, not the file lock: [`src/modules.ts`](src/modules.ts), [`test/helpers/publicApiContract.js`](test/helpers/publicApiContract.js), [`test/api-contract.spec.js`](test/api-contract.spec.js), [`test/api-artifact.spec.js`](test/api-artifact.spec.js). (A breaking API change is a v2 event; the contract check — not `lock-files` — is what forces the deliberate update. See [`RELEASING.md`](RELEASING.md).)
+- **Barrels** — removals are caught by `typecheck`: `src/{automata,components,utils}/index.ts` (`src/languages/index.ts` was deleted as dead in #309).
+- **Demo:** [`src/demo-bundle.ts`](src/demo-bundle.ts), `test/demo*.spec.js`, `scripts/{serve-demo,demo-static-server}.mjs`.
+- **Dev utils:** `scripts/{prebuild,free-port,reinstall}.{mjs,js}`.
+- **Dev/build config:** [`tsconfig.json`](tsconfig.json), [`eslint.config.js`](eslint.config.js), [`.prettierrc.json`](.prettierrc.json), [`.prettierignore`](.prettierignore), [`.c8rc.json`](.c8rc.json), [`.editorconfig`](.editorconfig), [`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml), [`.lychee.toml`](.lychee.toml), [`codecov.yml`](codecov.yml), [`.gitignore`](.gitignore).
+- **Manifests:** [`package.json`](package.json), [`package-lock.json`](package-lock.json) — intentionally Open so version/dependency churn flows freely; the manifest is guarded by the locked *checkers* ([`check-package-scripts.mjs`](scripts/check-package-scripts.mjs), [`check-npm-pack.mjs`](scripts/check-npm-pack.mjs)), not by locking `package.json`.
+- **Governance/docs:** `.github/{CODEOWNERS,FUNDING.yml,dependabot.yml,copilot-instructions.md,ISSUE_TEMPLATE/*,pull_request_template.md}`, [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md), [`README.md`](README.md), [`RELEASING.md`](RELEASING.md), [`SECURITY.md`](SECURITY.md), and any new `docs/*`.
+
+### Bypass model (verified against the live rulesets)
+
+The `lock-files` gate has **no automated bypass**. The single deliberate way a Locked change reaches `master` is the **manual `lock-files` toggle on the release PR** — this **stays by design** as the one intentional `master` gate.
+
+| Scope | Behavior |
+| ----- | -------- |
+| **Integration branch (`chore/v*`)** | Permissive staging. The `next-version-prep-branch` ruleset gates topic PRs on `test`+`lock-files` with **0 approvals** — so an ordinary topic PR (no protected-file change) merges as soon as those checks are green. The admin additionally has an **`always` bypass**, which is what makes protected changes frictionless here: a topic PR that edits a Locked file shows a red `lock-files` (expected), and the admin merges it via that bypass (`gh pr merge --admin`). So: **green checks are the normal path; the admin bypass is the escape hatch for the intentional protected-file change** — that change still faces the real `lock-files` gate later, on the release PR into `master`. |
+| **`master` (`main` ruleset)** | Hard gate. Admin bypass is *pull-requests only*: **cannot** direct-push and **cannot** merge past a failing required check (`test 18/20/22`, `lock-files`, `verify-release-version`). A protected-file change reaches `master` **only** by the owner manually toggling `lock-files` off/on on the release PR — the sole, deliberate bypass. |
+| **Tags (`v*`)** | Immutable — never bypassed. |
+
+A protected change that lands on the integration branch therefore **can't reach `master` silently**: it resurfaces as a red `lock-files` on the release PR's cumulative diff, forcing the owner's toggle decision.
+
+**Override process** (when a Locked change is intentional and must reach `master`):
+
+1. Open a PR with a clear explanation of why the Locked file must change.
 2. The `lock-files` check will fail — that failure is expected.
 3. Request review and tag `@jml6m`.
 4. The owner (`@jml6m`) reviews, then temporarily disables the `lock-files` required status check in the ruleset, merges, and re-enables it.
 
-There is no automated bypass — even owner- or agent-authored PRs go through this process, so every change to the protected set is explicitly human-reviewed before it lands.
+There is no automated bypass — even owner- or agent-authored PRs go through this process, so every change to the Locked set is explicitly human-reviewed before it lands on `master`.
 
 ### Published package surface
 
@@ -240,9 +264,9 @@ As the codebase matures — especially toward v2 — files that become reliable,
 
 - **Prefer adding new files/folders** rather than modifying locked ones.
 - Locked code is a stable base that new functionality is built *on top of*.
-- A new component (a language module, a critical utility, an additional gate) can be proposed for inclusion once it has proven itself and matches the spirit of the "Why protected" table above.
+- A new component (a language module, a critical utility, an additional gate) can be proposed for the Locked set once it has proven itself and matches the spirit of the Locked groups above.
 
-**How the locked set evolves:** a component demonstrates long-term stability under contract-level tests → a PR adds its path to [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) and the table above → because the list itself is locked, that PR follows the override process → thereafter the new path requires the same owner-level approval.
+**How the locked set evolves:** a component demonstrates long-term stability under contract-level tests → a PR adds its **exact path** to [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) (and the Locked groups above) → because the list itself is Locked, that PR follows the override process → thereafter the new path requires the same owner-level approval. (Because the list is exact paths, adding v2's new RegEx/GNFA files does *not* touch the lock until they are deliberately proposed for it.)
 
 This keeps most day-to-day work (features, experiments, non-core refactors) flowing on integration branches while shielding core contracts, test helpers, the public API surface, and the protection mechanisms themselves from accidental or lightly-reviewed change.
 
