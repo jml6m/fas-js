@@ -200,7 +200,7 @@ The `lock-files` CI check (see [`.github/PROTECTED_FILES.json`](.github/PROTECTE
 
 ### Two categories: Locked / Open
 
-**🔒 Locked** — the trusted core. Grouped (all exact paths are in [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json)):
+**🔒 Locked** — the trusted core. Grouped below for readability; brace lists such as `{DFA,NFA}` are documentation shorthand only, and [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) remains the canonical exact-path list:
 
 | Group | Paths | Why locked |
 | ----- | ----- | ---------- |
