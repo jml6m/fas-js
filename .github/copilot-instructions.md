@@ -84,7 +84,7 @@ npm run health:dead # knip — unused files/exports/deps (unused files are fatal
 npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
 
-- **Dead-code detection** (`npm run health:dead`, config [`knip.json`](../knip.json)): on integration PRs only unused *files* are fatal (exports/types/deps are warnings) and the CI step is non-blocking. At publish, `npm run health:dead:strict` (`knip --production --strict`) is a hard gate that fails on *any* dead code — files, exports, types, or deps — reachable from the shipped surface. See [`publish.yml`](workflows/publish.yml).
+- **Dead-code detection** (`npm run health:dead`, config [`knip.json`](../knip.json)): knip reports unused *files* as errors (non-zero) and other findings as warnings, but CI treats this step as non-blocking on integration PRs (it surfaces a warning only). Note: this check is expected to be run on Node 20+ (it’s wired in CI/publish on Node 20). At publish, `npm run health:dead:strict` (`knip --production --strict`) is a hard gate that fails on *any* dead-code finding reachable from the shipped surface. See [`publish.yml`](workflows/publish.yml).
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
 - Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
