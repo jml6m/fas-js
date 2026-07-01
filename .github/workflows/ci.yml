@@ -82,6 +82,10 @@ jobs:
         if: matrix.node != '18'
         run: npm install -g npm@^11.5.1
       - run: npm ci
+      # Integrity gate before any npm script runs, mirroring static-gates: a
+      # tampered package.json build/test script must not execute on the runner
+      # before check-package-scripts has vetted it.
+      - run: node scripts/check-package-scripts.mjs
       # Runtime tests need the built lib/ artifacts (tests exercise lib/, and the
       # demo spec reads build output). Build, then run mocha under c8.
       - run: npm run build

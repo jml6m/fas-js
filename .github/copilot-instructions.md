@@ -118,10 +118,10 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 ## 🔄 CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): a **`static-gates`** job (single Node 20) runs the env-independent gates once — `check-package-scripts`, `typecheck`, `lint`, `npm audit`, `build`, the security guards (`check-guard-tests` + `check-public-api` + `check-npm-pack`), and the non-blocking `health:dead` scan; a **`test`** matrix job runs only build + mocha + c8 coverage across Node 18/20/22 (the required `test (18/20/22)` contexts) and uploads coverage to Codecov on Node 20 via `CODECOV_TOKEN`. `npm test` stays the local full-gate; the split is CI-only.
+- **CI** ([`.github/workflows/ci.yml`](workflows/ci.yml)): a **`static-gates`** job (single Node 20) runs the env-independent gates once — `check-package-scripts`, `typecheck`, `lint`, `npm audit`, `build`, the security guards (`check-guard-tests` + `check-public-api` + `check-npm-pack`), and the non-blocking `health:dead` scan; a **`test`** matrix job runs only build + mocha + c8 coverage across Node 18/20/22 (the required `test (18/20/22)` contexts) and uploads coverage to Codecov on Node 20 via `CODECOV_TOKEN`. `npm test` stays the local full-gate; the split is CI-only.
 - **Guard-test completeness**: `check:security` runs [`scripts/check-guard-tests.mjs`](../scripts/check-guard-tests.mjs) — every `scripts/check-*.mjs` must have a matching `test/check-*.spec.js` or CI fails. Structural, independent of coverage (coverage scope stays `src/**`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
-- **Dead-code check**: `security` job runs `npm run health:dead` (knip, non-blocking warning); the hard failure is `npm run health:dead:strict` in [`publish.yml`](workflows/publish.yml).
+- **Dead-code check**: `static-gates` job runs `npm run health:dead` (knip, non-blocking warning); the hard failure is `npm run health:dead:strict` (`knip --production --strict`) in [`publish.yml`](workflows/publish.yml).
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
 
