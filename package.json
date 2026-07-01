@@ -42,7 +42,8 @@
     "health:dead": "knip",
     "health:dead:strict": "knip --production --strict",
     "check:package-scripts": "node scripts/check-package-scripts.mjs",
-    "check:security": "node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs",
+    "check:guard-tests": "node scripts/check-guard-tests.mjs",
+    "check:security": "node scripts/check-guard-tests.mjs && node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs",
     "git:reset": "git reset --hard HEAD && git clean -fd",
     "npm:reinstall": "node scripts/reinstall.js"
   },

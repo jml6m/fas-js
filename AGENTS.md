@@ -184,8 +184,9 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 ## 🔄 CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via repository secret `CODECOV_TOKEN`.
+- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — guard-test completeness + public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via repository secret `CODECOV_TOKEN`.
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
+- **Guard-test completeness**: `check:security` (in `npm test` and CI) runs [`scripts/check-guard-tests.mjs`](scripts/check-guard-tests.mjs), which fails closed if any guard script (`scripts/check-*.mjs`) lacks a matching unit-test spec (`test/check-*.spec.js`). This is a **structural** guarantee independent of line coverage — see [`docs/coverage-policy.md`](docs/coverage-policy.md). Coverage scope stays `src/**` only (`scripts/` is intentionally out of c8 scope; the completeness gate is the guarantee).
 - **Dead-code check**: the `security` job runs `npm run health:dead` (knip) **non-blocking** — an unused file/export is surfaced as a warning on PRs. The **hard** dead-code failure lives in [`publish.yml`](.github/workflows/publish.yml) (`npm run health:dead:strict`), so dead code cannot ship even though it does not block day-to-day integration merges. See [`knip.json`](knip.json).
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
