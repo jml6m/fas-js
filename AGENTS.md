@@ -200,7 +200,9 @@ The `lock-files` CI check (see [`.github/PROTECTED_FILES.json`](.github/PROTECTE
 
 ### Two categories: Locked / Open
 
-**🔒 Locked** — the trusted core. Grouped below for readability; brace lists such as `{DFA,NFA}` are documentation shorthand only, and [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) remains the canonical exact-path list:
+> **Notation:** the brace-expansion shorthand below (e.g. `src/automata/{DFA,NFA}.ts`) is *illustrative shorthand for readability only* — the `lock-files` gate does **no** brace/glob expansion. The **canonical, exact-path list is [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json)** (a flat array of literal paths); this table summarizes it. Because entries are literal paths, a new file never matches until its exact path is added.
+
+**🔒 Locked** — the trusted core. Grouped (the canonical exact paths live in [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json)):
 
 | Group | Paths | Why locked |
 | ----- | ----- | ---------- |
@@ -229,7 +231,7 @@ The `lock-files` gate has **no automated bypass**. The single deliberate way a L
 
 | Scope | Behavior |
 | ----- | -------- |
-| **Integration branch (`chore/v*`)** | Permissive staging. Topic PRs merge with 0 approvals (must pass checks); the admin has `always` bypass for last-minute fixes / direct pushes. **Protected files can change here without ceremony** — a red `lock-files` on a topic PR is fine and merges via admin. |
+| **Integration branch (`chore/v*`)** | Permissive staging. The `next-version-prep-branch` ruleset gates topic PRs on `test`+`lock-files` with **0 approvals** — so an ordinary topic PR (no protected-file change) merges as soon as those checks are green. The admin additionally has an **`always` bypass**, which is what makes protected changes frictionless here: a topic PR that edits a Locked file shows a red `lock-files` (expected), and the admin merges it via that bypass (`gh pr merge --admin`). So: **green checks are the normal path; the admin bypass is the escape hatch for the intentional protected-file change** — that change still faces the real `lock-files` gate later, on the release PR into `master`. |
 | **`master` (`main` ruleset)** | Hard gate. Admin bypass is *pull-requests only*: **cannot** direct-push and **cannot** merge past a failing required check (`test 18/20/22`, `lock-files`, `verify-release-version`). A protected-file change reaches `master` **only** by the owner manually toggling `lock-files` off/on on the release PR — the sole, deliberate bypass. |
 | **Tags (`v*`)** | Immutable — never bypassed. |
 
