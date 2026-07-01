@@ -28,9 +28,18 @@ For unsupervised runs (e.g. automated fixes):
 
 **STRICTLY PROHIBITED for agents:**
 
-- `npm publish`
-- `git push` (agents propose; CI/humans push)
+- `npm publish` (publishing is tag-triggered OIDC only)
+- Pushing to, merging into, force-pushing, or deleting `master`
+- Creating or moving any `v*` tag
 - Bumping `version` in `package.json`
+- Disabling/toggling any required status check on the `main` ruleset (the release `lock-files` toggle is the **admin's** step)
+
+**Permitted for agents (delegated execution):**
+
+- Push `topic/<name>` branches and open PRs into the current version integration branch (`chore/vX.Y-*`)
+- Merge those topic PRs into the integration branch once CI is green — the integration branch is a **permissive staging area** (0-approval; protected-file changes are allowed here and only face the gate at the `master` release)
+- Request review (assign/@mention Copilot, `gh pr edit --add-reviewer`)
+- Accumulate an entire milestone on the integration branch, then **stop and leave the admin a single final step**: review the integration branch, then merge → `master`, tag, publish. Surface any blocker or design decision instead of guessing.
 
 ### 4. Branch Workflow
 
@@ -43,6 +52,7 @@ For unsupervised runs (e.g. automated fixes):
 - While a release is in flight, stack topic work on `topic/<name>` branches off the version integration branch and PR them back into it.
 - At release: merge integration branch → `master`, tag `v*.*.*`, publish via OIDC workflow.
 - New public API features remain scheduled for **v2**; release lines ship UX, tests, docs, and internal language tooling.
+- **Delegated milestone execution:** an agent may implement an entire milestone across `topic/<name>` PRs merged into the current version integration branch, then **hand off a single ready integration branch** for the admin to review and release (merge → `master`, tag, publish). The admin's manual step — and the `lock-files` toggle if the release touches protected files — is the only human gate. See §3.
 
 **Branch policy (enforced):**
 
