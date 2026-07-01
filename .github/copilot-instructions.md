@@ -80,9 +80,11 @@ npm ci              # install
 npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/index.d.ts
 npm run typecheck   # TypeScript type check (no emit)
 npm run lint        # ESLint on src/
+npm run health:dead # knip — unused files/exports/deps (unused files are fatal)
 npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
 
+- **Dead-code detection** (`npm run health:dead`, config [`knip.json`](../knip.json)): unused *files* are fatal; exports/types/deps are warnings. Non-blocking on integration PRs; a hard gate at publish via `npm run health:dead:strict` in [`publish.yml`](workflows/publish.yml).
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
 - Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
@@ -118,6 +120,7 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 - **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via `CODECOV_TOKEN`.
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
+- **Dead-code check**: `security` job runs `npm run health:dead` (knip, non-blocking warning); the hard failure is `npm run health:dead:strict` in [`publish.yml`](workflows/publish.yml).
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
 

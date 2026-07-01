@@ -45,4 +45,7 @@ jobs:
       - run: node scripts/check-package-scripts.mjs
       - run: npm run build
       - run: npm run check:security
+      # Hard gate: dead code / unused files must not ship. Non-blocking in CI
+      # (a warning on integration PRs), fatal here at publish. See issue #309.
+      - run: npm run health:dead:strict
       - run: npm publish --provenance --access public
