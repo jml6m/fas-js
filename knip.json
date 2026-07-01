@@ -2,8 +2,7 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": [
     "scripts/*.{mjs,js}",
-    "test/**/*.spec.js",
-    "test/helpers/**/*.js"
+    "test/**/*.spec.js"
   ],
   "project": ["src/**/*.ts", "scripts/**/*.{mjs,js}"],
   "rules": {
