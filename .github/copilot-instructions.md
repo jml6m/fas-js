@@ -118,7 +118,8 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 ## 🔄 CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via `CODECOV_TOKEN`.
+- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — guard-test completeness + public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via `CODECOV_TOKEN`.
+- **Guard-test completeness**: `check:security` runs [`scripts/check-guard-tests.mjs`](../scripts/check-guard-tests.mjs) — every `scripts/check-*.mjs` must have a matching `test/check-*.spec.js` or CI fails. Structural, independent of coverage (coverage scope stays `src/**`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
 - **Dead-code check**: `security` job runs `npm run health:dead` (knip, non-blocking warning); the hard failure is `npm run health:dead:strict` in [`publish.yml`](workflows/publish.yml).
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).

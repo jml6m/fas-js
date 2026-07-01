@@ -50,6 +50,12 @@ describe("check-package-scripts", function () {
     assert.isFalse(isPackageJsonValid(tampered));
   });
 
+  it("detects a tampered check:guard-tests script", function () {
+    const tampered = JSON.parse(JSON.stringify(REAL_PKG));
+    tampered.scripts["check:guard-tests"] = "echo ok";
+    assert.isFalse(isPackageJsonValid(tampered));
+  });
+
   it("detects a tampered prepublishOnly script", function () {
     const tampered = JSON.parse(JSON.stringify(REAL_PKG));
     tampered.scripts.prepublishOnly = "npm run build";
