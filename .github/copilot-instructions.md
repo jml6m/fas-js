@@ -80,9 +80,11 @@ npm ci              # install
 npm run build       # tsup → lib/index.js, lib/index.cjs, lib/bundle.js, lib/index.d.ts
 npm run typecheck   # TypeScript type check (no emit)
 npm run lint        # ESLint on src/
+npm run health:dead # knip — unused files/exports/deps (unused files are fatal)
 npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
 
+- **Dead-code detection** (`npm run health:dead`, config [`knip.json`](../knip.json)): knip reports unused *files* as errors (non-zero) and other findings as warnings, but CI treats this step as non-blocking on integration PRs (it surfaces a warning only). Note: this check is expected to be run on Node 20+ (it’s wired in CI/publish on Node 20). At publish, `npm run health:dead:strict` (`knip --production --strict`) is a hard gate that fails on *any* dead-code finding reachable from the shipped surface. See [`publish.yml`](workflows/publish.yml).
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
 - Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
@@ -116,10 +118,19 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 ## 🔄 CI / CD
 
-- **CI** (`.github/workflows/ci.yml`): `test` job runs `npm test` (includes `check:security` — public API surface + npm pack gate) on Node 18/20/22; `security` job runs `npm audit --audit-level=high` (fails on high) + `check:security`; uploads coverage to Codecov on the Node 20 matrix entry via `CODECOV_TOKEN`.
+- **CI** ([`.github/workflows/ci.yml`](workflows/ci.yml)): a **`static-gates`** job (single Node 20) runs the env-independent gates once — `check-package-scripts`, `typecheck`, `lint`, `npm audit`, `build`, the security guards (`check-guard-tests` + `check-public-api` + `check-npm-pack`), and the non-blocking `health:dead` scan; a **`test`** matrix job runs only build + mocha + c8 coverage across Node 18/20/22 (the required `test (18/20/22)` contexts) and uploads coverage to Codecov on Node 20 via `CODECOV_TOKEN`. `npm test` stays the local full-gate; the split is CI-only.
+- **Guard-test completeness**: `check:security` runs [`scripts/check-guard-tests.mjs`](../scripts/check-guard-tests.mjs) — every `scripts/check-*.mjs` must have a matching `test/check-*.spec.js` or CI fails. Structural, independent of coverage (coverage scope stays `src/**`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
+- **Dead-code check**: `static-gates` job runs `npm run health:dead` (knip, non-blocking warning); the hard failure is `npm run health:dead:strict` (`knip --production --strict`) in [`publish.yml`](workflows/publish.yml).
 - **Publish** (`.github/workflows/publish.yml`): triggers on `v*.*.*` tags (and can also be run via `workflow_dispatch`); uses OIDC trusted publishing (no NPM_TOKEN needed); gated by the `npm` GitHub environment (requires manual approval).
 - Actions are SHA-pinned for supply-chain security; Dependabot (monthly, `github-actions` ecosystem) auto-bumps them.
+
+---
+
+## 🔒 Protected Files
+
+- The `lock-files` gate ([`.github/PROTECTED_FILES.json`](PROTECTED_FILES.json), the canonical exact-path list) locks the proven pre-v2 **Locked** set (core algorithm impls, behavioral tests, the guard group + specs, all workflows, build config, [`LICENSE`](../LICENSE), [`docs/coverage-policy.md`](../docs/coverage-policy.md)) as **exact paths** — so **new files are Open by default** and v2's RegEx/GNFA files won't trip it. **Open** on purpose: the API surface (governed by the api-contract check, not the lock — [`src/modules.ts`](../src/modules.ts), [`test/helpers/publicApiContract.js`](../test/helpers/publicApiContract.js)), barrels, demo, dev/build config, [`package.json`](../package.json) / [`package-lock.json`](../package-lock.json), and governance docs.
+- **Bypass model:** the integration branch (`chore/v*`) is permissive — protected files can change there and merge via admin (a red `lock-files` on a topic PR is expected). `master` is a hard gate: the **only** deliberate bypass is the owner manually toggling `lock-files` off/on on the release PR. Tags are immutable. There is no automated bypass. Full detail + the Locked/Open lists live in [`AGENTS.md`](../AGENTS.md) → "Protected Files".
 
 ---
 

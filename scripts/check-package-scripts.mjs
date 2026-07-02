@@ -48,9 +48,15 @@ export function validatePackageJson(pkg) {
       expected: 'node scripts/check-package-scripts.mjs',
     },
     {
+      field: 'scripts["check:guard-tests"]',
+      actual: pkg?.scripts?.['check:guard-tests'],
+      expected: 'node scripts/check-guard-tests.mjs',
+    },
+    {
       field: 'scripts["check:security"]',
       actual: pkg?.scripts?.['check:security'],
-      expected: 'node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs',
+      expected:
+        'node scripts/check-guard-tests.mjs && node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs',
     },
     {
       field: 'scripts.prepublishOnly',
