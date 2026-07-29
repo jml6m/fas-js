@@ -14,7 +14,6 @@
 
 ### 0. GitHub credentials — never commit values
 
-
 Do **not** commit GitHub App IDs, installation IDs, client IDs/secrets, private keys,
 PATs, tokens, webhook secrets, or any other Actions secret/variable **values**. Refer
 to apps by slug/name (e.g. `jml6m-bot`), never by numeric ID. Workflows may reference
