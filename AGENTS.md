@@ -12,6 +12,17 @@
 
 ## 🛑 Critical Protocols (Read First)
 
+### 0. GitHub credentials — never commit values
+
+
+Do **not** commit GitHub App IDs, installation IDs, client IDs/secrets, private keys,
+PATs, tokens, webhook secrets, or any other Actions secret/variable **values**. Refer
+to apps by slug/name (e.g. `jml6m-bot`), never by numeric ID. Workflows may reference
+secret *names* (e.g. `${{ secrets.APP_ID }}`) — never hardcode values into source,
+docs, comments, or agent instruction files. Local App credentials live only under
+`~/workspaces/.tooling/` (outside any git repo); repository secrets live only in
+GitHub Settings → Secrets and variables.
+
 ### 1. Loop Prevention
 
 For unsupervised runs (e.g. automated fixes):
