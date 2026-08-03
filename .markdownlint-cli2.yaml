@@ -25,3 +25,7 @@ ignores:
   - 'dist/**'
   - '.github/ISSUE_TEMPLATE/**'
   - '.github/pull_request_template.md'
+  # Agent-instruction files — formatting is irrelevant (only an agent reads them); their links are
+  # still checked by lychee, which does not honor this list.
+  - 'AGENTS.md'
+  - 'CLAUDE.md'
