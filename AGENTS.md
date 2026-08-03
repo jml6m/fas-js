@@ -6,7 +6,7 @@
 **Build:** tsup → `lib/index.js`, `lib/index.cjs`, `lib/bundle.js`
 **Types:** TypeScript (strict)
 
-> **📌 Single Source of Truth**: This document is the authoritative reference for coding standards, architecture rules, and project policies. Copilot and Grok read this file natively; `CLAUDE.md` is a bare pointer to it.
+> **📌 Single Source of Truth**: This document is the authoritative reference for coding standards, architecture rules, and project policies.
 
 ---
 
