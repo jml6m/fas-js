@@ -1,7 +1,7 @@
 # 🤖 Agent & AI Protocols
 
 **Project:** fas-js
-**Runtime:** Node.js (>=18.13)
+**Runtime:** Node.js (>=22)
 **Testing:** Mocha + c8 (coverage)
 **Build:** tsup → `lib/index.js`, `lib/index.cjs`, `lib/bundle.js`
 **Types:** TypeScript (strict)
@@ -84,7 +84,7 @@ npm run health:dead # knip — unused files/exports/deps (unused files are fatal
 npm test            # typecheck + lint + build + mocha + c8 coverage
 ```
 
-- **Dead-code detection** (`npm run health:dead`, config [`knip.json`](../knip.json)): knip reports unused *files* as errors (non-zero) and other findings as warnings, but CI treats this step as non-blocking on integration PRs (it surfaces a warning only). Note: this check is expected to be run on Node 20+ (it’s wired in CI/publish on Node 20). At publish, `npm run health:dead:strict` (`knip --production --strict`) is a hard gate that fails on *any* dead-code finding reachable from the shipped surface. See [`publish.yml`](workflows/publish.yml).
+- **Dead-code detection** (`npm run health:dead`, config [`knip.json`](../knip.json)): knip reports unused *files* as errors (non-zero) and other findings as warnings, but CI treats this step as non-blocking on integration PRs (it surfaces a warning only). Note: this check is expected to be run on Node 22+ (it’s wired in CI/publish on Node 24). At publish, `npm run health:dead:strict` (`knip --production --strict`) is a hard gate that fails on *any* dead-code finding reachable from the shipped surface. See [`publish.yml`](workflows/publish.yml).
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
 - TypeScript is checked via `npm run typecheck` and declaration emit during `npm run build`.
 - Coverage floor on `master` and version integration branches: **90%** lines/statements/functions/branches (c8 in `npm test`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
@@ -118,7 +118,7 @@ TypeScript (`npm run typecheck`) catches **structural** mistakes: wrong argument
 
 ## 🔄 CI / CD
 
-- **CI** ([`.github/workflows/ci.yml`](workflows/ci.yml)): a **`static-gates`** job (single Node 20) runs the env-independent gates once — `check-package-scripts`, `typecheck`, `lint`, `npm audit`, `build`, the security guards (`check-guard-tests` + `check-public-api` + `check-npm-pack`), and the non-blocking `health:dead` scan; a **`test`** matrix job runs only build + mocha + c8 coverage across Node 18/20/22 (the required `test (18/20/22)` contexts) and uploads coverage to Codecov on Node 20 via `CODECOV_TOKEN`. `npm test` stays the local full-gate; the split is CI-only.
+- **CI** ([`.github/workflows/ci.yml`](workflows/ci.yml)): a **`static-gates`** job (single Node 24) runs the env-independent gates once — `check-package-scripts`, `typecheck`, `lint`, `npm audit`, `build`, the security guards (`check-guard-tests` + `check-public-api` + `check-npm-pack`), and the non-blocking `health:dead` scan; a **`test`** matrix job runs only build + mocha + c8 coverage across Node 22/24 (the required `test (22/24)` contexts) and uploads coverage to Codecov on Node 24 via `CODECOV_TOKEN`. `npm test` stays the local full-gate; the split is CI-only.
 - **Guard-test completeness**: `check:security` runs [`scripts/check-guard-tests.mjs`](../scripts/check-guard-tests.mjs) — every `scripts/check-*.mjs` must have a matching `test/check-*.spec.js` or CI fails. Structural, independent of coverage (coverage scope stays `src/**`). See [`docs/coverage-policy.md`](../docs/coverage-policy.md).
 - **Auto-link** (`.github/workflows/auto-link-issue.yml`): prepends `Closes #N` when branch name starts with `N-`.
 - **Dead-code check**: `static-gates` job runs `npm run health:dead` (knip, non-blocking warning); the hard failure is `npm run health:dead:strict` (`knip --production --strict`) in [`publish.yml`](workflows/publish.yml).

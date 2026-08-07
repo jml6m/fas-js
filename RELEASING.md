@@ -13,7 +13,7 @@ topic/<name> branch ──PR──▶ version integration branch (chore/vX.Y-*) 
 - **One active integration branch per release**, branched from `master`, named `chore/vX.Y-*`. Per [`AGENTS.md`](./AGENTS.md) §4, minor lines ship UX, tests, docs, and internal tooling; public API features are reserved for v2.
 - The `chore/vX.Y-*` / `vX.Y-*` / `vX-*` patterns are **reserved for that integration branch only** — topic work uses the `topic/<name>` prefix and never a reserved pattern (enforced by the `next-version-prep-branch` GitHub ruleset). See [`AGENTS.md`](./AGENTS.md) §4 → "Reserved branch names".
 - **Topic work never targets `master` directly** — it PRs into the current integration branch. Enforced by [`release-base-guard`](./.github/workflows/release-base-guard.yml).
-- PRs into the integration branch require passing `test (18/20/22)` + `lock-files` but **no approval** (the `next-version-prep-branch` ruleset), so day-to-day work merges without friction.
+- PRs into the integration branch require passing `test (22/24)` + `lock-files` but **no approval** (the `next-version-prep-branch` ruleset), so day-to-day work merges without friction.
 
 ## 1. Accumulate work on the integration branch
 
@@ -40,7 +40,7 @@ Open a PR from `chore/vX.Y-*` into `master`. [`release-base-guard`](./.github/wo
 The `main` ruleset requires **1 approving review**. Because release PRs are authored under the owner's account, the owner cannot self-approve — so the rule is satisfied another way **without ever relaxing it**:
 
 - The `main` ruleset lists the repository **owner / admin role as a `bypass_actors`** entry, in **"pull requests" bypass mode** (can merge a PR that lacks the required approval; cannot push directly to `master`).
-- The owner squash-merges the integration → `master` release PR directly once all **required status checks** (`test (18/20/22)`, `lock-files`, `verify-release-version`) are green.
+- The owner squash-merges the integration → `master` release PR directly once all **required status checks** (`test (22/24)`, `lock-files`, `verify-release-version`) are green.
 
 This keeps the approval requirement fully in force for **every non-owner PR** to `master` (Dependabot, Copilot, contributors — the owner approves those normally, since they aren't self-authored), while letting the sole maintainer ship a release without a self-approve, a second account, a bot App, or a temporary ruleset toggle.
 

@@ -1,22 +1,26 @@
+# Dependabot — monthly multi-ecosystem group (gold baseline)
 version: 2
-updates:
-  - package-ecosystem: npm
-    directory: "/"
-    schedule:
-      interval: monthly
-    open-pull-requests-limit: 10
-    groups:
-      testing:
-        patterns:
-          - "mocha"
-          - "chai"
-          - "c8"
 
-  - package-ecosystem: github-actions
-    directory: "/"
+multi-ecosystem-groups:
+  all-dependencies:
     schedule:
-      interval: monthly
-    groups:
-      actions:
-        patterns:
-          - "*"
+      interval: "monthly"
+    open-pull-requests-limit: 1
+    labels:
+      - "dependencies"
+    assignees:
+      - "jml6m"
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    patterns:
+      - "*"
+    multi-ecosystem-group: "all-dependencies"
+    versioning-strategy: "increase"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    patterns:
+      - "*"
+    multi-ecosystem-group: "all-dependencies"

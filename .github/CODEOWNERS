@@ -1,1 +1,8 @@
 *       @jml6m
+
+# package.json / lockfile governance — dependency, scripts, and important
+# metadata changes require @jml6m review (ruleset: Require review from Code Owners).
+# Version-only auto-bumps must use jml6m-version-bot with Always-allow ruleset bypass
+# (not jml6m-bot). See post-merge / release workflows where applicable.
+package.json                       @jml6m
+package-lock.json                  @jml6m

@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       # Upgrade npm for consistent behavior (matches the publish path).
       - run: npm install -g npm@^11.5.1
@@ -54,7 +54,7 @@ jobs:
         run: npm run health:dead || echo "::warning::knip reported dead code or unused files (see log); this is non-blocking on PRs but blocks publish."
 
   # Runtime tests only — the sole env-dependent step — across the supported Node
-  # matrix. Emits the required `test (18)` / `test (20)` / `test (22)` check
+  # matrix. Emits the required `test (22)` / `test (24)` check
   # contexts that the main / next-version-prep-branch rulesets gate on. Runs
   # build + mocha + coverage (NOT `npm test`, whose static half is covered once
   # in static-gates above); `npm test` remains the local full-gate convention.
@@ -69,17 +69,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [18, 20, 22]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      # Upgrade npm only on Node 20+ (npm 11 requires Node ^20.17 || >=22.9;
-      # Node 18 ships npm 10, which is sufficient for the test path).
-      - name: Upgrade npm (Node 20+ only)
-        if: matrix.node != '18'
+      # npm 11 for modern lockfile / trusted publishing paths (Node 22+).
+      - name: Upgrade npm
         run: npm install -g npm@^11.5.1
       - run: npm ci
       # Integrity gate before any npm script runs, mirroring static-gates: a
@@ -92,7 +90,7 @@ jobs:
       - name: Run tests with coverage
         run: npx cross-env NODE_OPTIONS=--import=tsx c8 mocha "test/**/*.spec.js"
       - name: Upload coverage to Codecov
-        if: matrix.node == 20
+        if: matrix.node == 24
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
