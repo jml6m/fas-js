@@ -192,3 +192,4 @@ See [demo/README.md](demo/README.md) for version history, local development (`np
 
 ## License
 This library is distributed under the GPL 3.0 license found in the [LICENSE](https://github.com/jml6m/fas-js/blob/master/LICENSE) file.
+
