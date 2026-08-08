@@ -17,27 +17,54 @@ function isWithinRoot(root, filePath) {
 
 /**
  * Resolve a URL path under demoRoot to a file on disk.
- * Supports directory paths with or without a trailing slash (e.g. /v1.5 → index.html).
+ * Rejects `..` segments and absolute paths so user input never escapes the root
+ * (CodeQL js/path-injection). Supports directory paths with or without a trailing
+ * slash (e.g. /v1.5 → index.html).
  */
 export function resolveDemoFilePath(demoRoot, urlPath) {
   const root = path.resolve(demoRoot);
-  let relativePath = (urlPath ?? "/").split("?")[0].replace(/^\/+/, "");
+  const raw = (urlPath ?? "/").split("?")[0];
 
-  if (relativePath === "" || relativePath.endsWith("/")) {
-    relativePath += "index.html";
+  let decoded;
+  try {
+    decoded = decodeURIComponent(raw);
+  } catch {
+    return null;
+  }
+  if (decoded.includes("\0")) {
+    return null;
   }
 
-  let filePath = path.resolve(root, relativePath);
+  // Build from root using only path segments — never pass raw user strings to path.resolve.
+  const segments = decoded
+    .replace(/^\/+/, "")
+    .split(/[/\\]+/)
+    .filter(seg => seg.length > 0 && seg !== ".");
+
+  if (segments.some(seg => seg === "..")) {
+    return null;
+  }
+
+  let filePath = root;
+  for (const seg of segments) {
+    filePath = path.join(filePath, seg);
+  }
+
   if (!isWithinRoot(root, filePath)) {
     return null;
   }
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, "index.html");
-  } else if (!path.extname(relativePath) && !fs.existsSync(filePath)) {
-    const indexCandidate = path.join(filePath, "index.html");
-    if (fs.existsSync(indexCandidate)) {
-      filePath = indexCandidate;
+  } else if (segments.length === 0 || !path.extname(segments[segments.length - 1] ?? "")) {
+    // No extension (or empty path): prefer index.html when the file itself is missing.
+    if (!fs.existsSync(filePath)) {
+      const indexCandidate = path.join(filePath, "index.html");
+      if (fs.existsSync(indexCandidate)) {
+        filePath = indexCandidate;
+      }
+    } else if (decoded.endsWith("/")) {
+      filePath = path.join(filePath, "index.html");
     }
   }
 
