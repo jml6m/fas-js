@@ -6,7 +6,7 @@
 **Build:** tsup → `lib/index.js`, `lib/index.cjs`, `lib/bundle.js`
 **Types:** TypeScript (strict)
 
-> **📌 Single Source of Truth**: This document is the authoritative reference for coding standards, architecture rules, and project policies. If there is a conflict with generated copies (for example `.github/copilot-instructions.md`), follow `AGENTS.md`.
+> **📌 Single Source of Truth**: This document is the authoritative reference for coding standards, architecture rules, and project policies.
 
 ---
 
@@ -158,7 +158,7 @@ npm test            # typecheck + lint + build + mocha + c8 coverage
 
 - **Dead-code / unused-file detection** is run by [`knip`](https://knip.dev) via `npm run health:dead` (config in [`knip.json`](knip.json)). Knip reports an unused *file* as an error (non-zero exit) while unused exports/types/deps surface as warnings. On PRs into the integration branch the CI step is **non-blocking** (it surfaces a warning only), but at publish it is a **hard gate** — `npm run health:dead:strict` (`knip --production --strict`, scoped to the shipped `src/modules.ts` entry) runs in [`publish.yml`](.github/workflows/publish.yml) and **`--strict` escalates warnings to failures**, so any unused export or dependency also blocks publish. (This check is expected to run on Node 20+; CI/publish execute it on Node 20.) Entry points are `src/modules.ts`/`src/demo-bundle.ts` (auto-detected from `package.json`/[`tsup.config.ts`](tsup.config.ts)) plus `scripts/` and `test/`.
 
-- **Code** formatting is Prettier, run **on save in-editor** ([`.vscode/settings.json`](.vscode/settings.json) + [`.prettierrc.json`](.prettierrc.json)) — there is no CLI `format` script by design.
+- **Code** formatting is Prettier, run **on save in-editor** ([`.prettierrc.json`](.prettierrc.json)) — there is no CLI `format` script by design.
 - **Markdown** is owned by **markdownlint** ([`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml)), not Prettier (which is barred from `.md` via [`.prettierignore`](.prettierignore) and the editor config). Run `npm run docs:lint:fix` before pushing docs. The lychee link/anchor check runs in CI only (it's a Rust binary, not an npm dep).
 
 - `lib/` is tracked as an empty directory via `lib/.gitkeep` (build output is gitignored).
@@ -233,7 +233,7 @@ The `lock-files` CI check (see [`.github/PROTECTED_FILES.json`](.github/PROTECTE
 - **Dev utils:** `scripts/{prebuild,free-port,reinstall}.{mjs,js}`.
 - **Dev/build config:** [`tsconfig.json`](tsconfig.json), [`eslint.config.js`](eslint.config.js), [`.prettierrc.json`](.prettierrc.json), [`.prettierignore`](.prettierignore), [`.c8rc.json`](.c8rc.json), [`.editorconfig`](.editorconfig), [`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml), [`.lychee.toml`](.lychee.toml), [`codecov.yml`](codecov.yml), [`.gitignore`](.gitignore).
 - **Manifests:** [`package.json`](package.json), [`package-lock.json`](package-lock.json) — intentionally Open so version/dependency churn flows freely; the manifest is guarded by the locked *checkers* ([`check-package-scripts.mjs`](scripts/check-package-scripts.mjs), [`check-npm-pack.mjs`](scripts/check-npm-pack.mjs)), not by locking `package.json`.
-- **Governance/docs:** `.github/{CODEOWNERS,FUNDING.yml,dependabot.yml,copilot-instructions.md,ISSUE_TEMPLATE/*,pull_request_template.md}`, [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md), [`README.md`](README.md), [`RELEASING.md`](RELEASING.md), [`SECURITY.md`](SECURITY.md), and any new `docs/*`.
+- **Governance/docs:** `.github/{CODEOWNERS,FUNDING.yml,dependabot.yml,ISSUE_TEMPLATE/*,pull_request_template.md}`, [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md), [`README.md`](README.md), [`RELEASING.md`](RELEASING.md), [`SECURITY.md`](SECURITY.md), and any new `docs/*`.
 
 ### Bypass model (verified against the live rulesets)
 
@@ -291,5 +291,5 @@ This keeps most day-to-day work (features, experiments, non-core refactors) flow
 ## Documentation conventions
 
 - **Linkable paths must be clickable links.** Any in-repo path mentioned in a Markdown file must be written as a clickable link to the target (e.g. [`src/modules.ts`](src/modules.ts)), not as bare inline code. Command examples and illustrative / non-existent paths are exempt.
-- Docs are gated by [`docs-lint.yml`](.github/workflows/docs-lint.yml): [lychee](https://lychee.cli.rs/) validates that links and `#anchors` resolve, and [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) enforces formatting per [`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml). Only the GitHub form templates — [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/) and [`.github/pull_request_template.md`](.github/pull_request_template.md) — are excluded (their template syntax isn't plain prose). The [`.github/copilot-instructions.md`](.github/copilot-instructions.md) mirror **is** linted, so it stays formatted and in sync with this file. Run `npm run docs:lint:fix` before pushing. Prettier does **not** format Markdown (see [`.prettierignore`](.prettierignore)) — markdownlint is the sole Markdown authority.
+- Docs are gated by [`docs-lint.yml`](.github/workflows/docs-lint.yml): [lychee](https://lychee.cli.rs/) validates that links and `#anchors` resolve, and [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) enforces formatting per [`.markdownlint-cli2.yaml`](.markdownlint-cli2.yaml). Only the GitHub form templates — [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/) and [`.github/pull_request_template.md`](.github/pull_request_template.md) — are excluded (their template syntax isn't plain prose). Run `npm run docs:lint:fix` before pushing. Prettier does **not** format Markdown (see [`.prettierignore`](.prettierignore)) — markdownlint is the sole Markdown authority.
 - **Docs are an as-is snapshot of the current version, not an archive.** We do not keep per-release documentation history in the repo — backward compatibility is handled in code on a best-effort basis, but old-release specs, runbooks, and `docs/<version>-prep/` working files are not maintained here. Promote durable decisions into this file or [`RELEASING.md`](RELEASING.md) and delete the scratch; the canonical release runbook is [`RELEASING.md`](RELEASING.md).
