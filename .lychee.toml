@@ -22,3 +22,4 @@ exclude = [
   '^https?://badge\.fury\.io',                    # badge host 403s bots
   '^https?://127\.0\.0\.1',                       # local dev-server refs
 ]
+
