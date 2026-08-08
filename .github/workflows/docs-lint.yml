@@ -10,6 +10,7 @@ on:
       - '.markdownlint-cli2.yaml'
       - '.github/workflows/*.yml'
       - '.github/workflows/*.yaml'
+      - 'scripts/check-agent-file-length.mjs'
   workflow_dispatch:
 
 permissions:
@@ -41,3 +42,6 @@ jobs:
 
       - name: Run markdownlint
         run: markdownlint-cli2 '**/*.md'
+
+      - name: Agent-instruction file length
+        run: node scripts/check-agent-file-length.mjs
