@@ -91,4 +91,5 @@ Published `vX.Y.Z` tags are **permanent** (`v*` ruleset). Fix mistakes with a **
 
 - Un-run checks (`action_required` on first-time bot PRs) are **not** passes — approve workflow runs first.
 - `publish.yml` must `npm run build` before `check:security`.
+- Required PR checks (rulesets): `static-gates`, `test (22)`, `test (24)`, `docs-lint`; master also `verify-release-version` + `lock-files`. CI is **pull_request-only** (no push dual-run).
 - Required `docs-lint` runs on **every** PR (no path filter) so the required check always reports.
