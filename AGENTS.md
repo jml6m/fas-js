@@ -63,7 +63,7 @@ npm test             # typecheck + lint + build + check:security + c8 mocha
 npm run health:dead  # knip (unused files fatal; unused exports warn)
 ```
 
-- Coverage floor on `master` / integration: **90%** — policy in [`docs/coverage-policy.md`](docs/coverage-policy.md).
+- Coverage floor on `master` / integration: **90%** — policy in [`coverage-policy.md`](coverage-policy.md).
 - Guard scripts under `scripts/check-*.mjs` must have matching `test/check-*.spec.js` (`check:security`).
 - Single Mocha file: `cross-env NODE_OPTIONS=--import=tsx npx mocha "test/foo.spec.js"`.
 

@@ -1,67 +1,94 @@
 # Releasing fas-js
 
-The authoritative, override-free runbook for shipping a release. The goal: a
-release needs **no temporary ruleset relaxation and no manual self-approve**.
-See [`AGENTS.md`](./AGENTS.md) §4 for the branch policy this enforces.
+Authoritative runbook for shipping a release. Keep process detail here (not in
+public essay form under `docs/`). Agent summary: [`AGENTS.md`](./AGENTS.md).
 
 ## Branch model
 
 ```
-topic/<name> branch ──PR──▶ version integration branch (chore/vX.Y-*) ──release PR──▶ master ──tag vX.Y.Z──▶ npm
+topic/<name> ──PR──▶ chore/vX.Y-* (integration) ──release PR──▶ master ──tag vX.Y.Z──▶ npm
 ```
 
-- **One active integration branch per release**, branched from `master`, named `chore/vX.Y-*`. Per [`AGENTS.md`](./AGENTS.md) §4, minor lines ship UX, tests, docs, and internal tooling; public API features are reserved for v2.
-- The `chore/vX.Y-*` / `vX.Y-*` / `vX-*` patterns are **reserved for that integration branch only** — topic work uses the `topic/<name>` prefix and never a reserved pattern (enforced by the `next-version-prep-branch` GitHub ruleset). See [`AGENTS.md`](./AGENTS.md) §4 → "Reserved branch names".
-- **Topic work never targets `master` directly** — it PRs into the current integration branch. Enforced by [`release-base-guard`](./.github/workflows/release-base-guard.yml).
-- PRs into the integration branch require passing `test (18/20/22)` + `lock-files` but **no approval** (the `next-version-prep-branch` ruleset), so day-to-day work merges without friction.
+| Branch | Role |
+| --- | --- |
+| `master` | Stable / npm. **1 approving review** + required checks. No review-bypass on the live `main` ruleset. |
+| `chore/vX.Y-*` (or reserved `vX.Y-*` / `chore/vX-*` / `vX-*`) | **One** integration branch per release — temporary default for the cycle. **0** required approvals + required checks. |
+| `topic/<name>` | All other work. Never use a reserved integration name pattern. |
+
+- Topic work **never** targets `master` (except Dependabot `github_actions/*`). See [`release-base-guard`](./.github/workflows/release-base-guard.yml).
+- Wave / mid-cycle review: compare [`master...chore/vX.Y-*`](https://github.com/jml6m/fas-js/compare/master...chore/v1.10-prep) (or since last reviewed SHA). Comment on the wave-plan issue — **do not** open a long-lived integration→`master` PR just for review.
+- Live ruleset names: `main`, `main-lock-files`, `next-version-prep-branch`, `next-version-prep-branch-lock-files`, `v*` (tags).
+
+## PR authorship (`jml6m-bot`)
+
+Command-line agents should open PRs as **`jml6m-bot`** when practical:
+
+```bash
+GH_TOKEN="$(~/workspaces/.tooling/gh-app-token.sh jml6m/fas-js)" gh pr create ...
+```
+
+That keeps the admin free to **Approve** (not stuck on self-authored PRs) and avoids some bot/`GITHUB_TOKEN` workflow gaps. Topic PRs into the integration branch still need **0** human approvals once checks pass.
 
 ## 1. Accumulate work on the integration branch
 
-Open topic-branch PRs into `chore/vX.Y-*`. Keep `master`-level coverage (90%) and the public-API contract intact.
+Open `topic/*` PRs into `chore/vX.Y-*`. Keep 90% coverage and the public API contract intact ([`coverage-policy.md`](./coverage-policy.md)).
+
+| Situation | Merge |
+| --- | --- |
+| Required checks green, no Locked paths | Normal merge / auto-merge OK |
+| **`lock-files` red on purpose** (Locked path changed) | **Admin merge only** (`gh pr merge --admin`). **Never** enable auto-merge — it will wait forever. Integration lock-files ruleset allows admin/bot bypass; `master` does not. |
 
 ## 2. Bump the version (human-initiated)
 
-Agents never bump the version. On a small topic branch into the integration branch:
+Agents never bump `version`. On a topic branch into the integration branch:
 
 ```bash
-npm version X.Y.Z --no-git-tag-version   # updates package.json + package-lock.json
+npm version X.Y.Z --no-git-tag-version
 ```
 
-`package.json` is not in the protected-files set, so this does not trip `lock-files`. PR it into the integration branch and merge.
-
-> **Enforced, not just convention:** the release PR (step 3) is gated by the required [`verify-release-version`](./.github/workflows/verify-release-version.yml) check, which **fails the merge unless `package.json` increases vs `master`**. A forgotten or clobbered bump (the v1.7.0 "shipped as 1.6.0" failure) therefore blocks the release rather than slipping through — so the bump's commit *order* doesn't matter, only that the version is correct at merge time.
+`package.json` is not Locked. The release PR is gated by [`verify-release-version`](./.github/workflows/verify-release-version.yml) (**fails unless version increases vs `master`**).
 
 ## 3. Open the release PR (integration → master)
 
-Open a PR from `chore/vX.Y-*` into `master`. [`release-base-guard`](./.github/workflows/release-base-guard.yml) confirms the head is an integration/release branch.
+Open (prefer **bot-authored**) PR: `chore/vX.Y-*` → `master`.
 
-## 4. Merge the release PR (owner bypass — no self-approve, no toggle)
+Required on `main` (live): `test (22)`, `docs-lint`, `static-gates`, `verify-release-version`, plus `lock-files` via `main-lock-files`.
 
-The `main` ruleset requires **1 approving review**. Because release PRs are authored under the owner's account, the owner cannot self-approve — so the rule is satisfied another way **without ever relaxing it**:
+## 4. Merge the release PR (real Approve)
 
-- The `main` ruleset lists the repository **owner / admin role as a `bypass_actors`** entry, in **"pull requests" bypass mode** (can merge a PR that lacks the required approval; cannot push directly to `master`).
-- The owner squash-merges the integration → `master` release PR directly once all **required status checks** (`test (18/20/22)`, `lock-files`, `verify-release-version`) are green.
+1. All required checks green.
+2. Admin **Approves** the bot-authored PR (allowed — not self-authored).
+3. Squash-merge.
 
-This keeps the approval requirement fully in force for **every non-owner PR** to `master` (Dependabot, Copilot, contributors — the owner approves those normally, since they aren't self-authored), while letting the sole maintainer ship a release without a self-approve, a second account, a bot App, or a temporary ruleset toggle.
-
-> **One-time ruleset setup:** on the `main` ruleset, (1) add the Repository **admin** role (or `jml6m`) to the **Bypass list** with mode **"Pull requests"** — the only standing relaxation, scoped to the owner, not a global approval-count change; and (2) add **`verify-release-version`** to the required status checks so the version-increase gate cannot be bypassed.
+If the cumulative release diff touches **Locked** paths, `lock-files` stays red on `master` with **no bypass**. Only the admin may temporarily remove the `lock-files` required check from `main-lock-files`, merge, and re-enable it. That is the sole deliberate `master` override.
 
 ## 5. Tag and publish
 
+Prefer a tag that points at the **`master` tip** (never a stray local tag):
+
 ```bash
-git tag vX.Y.Z origin/master && git push origin vX.Y.Z
+git fetch origin master
+git tag vX.Y.Z origin/master
+git push origin vX.Y.Z
 ```
 
-The tag push fires [`publish.yml`](./.github/workflows/publish.yml): OIDC trusted publishing, gated by the `npm` GitHub environment (**requires manual `jml6m` approval** in the Actions UI). Before publishing, the workflow **asserts the tag equals `package.json`'s version and hard-rejects any non-tag trigger** (so a `workflow_dispatch` run cannot silently publish a branch, and a tag/manifest mismatch fails fast). Verify success in the CI **publish-step log** (`+ fas-js@X.Y.Z`), not local `npm view` (CDN/proxy lag).
+Tag push → [`publish.yml`](./.github/workflows/publish.yml) (OIDC) → `npm` environment (**manual `jml6m` approval**). Workflow asserts tag name == `package.json` version and rejects non-tag triggers. Confirm in the Actions **publish log** (`+ fas-js@X.Y.Z`).
 
-Then: `gh release create vX.Y.Z --target master --generate-notes`.
+```bash
+gh release create vX.Y.Z --target master --generate-notes
+```
+
+### Major releases (v2+)
+
+- Update the public-API baseline in Locked [`scripts/check-public-api.mjs`](./scripts/check-public-api.mjs) **on purpose** (red `lock-files` until the release override). See issue #318.
+- Publish migration notes in the **GitHub Release body** (and optionally a short root doc if needed). Do not grow a permanent public process archive under `docs/`. See #317.
 
 ## 6. Tag immutability (no retag)
 
-Published `vX.Y.Z` tags are **permanent and immutable** — never move or delete one (it would break npm provenance, and the `v*` ruleset blocks it). Fix any post-tag mistake with a **new patch tag** (`vX.Y.(Z+1)`), never by retagging.
+Published `vX.Y.Z` tags are **permanent** (`v*` ruleset). Fix mistakes with a **new patch tag**, never by moving a tag.
 
-## Notes & gotchas
+## Notes
 
-- **Bot-authored PRs** (e.g. Copilot) get workflow runs stuck in `action_required` until a maintainer clicks "Approve and run workflows" — an un-run gate is **not** a pass.
-- **`publish.yml` must `npm run build` before `check:security`** (it reads `lib/index.d.ts`).
-- Remaining release-hardening work is tracked in the release epic (#282).
+- Un-run checks (`action_required` on first-time bot PRs) are **not** passes — approve workflow runs first.
+- `publish.yml` must `npm run build` before `check:security`.
+- Required `docs-lint` runs on **every** PR (no path filter) so the required check always reports.

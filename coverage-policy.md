@@ -19,7 +19,7 @@ High coverage on language algorithms means fixture instances were exercised, not
 
 ## CI config
 
-See [`.c8rc.json`](../.c8rc.json) — all four metrics at 90%. Interface-only files and barrel `index.ts` re-exports are excluded.
+See [`.c8rc.json`](.c8rc.json) — all four metrics at 90%. Interface-only files and barrel `index.ts` re-exports are excluded.
 
 ### Coverage scope excludes `scripts/`
 
@@ -32,7 +32,7 @@ Guard-test completeness is therefore enforced **structurally**, not by coverage:
 
 ## Guard-test completeness gate
 
-Every guard script (`scripts/check-*.mjs`) must ship a matching unit-test spec (`test/check-*.spec.js`). This is enforced fail-closed by [`scripts/check-guard-tests.mjs`](../scripts/check-guard-tests.mjs) (run via `check:security` in `npm test` and CI): adding a `check-*.mjs` without its spec fails CI. The gate is itself a `check-*.mjs` and so is subject to its own rule (it ships with [`test/check-guard-tests.spec.js`](../test/check-guard-tests.spec.js)). This closes the gap where [`check-public-api.mjs`](../scripts/check-public-api.mjs) shipped untested — structural, independent of line coverage.
+Every guard script (`scripts/check-*.mjs`) must ship a matching unit-test spec (`test/check-*.spec.js`). This is enforced fail-closed by [`scripts/check-guard-tests.mjs`](scripts/check-guard-tests.mjs) (run via `check:security` in `npm test` and CI): adding a `check-*.mjs` without its spec fails CI. The gate is itself a `check-*.mjs` and so is subject to its own rule (it ships with [`test/check-guard-tests.spec.js`](test/check-guard-tests.spec.js)). This closes the gap where [`check-public-api.mjs`](scripts/check-public-api.mjs) shipped untested — structural, independent of line coverage.
 
 ## Exception process
 
