@@ -1,6 +1,8 @@
 # Lychee link-checker config. See https://lychee.cli.rs/usage/config/ for full schema.
 
-include_fragments = true
+# Fragments (anchors + text fragments). String enum matches lychee 0.24.x, pinned via
+# lycheeVersion in docs-lint.yml.
+include_fragments = "full"
 accept = [200, 206, 429]
 max_concurrency = 8
 max_retries = 2
