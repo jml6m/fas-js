@@ -1,25 +1,22 @@
 name: CI
 
+# Required contexts (rulesets main + next-version-prep-branch):
+#   static-gates, test (22), test (24)
+# Single trigger: pull_request only — avoid also pushing to chore/v* (double-runs on release PRs).
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
-  push:
-    branches:
-      - master
-      - 'chore/v*.*-*'
-      - 'chore/v*-*'
-      - 'v*.*-*'
-      - 'v*-*'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # Environment-independent gates: run exactly once per PR (not per Node version).
+  # Environment-independent gates: once per PR (not per Node version).
   static-gates:
     runs-on: ubuntu-latest
     steps:
@@ -41,7 +38,7 @@ jobs:
       - name: Dead-code check (warn)
         run: npm run health:dead || echo "::warning::knip reported dead code or unused files (see log); this is non-blocking on PRs but blocks publish."
 
-  # Runtime tests — required ruleset context remains `test (22)`; matrix also runs 24.
+  # Required: test (22), test (24)
   test:
     runs-on: ubuntu-latest
     env:

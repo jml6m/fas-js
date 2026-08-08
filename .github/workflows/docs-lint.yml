@@ -5,6 +5,7 @@ name: Docs Lint
 # merge the same way a failing check does.
 on:
   pull_request:
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 permissions:
