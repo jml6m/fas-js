@@ -1,22 +1,43 @@
+# Dependabot — monthly multi-ecosystem baseline
+# https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configuring-multi-ecosystem-updates
 version: 2
-updates:
-  - package-ecosystem: npm
-    directory: "/"
-    schedule:
-      interval: monthly
-    open-pull-requests-limit: 10
-    groups:
-      testing:
-        patterns:
-          - "mocha"
-          - "chai"
-          - "c8"
 
-  - package-ecosystem: github-actions
-    directory: "/"
+multi-ecosystem-groups:
+  all-dependencies:
     schedule:
-      interval: monthly
-    groups:
-      actions:
-        patterns:
-          - "*"
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    patterns:
+      - "*"
+    multi-ecosystem-group: "all-dependencies"
+    versioning-strategy: "increase"
+    # Majors need deliberate review on a published library — Dependabot keeps minors/patches.
+    ignore:
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript-eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jsdom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "mocha"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "chai"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "cross-env"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    patterns:
+      - "*"
+    multi-ecosystem-group: "all-dependencies"

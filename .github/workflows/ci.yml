@@ -20,44 +20,28 @@ concurrency:
 
 jobs:
   # Environment-independent gates: run exactly once per PR (not per Node version).
-  # typecheck, lint, build, check:security (public API + npm pack), the package.json
-  # integrity check, dead-code scan, and npm audit are all env-independent, so the
-  # Node matrix below reserves itself for the actual runtime tests.
   static-gates:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
-      # Upgrade npm for consistent behavior (matches the publish path).
       - run: npm install -g npm@^11.5.1
       - run: npm ci
-      # Run guards directly (not via npm scripts) so package.json script tampering
-      # cannot skip the integrity gates. check-package-scripts first: it locks the
-      # very scripts the rest of the pipeline relies on.
       - run: node scripts/check-package-scripts.mjs
       - run: npm run typecheck
       - run: npm run lint
       - run: npm audit --audit-level=high
-      # Build before the security gate: check-public-api reads lib/index.d.ts and
-      # check-npm-pack packs the tarball, so the artifacts must exist first.
       - run: npm run build
       - run: node scripts/check-guard-tests.mjs
       - run: node scripts/check-public-api.mjs
       - run: node scripts/check-npm-pack.mjs
-      # Dead-code / unused-file detection. Non-blocking here (warning surface on
-      # PRs into the integration branch); the hard failure is at publish time
-      # (publish.yml runs `health:dead:strict`). See issue #309.
       - name: Dead-code check (warn)
         run: npm run health:dead || echo "::warning::knip reported dead code or unused files (see log); this is non-blocking on PRs but blocks publish."
 
-  # Runtime tests only — the sole env-dependent step — across the supported Node
-  # matrix. Emits the required `test (18)` / `test (20)` / `test (22)` check
-  # contexts that the main / next-version-prep-branch rulesets gate on. Runs
-  # build + mocha + coverage (NOT `npm test`, whose static half is covered once
-  # in static-gates above); `npm test` remains the local full-gate convention.
+  # Runtime tests — required ruleset context remains `test (22)`; matrix also runs 24.
   test:
     runs-on: ubuntu-latest
     env:
@@ -69,30 +53,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [18, 20, 22]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      # Upgrade npm only on Node 20+ (npm 11 requires Node ^20.17 || >=22.9;
-      # Node 18 ships npm 10, which is sufficient for the test path).
-      - name: Upgrade npm (Node 20+ only)
-        if: matrix.node != '18'
-        run: npm install -g npm@^11.5.1
+      - run: npm install -g npm@^11.5.1
       - run: npm ci
-      # Integrity gate before any npm script runs, mirroring static-gates: a
-      # tampered package.json build/test script must not execute on the runner
-      # before check-package-scripts has vetted it.
       - run: node scripts/check-package-scripts.mjs
-      # Runtime tests need the built lib/ artifacts (tests exercise lib/, and the
-      # demo spec reads build output). Build, then run mocha under c8.
       - run: npm run build
       - name: Run tests with coverage
         run: npx cross-env NODE_OPTIONS=--import=tsx c8 mocha "test/**/*.spec.js"
       - name: Upload coverage to Codecov
-        if: matrix.node == 20
+        if: matrix.node == 24
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
