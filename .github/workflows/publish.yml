@@ -37,6 +37,22 @@ jobs:
             exit 1
           fi
           echo "OK: publishing v${PKG_VER} from tag ${GITHUB_REF_NAME}."
+      # Fail-closed: tag must point at a commit on master (blocks stray/off-master tags
+      # like the v1.9.0 local-tag footgun — see #328).
+      - name: Verify tag commit is on master
+        run: |
+          git fetch --no-tags origin master
+          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/master; then
+            echo "::error::Tag commit ${GITHUB_SHA} is not on origin/master. Refusing to publish a stray/off-master tag."
+            echo "Tip: git fetch origin master && git tag -f vX.Y.Z origin/master  # only before first push; never retag after publish"
+            exit 1
+          fi
+          MASTER_SHA="$(git rev-parse origin/master)"
+          if [ "${GITHUB_SHA}" = "${MASTER_SHA}" ]; then
+            echo "OK: tag ${GITHUB_REF_NAME} points at master tip ${MASTER_SHA}."
+          else
+            echo "OK: tag ${GITHUB_REF_NAME} points at ${GITHUB_SHA}, which is an ancestor of master tip ${MASTER_SHA}."
+          fi
       # Use recent npm for OIDC provenance support (see ci.yml for rationale).
       - run: npm install -g npm@^11.5.1
       - run: npm ci
