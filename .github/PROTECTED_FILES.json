@@ -53,6 +53,10 @@
     "tsup.config.ts",
     "scripts/postbuild.mjs",
     "LICENSE",
-    "docs/coverage-policy.md"
+    "docs/coverage-policy.md",
+    "CLAUDE.md",
+    ".cursorrules",
+    "GEMINI.md",
+    ".grok/**"
   ]
 }

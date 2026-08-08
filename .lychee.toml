@@ -26,3 +26,5 @@ exclude = [
 ]
 
 
+
+# docs-lint path trigger (no config change)
