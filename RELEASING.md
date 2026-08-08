@@ -64,15 +64,15 @@ If the cumulative release diff touches **Locked** paths, `lock-files` stays red 
 
 ## 5. Tag and publish
 
-Prefer a tag that points at the **`master` tip** (never a stray local tag):
+Prefer a tag that points at the **`master` tip** (never a stray local tag — `npm version` without `--no-git-tag-version` can create a wrong local tag):
 
 ```bash
 git fetch origin master
-git tag vX.Y.Z origin/master
+git tag vX.Y.Z origin/master   # fails loudly if the tag name already exists locally
 git push origin vX.Y.Z
 ```
 
-Tag push → [`publish.yml`](./.github/workflows/publish.yml) (OIDC) → `npm` environment (**manual `jml6m` approval**). Workflow asserts tag name == `package.json` version and rejects non-tag triggers. Confirm in the Actions **publish log** (`+ fas-js@X.Y.Z`).
+Tag push → [`publish.yml`](./.github/workflows/publish.yml) (OIDC) → `npm` environment (**manual `jml6m` approval**). Workflow asserts: (1) trigger is a tag push, (2) tag name == `package.json` version, (3) **tag commit is on `master`** (#328). Confirm in the Actions **publish log** (`+ fas-js@X.Y.Z`).
 
 ```bash
 gh release create vX.Y.Z --target master --generate-notes
