@@ -1,13 +1,15 @@
 /**
- * Unit tests for scripts/check-agent-file-length.mjs.
+ * Unit tests for scripts/check-agent-file-length.mjs (pure helpers only).
+ * End-to-end "real repo files" coverage is the script's job when docs-lint runs it.
  */
 import { assert } from "chai";
 import {
   MAX_CHARS,
+  AGENT_FILENAMES,
   exceedsCap,
+  findAgentFiles,
   checkFiles,
   runCheck,
-  findAgentFiles,
 } from "../scripts/check-agent-file-length.mjs";
 
 describe("check-agent-file-length", function () {
@@ -22,9 +24,24 @@ describe("check-agent-file-length", function () {
     });
   });
 
+  describe("findAgentFiles", function () {
+    it("returns only root basenames that exist (no recursion)", function () {
+      const exists = p => p.endsWith("AGENTS.md") || p.endsWith("CLAUDE.md");
+      assert.deepEqual(findAgentFiles("/repo", { exists }), ["AGENTS.md", "CLAUDE.md"]);
+    });
+
+    it("returns empty when none exist", function () {
+      assert.deepEqual(findAgentFiles("/repo", { exists: () => false }), []);
+    });
+
+    it("only considers the known root filename set", function () {
+      assert.includeMembers([...AGENT_FILENAMES], ["AGENTS.md", "CLAUDE.md"]);
+    });
+  });
+
   describe("checkFiles", function () {
     it("passes when all files are under the cap", function () {
-      const { ok, results } = checkFiles(["a.md"], {
+      const { ok, results } = checkFiles(["AGENTS.md"], {
         readFile: () => "ok",
       });
       assert.isTrue(ok);
@@ -33,7 +50,7 @@ describe("check-agent-file-length", function () {
     });
 
     it("fails when any file is over the cap", function () {
-      const { ok, results } = checkFiles(["big.md"], {
+      const { ok, results } = checkFiles(["AGENTS.md"], {
         readFile: () => "x".repeat(MAX_CHARS + 10),
       });
       assert.isFalse(ok);
@@ -91,13 +108,6 @@ describe("check-agent-file-length", function () {
       });
       assert.equal(cap.exitCode, 1);
       assert.isTrue(cap.errors.some(e => e.includes("over the")));
-    });
-
-    it("passes against the real repo agent files", function () {
-      const cap = makeCapture();
-      runCheck({ log: cap.log, error: cap.error, exit: cap.exit });
-      assert.equal(cap.exitCode, 0, cap.errors.join("\n"));
-      assert.isTrue(findAgentFiles().some(f => f.endsWith("AGENTS.md")));
     });
   });
 });
