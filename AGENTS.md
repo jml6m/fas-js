@@ -84,7 +84,7 @@ Canonical list: [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) (
 
 - **Integration:** red `lock-files` on intentional Locked edits is expected → merge with admin/bot bypass.
 - **`master`:** red `lock-files` is a hard gate; only the admin may temporarily drop the required check on the release PR, merge, and re-enable.
-- Agent-instruction tripwires include `CLAUDE.md`, `.cursorrules`, `GEMINI.md`, `.grok/**` (block silent reintroduction).
+- Agent-instruction tripwires include `CLAUDE.md`, `.cursorrules`, `GEMINI.md`, `.geminiignore`, `.grok/**`, `.cursor/**`, `.gemini/**` (block silent reintroduction).
 
 ---
 

@@ -57,6 +57,9 @@
     "CLAUDE.md",
     ".cursorrules",
     "GEMINI.md",
-    ".grok/**"
+    ".grok/**",
+    ".cursor/**",
+    ".gemini/**",
+    ".geminiignore"
   ]
 }

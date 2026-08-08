@@ -1,16 +1,10 @@
 name: Docs Lint
 
+# Required status check on `main` and `next-version-prep-branch` — must run on
+# every PR targeting those branches. Do NOT path-filter: a missing check blocks
+# merge the same way a failing check does.
 on:
   pull_request:
-    # Run when docs change, and also when commonly linked targets (like workflow files)
-    # change so lychee can catch broken in-repo links after renames/deletes.
-    paths:
-      - '**/*.md'
-      - '.lychee.toml'
-      - '.markdownlint-cli2.yaml'
-      - '.github/workflows/*.yml'
-      - '.github/workflows/*.yaml'
-      - 'scripts/check-agent-file-length.mjs'
   workflow_dispatch:
 
 permissions:
