@@ -60,7 +60,7 @@
     "eslint": "^9.39.4",
     "jsdom": "^26.1.0",
     "knip": "^5.88.1",
-    "markdownlint-cli2": "0.22.1",
+    "markdownlint-cli2": "^0.23.2",
     "mocha": "^11.7.1",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
