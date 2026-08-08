@@ -41,6 +41,10 @@ jobs:
       # like the v1.9.0 local-tag footgun — see #328).
       - name: Verify tag commit is on master
         run: |
+          # Deepen history: default checkout is shallow; merge-base --is-ancestor
+          # needs enough master history when the tag is not the tip (#359 review).
+          git fetch --no-tags --prune --unshallow origin master 2>/dev/null \
+            || git fetch --no-tags --prune --depth=1000 origin master
           git fetch --no-tags origin master
           if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/master; then
             echo "::error::Tag commit ${GITHUB_SHA} is not on origin/master. Refusing to publish a stray/off-master tag."
