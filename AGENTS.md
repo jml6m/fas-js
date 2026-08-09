@@ -8,6 +8,15 @@
 
 ### Credentials
 
+Never commit GitHub App IDs, installation IDs, client secrets, private keys, PATs, tokens, or Actions secret **values**. Refer to apps by slug (`jml6m-bot`). Workflows may use secret *names* only (`${{ secrets.APP_ID }}`). Local App material lives under `~/workspaces/.tooling/` (outside git).
+
+### Versioning & release (agents)
+
+- **Do not** bump `package.json` `version`, create/move `v*` tags, or run `npm publish` (tag-triggered OIDC only).
+- **Do not** push/merge/force-push/delete `master`, or toggle required checks on the `main` ruleset (admin-only).
+- Topic work: `topic/*` → PR into current `chore/vX.Y-*`. Red `lock-files` on intentional Locked edits → `gh pr merge --admin` on integration (not auto-merge).
+- Hand off integration for admin: release PR → `master`, tag **`origin/master` tip**, approve **npm** env.
+
 ### Branch model
 
 ```
@@ -17,7 +26,7 @@ topic/<name> ──PR──▶ chore/vX.Y-* (integration) ──release PR──
 - **One** reserved-name integration branch per release (`chore/vX.Y-*` / `vX.Y-*` / `chore/vX-*` / `vX-*`). Everything else is **`topic/<name>`** (not a reserved pattern).
 - Topic work **never** targets `master` (except Dependabot `github_actions/*`). Enforced by [`release-base-guard`](.github/workflows/release-base-guard.yml).
 - Integration = temporary default for the cycle (0 approvals + required checks). `master` requires **1 approving review** + checks; no agent self-merge to `master`.
-- Full runbook, tag immutability, publish: [`RELEASING.md`](RELEASING.md). Live rulesets in Settings → Rules (names: `main`, `main-lock-files`, `next-version-prep-branch`, `next-version-prep-branch-lock-files`, `v*`).
+- Tags are immutable (no retag — new patch only). Live rulesets: Settings → Rules (`main`, `main-lock-files`, `next-version-prep-branch`, `next-version-prep-branch-lock-files`, `v*`).
 
 ### Issues & PRs
 
@@ -69,11 +78,11 @@ Canonical list: [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) (
 
 - **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): `static-gates` once + Node matrix `test`.
 - **docs-lint**: lychee + markdownlint + agent file length.
-- **Publish**: `v*.*.*` tag → OIDC → `npm` environment (manual approval). Prefer tags that point at `master`. Details: [`RELEASING.md`](RELEASING.md).
+- **Publish**: tag **must equal** `origin/master` tip → OIDC → `npm` environment (manual approval). `git tag vX.Y.Z origin/master && git push origin vX.Y.Z`.
 
 ---
 
 ## Docs conventions
 
-- In-repo paths in Markdown → clickable links. Prefer linking to [`RELEASING.md`](RELEASING.md) / this file over duplication.
+- In-repo paths in Markdown → clickable links. Prefer linking to this file over duplication.
 - Markdownlint owns `.md` formatting (Prettier does not). AGENTS/CLAUDE are length-capped, not format-linted.
