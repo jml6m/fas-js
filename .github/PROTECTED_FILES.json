@@ -53,6 +53,7 @@
     "scripts/postbuild.mjs",
     "LICENSE",
     "coverage-policy.md",
+    "AGENTS.md",
     "CLAUDE.md",
     ".cursorrules",
     "GEMINI.md",
