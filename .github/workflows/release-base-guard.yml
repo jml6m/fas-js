@@ -4,7 +4,7 @@ name: Release Base Guard
 #   - a version integration/release branch (`chore/v*` or `v*`), or
 #   - a Dependabot GitHub Actions bump (`dependabot/github_actions/*`).
 # Any other (topic) branch is rejected — that work belongs on the current
-# version integration branch instead. See AGENTS.md §4 and RELEASING.md.
+# version integration branch instead. See AGENTS.md §4.
 
 on:
   pull_request:

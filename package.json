@@ -1,7 +1,7 @@
 {
   "name": "fas-js",
   "description": "Finate State Automata JS Solutions",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "type": "module",
   "main": "./lib/index.cjs",
   "module": "./lib/index.js",
@@ -45,7 +45,8 @@
     "check:guard-tests": "node scripts/check-guard-tests.mjs",
     "check:security": "node scripts/check-guard-tests.mjs && node scripts/check-public-api.mjs && node scripts/check-npm-pack.mjs",
     "git:reset": "git reset --hard HEAD && git clean -fd",
-    "npm:reinstall": "node scripts/reinstall.js"
+    "npm:reinstall": "node scripts/reinstall.js",
+    "docs:agent-length": "node scripts/check-agent-file-length.mjs"
   },
   "author": "Joseph Lewkovich",
   "license": "GPL-3.0-or-later",
@@ -60,7 +61,7 @@
     "eslint": "^9.39.4",
     "jsdom": "^26.1.0",
     "knip": "^5.88.1",
-    "markdownlint-cli2": "0.22.1",
+    "markdownlint-cli2": "^0.23.2",
     "mocha": "^11.7.1",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
@@ -95,7 +96,7 @@
     "turing"
   ],
   "engines": {
-    "node": ">=18.13"
+    "node": ">=22"
   },
   "overrides": {
     "diff": "^8.0.3",

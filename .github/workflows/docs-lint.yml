@@ -1,15 +1,11 @@
 name: Docs Lint
 
+# Required status check on `main` and `next-version-prep-branch` — must run on
+# every PR targeting those branches. Do NOT path-filter: a missing check blocks
+# merge the same way a failing check does.
 on:
   pull_request:
-    # Run when docs change, and also when commonly linked targets (like workflow files)
-    # change so lychee can catch broken in-repo links after renames/deletes.
-    paths:
-      - '**/*.md'
-      - '.lychee.toml'
-      - '.markdownlint-cli2.yaml'
-      - '.github/workflows/*.yml'
-      - '.github/workflows/*.yaml'
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 permissions:
@@ -23,18 +19,26 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Lychee link check
-        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
-          args: --no-progress --include-fragments --config ./.lychee.toml './**/*.md'
+          # Fragments via include_fragments = "full" in .lychee.toml — no CLI flag.
+          # lycheeVersion pinned so config syntax cannot drift with the action tag.
+          args: --no-progress --config ./.lychee.toml './**/*.md'
+          lycheeVersion: v0.24.2
           fail: true
 
       - name: Set up Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: 20
+          node-version: 24
+          cache: npm
 
-      - name: Install markdownlint-cli2
-        run: npm install -g markdownlint-cli2@0.14.0
+      # Use the lockfile version of markdownlint-cli2 (not a stale global pin).
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run markdownlint
-        run: markdownlint-cli2 '**/*.md'
+        run: npx markdownlint-cli2 '**/*.md'
+
+      - name: Agent-instruction file length
+        run: node scripts/check-agent-file-length.mjs
