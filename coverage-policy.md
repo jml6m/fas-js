@@ -1,10 +1,8 @@
 # Coverage Policy — Workflow-First
 
-Closes [#219](https://github.com/jml6m/fas-js/issues/219). Revised per maintainer direction in epic [#241](https://github.com/jml6m/fas-js/issues/241).
-
 ## Philosophy
 
-Coverage is a **sanity check**, not the definition of done. Tests must prove **workflows and contracts** (API behavior, error codes, artifact fidelity, generated-machine equivalence). Do **not** add tests whose only purpose is to execute an uncovered line — especially legacy logging branches.
+Coverage is a **sanity check**, not the definition of done. Tests must prove **workflows and contracts** (API behavior, error codes, artifact fidelity, generated-machine equivalence). Do **not** add tests whose only purpose is to execute an uncovered line — we want to enforce correct functionality not just satisfy arbitrary metrics.
 
 ## Targets
 
