@@ -44,7 +44,7 @@ topic/<name> ──PR──▶ chore/vX.Y-* (integration) ──release PR──
 
 ### Issues & PRs
 
-Check open issues first. Prefer `Closes #N` / `Relates to #N`. Epics: children first, parent last, real numbers in the task list. Use [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
+Check open issues first. Agents put `Closes #N` / `Relates to #N` in the PR body (no auto-link workflow). Epics: children first, parent last, real numbers in the task list. Use [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
 
 Open agent PRs as **`jml6m-bot`** when practical (`GH_TOKEN="$(~/workspaces/.tooling/gh-app-token.sh jml6m/fas-js)" gh pr create …`). Respond to human review with a change or technical disagreement — no empty acks.
 

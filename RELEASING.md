@@ -72,7 +72,7 @@ git tag vX.Y.Z origin/master   # fails loudly if the tag name already exists loc
 git push origin vX.Y.Z
 ```
 
-Tag push → [`publish.yml`](./.github/workflows/publish.yml) (OIDC) → `npm` environment (**manual `jml6m` approval**). Workflow asserts: (1) trigger is a tag push, (2) tag name == `package.json` version, (3) **tag commit is on `master`** (#328). Confirm in the Actions **publish log** (`+ fas-js@X.Y.Z`).
+Tag push → [`publish.yml`](./.github/workflows/publish.yml) (OIDC) → `npm` environment (**manual `jml6m` approval**). Workflow asserts: (1) tag push only, (2) tag name == `package.json` version, (3) **tag SHA == `origin/master` tip** (#328). Confirm in the Actions **publish log** (`+ fas-js@X.Y.Z`).
 
 ```bash
 gh release create vX.Y.Z --target master --generate-notes
