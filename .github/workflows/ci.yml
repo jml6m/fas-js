@@ -2,7 +2,11 @@ name: CI
 
 # Required contexts (rulesets main + next-version-prep-branch):
 #   static-gates, test (22), test (24)
-# Single trigger: pull_request only — avoid also pushing to chore/v* (double-runs on release PRs).
+#
+# Trigger is pull_request only. We intentionally do NOT also run on push to
+# chore/v* / master: when a release PR's head is chore/v1.10-prep, a push to that
+# branch would start a second CI run that still attaches to the open PR (duplicate
+# check rows). One PR event = one CI run.
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]

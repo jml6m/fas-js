@@ -45,7 +45,6 @@
     ".github/workflows/ci.yml",
     ".github/workflows/docs-lint.yml",
     ".github/workflows/pages.yml",
-    ".github/workflows/auto-link-issue.yml",
     ".github/workflows/lock-files.yml",
     ".github/workflows/publish.yml",
     ".github/workflows/release-base-guard.yml",
