@@ -38,7 +38,7 @@ jobs:
           fi
           echo "OK: publishing v${PKG_VER} from tag ${GITHUB_REF_NAME}."
       # Fail-closed: release tags must point at the current master tip only
-      # (stray local tags / off-master commits — see #328). RELEASING: git tag vX.Y.Z origin/master
+      # (stray local tags / off-master commits — see #328). git tag vX.Y.Z origin/master
       - name: Verify tag is master tip
         run: |
           git fetch --no-tags origin master
