@@ -86,3 +86,4 @@ Canonical list: [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) (
 
 - In-repo paths in Markdown → clickable links. Prefer linking to this file over duplication.
 - Markdownlint owns `.md` formatting (Prettier does not). AGENTS/CLAUDE are length-capped, not format-linted.
+- **Markdown files are locked to an exact allowlist.** [`.github/docs-policy.yml`](.github/docs-policy.yml) lists every `.md` path allowed to exist; the `docs-policy` CI job fails a PR that adds an unlisted one. This is public-repo hardening against doc sprawl (agents documenting every decision in a new file) and against internal notes/patterns leaking out. Editing an already-allowed file is unrestricted (subject to `lock-files` where it applies). **Do not create a new top-level `.md` file** — put that content in the PR description or an issue. A genuinely new doc requires adding it to `docs-policy.yml`'s `allowed` list in the same PR (CODEOWNERS-gated to `@jml6m`).
