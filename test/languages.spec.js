@@ -121,6 +121,29 @@ describe('Regular languages', function () {
       assert.isFalse(lang.contains('β'));
       assert.isFalse(lang.contains('αα'));
     });
+
+    it('accepts explicit symbol-array words (multi-char alphabet symbols)', function () {
+      const lang = RegularLanguage.fromAutomaton(
+        createFSA(
+          ['q0', 'q1', 'dead'],
+          ['up', 'down'],
+          [
+            { from: 'q0', to: 'q1', input: 'up' },
+            { from: 'q0', to: 'dead', input: 'down' },
+            { from: 'q1', to: 'dead', input: 'up' },
+            { from: 'q1', to: 'dead', input: 'down' },
+            { from: 'dead', to: 'dead', input: 'up' },
+            { from: 'dead', to: 'dead', input: 'down' },
+          ],
+          'q0',
+          ['q1']
+        )
+      );
+
+      assert.isTrue(lang.contains(['up']));
+      assert.isFalse(lang.contains(['down']));
+      assert.isFalse(lang.contains('up')); // char-spread, not multi-char symbols
+    });
   });
 
   describe('Union', function () {

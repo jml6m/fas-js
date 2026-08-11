@@ -1,5 +1,10 @@
 import { type FSA } from "../interfaces/FSA";
-import { Language } from "./Language";
+import {
+  Language,
+  type AlphabetSymbol,
+  type LanguageClassification,
+  type Word,
+} from "./Language";
 import { simulateFSA } from "../engine/Simulators";
 import { ErrorCode } from "../globals/errors";
 import { NFA } from "../automata";
@@ -20,7 +25,7 @@ export class RegularLanguage extends Language {
     this.#automaton = automaton;
   }
 
-  getClassification(): string {
+  getClassification(): LanguageClassification {
     return "regular";
   }
 
@@ -28,9 +33,10 @@ export class RegularLanguage extends Language {
     return new RegularLanguage(automaton);
   }
 
-  contains(word: string): boolean {
+  contains(word: Word): boolean {
     try {
-      return Boolean(simulateFSA(word, this.#automaton));
+      // simulateFSA accepts string | string[]; readonly string[] is structurally fine
+      return Boolean(simulateFSA(word as string | string[], this.#automaton));
     } catch (error) {
       if (instanceOf(Error, error) && error.message === ErrorCode.INVALID_INPUT_CHAR) {
         return false;
@@ -43,7 +49,7 @@ export class RegularLanguage extends Language {
     return this.#automaton;
   }
 
-  getAlphabetSymbols(): string[] {
+  getAlphabetSymbols(): readonly AlphabetSymbol[] {
     return languageAlphabetSymbols(this.#automaton);
   }
 
