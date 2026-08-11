@@ -4,7 +4,14 @@ import { DFA, NFA } from "../automata";
 import { FSAUtils } from "../utils";
 import { ErrorCode } from "../globals/errors";
 import { instanceOf } from "../globals/globals";
+import { simulateDFA } from "./DFASimulators";
+import { simulateNFA } from "./NFASimulators";
 
+/**
+ * Public simulation entrypoints. Kind-specific `simulate*` implementations live in
+ * `DFASimulators.ts` / `NFASimulators.ts` (locked). This file is an open dispatch
+ * index for `simulateFSA` / `stepOnceFSA` — new automaton kinds wire in here.
+ */
 export const simulateFSA = (
   w: string | string[],
   fsa: FSA,
@@ -68,107 +75,3 @@ export const stepOnceFSA = (
     return retArray;
   }
 };
-
-/*
- * Private methods
- */
-function simulateDFA(
-  w: string | string[],
-  dfa: InstanceType<typeof DFA>,
-  utils: InstanceType<typeof FSAUtils>,
-  logging: boolean,
-  returnEndState: boolean
-): boolean | string {
-  if (logging) console.log("Beginning DFA Simulation");
-
-  //Accept either string or string[] for w
-  if (!Array.isArray(w)) {
-    if (typeof w === "string") w = [...w];
-    else {
-      if (logging) console.error("Input w was invalid type: %O", w);
-      throw new TypeError();
-    }
-  }
-
-  // Step through the DFA
-  if (logging) console.log("Input Processing Started");
-  let currentState: State = dfa.getStartState();
-  for (const char of w) {
-    const prevState: State = currentState;
-    currentState = utils.receiveInput(dfa, char, prevState) as State;
-    if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), char, JSON.stringify(currentState));
-  }
-  if (logging) console.log("Input Processing Ended");
-
-  // Check for acceptance
-  if (dfa.getAcceptStates().has(currentState)) {
-    if (logging) console.log("Input Accepted!");
-    if (returnEndState) return currentState.name;
-    else return true;
-  } else {
-    if (logging) console.log("Input Rejected!");
-    if (returnEndState) return currentState.name;
-    else return false;
-  }
-}
-
-function simulateNFA(
-  w: string | string[],
-  nfa: InstanceType<typeof NFA>,
-  utils: InstanceType<typeof FSAUtils>,
-  logging: boolean,
-  returnEndState: boolean
-): boolean | string[] {
-  if (logging) console.log("Beginning NFA Simulation");
-
-  //Accept either string or string[] for w
-  if (!Array.isArray(w)) {
-    if (typeof w === "string") {
-      if (w === "") w = [""];
-      else w = [...w];
-    } else {
-      if (logging) console.error("Input w was invalid type: %O", w);
-      throw new TypeError();
-    }
-  }
-
-  if (logging) console.log("Input Processing Started");
-  let currentState: State[] = [nfa.getStartState()];
-  for (const char of w) {
-    const prevState: State[] = currentState;
-    currentState = [...(utils.receiveInput(nfa, char, currentState) as Set<State>)];
-    if (logging) console.log("%o x '%s' -> %o", JSON.stringify(prevState), char, JSON.stringify(currentState));
-  }
-  if (logging) console.log("Input Processing Ended");
-
-  /*
-   * Check for acceptance or rejection.
-   * If returnEndState:
-   *    If accept, return all final accept states.
-   *    If reject, return all final states or if no final state return empty string
-   */
-  const retObj: string[] = [];
-  for (const _accState of nfa.getAcceptStates()) {
-    if (currentState.includes(_accState)) {
-      if (!returnEndState) {
-        if (logging) console.log("Input Accepted!");
-        return true;
-      }
-      retObj.push(_accState.name);
-    }
-  }
-  if (retObj.length > 0) {
-    if (logging) console.log("Input Accepted!");
-    return retObj;
-  }
-
-  if (logging) console.log("Input Rejected!");
-  if (returnEndState) {
-    if (currentState.length > 0) {
-      for (const _cState of currentState) retObj.push(_cState.name);
-    }
-    return retObj;
-  } else {
-    return false;
-  }
-}

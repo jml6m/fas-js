@@ -23,6 +23,8 @@ ESM import:
 
 ```javascript
 import { createFSA, simulateFSA, stepOnceFSA } from "fas-js";
+// Optional type-only: TransitionInput describes each createFSA transition object
+// import type { TransitionInput } from "fas-js";
 ```
 
 CommonJS:

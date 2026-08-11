@@ -11,7 +11,12 @@ const __dir = dirname(__file);
 const root = resolve(__dir, "..");
 const require = createRequire(import.meta.url);
 
+/** Runtime enumerable exports (type-only exports do not appear on Object.keys). */
 export const PUBLIC_EXPORTS = ["createFSA", "simulateFSA", "stepOnceFSA"];
+/**
+ * Published `.d.ts` contract: three functions + type `TransitionInput` (intentional —
+ * consumers type `createFSA` transition arrays). Do not drop the type without a major.
+ */
 export const DTS_EXPORT_PATTERN =
   /export\s*\{\s*type\s+TransitionInput\s*,\s*createFSA\s*,\s*simulateFSA\s*,\s*stepOnceFSA\s*\}\s*;/;
 
