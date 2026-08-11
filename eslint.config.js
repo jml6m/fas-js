@@ -19,6 +19,8 @@ export default tseslint.config(
         "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
+      // Cap source file size (ESLint docs default 300; 400 fits this focused lib).
+      "max-lines": ["error", { max: 400, skipBlankLines: true, skipComments: true }],
     },
   }
 );
