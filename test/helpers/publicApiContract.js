@@ -1,8 +1,10 @@
 /**
  * Published npm / demo bundle API contract — shared by artifact and demo tests.
+ * Runtime export list is the single source in scripts/check-public-api.mjs.
  */
+import { PUBLIC_EXPORTS } from "../../scripts/check-public-api.mjs";
 
-export const PUBLIC_API_EXPORTS = ["createFSA", "simulateFSA", "stepOnceFSA"];
+export const PUBLIC_API_EXPORTS = PUBLIC_EXPORTS;
 
 export const INTERNAL_EXPORT_DENYLIST = [
   "RegularLanguage",
@@ -17,7 +19,7 @@ export const INTERNAL_EXPORT_DENYLIST = [
 
 export function assertExactPublicExports(api, label) {
   const keys = Object.keys(api).sort();
-  if (JSON.stringify(keys) !== JSON.stringify(PUBLIC_API_EXPORTS)) {
+  if (JSON.stringify(keys) !== JSON.stringify([...PUBLIC_API_EXPORTS].sort())) {
     throw new Error(
       `${label}: expected exports [${PUBLIC_API_EXPORTS.join(", ")}], got [${keys.join(", ")}]`
     );

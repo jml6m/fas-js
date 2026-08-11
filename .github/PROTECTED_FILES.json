@@ -51,6 +51,9 @@
     "scripts/postbuild.mjs",
     "LICENSE",
     "coverage-policy.md",
-    "CLAUDE.md"
+    "CLAUDE.md",
+    "test/api-contract-createFSA.spec.js",
+    "test/api-contract-simulateFSA.spec.js",
+    "test/api-contract-stepOnceFSA.spec.js"
   ]
 }
