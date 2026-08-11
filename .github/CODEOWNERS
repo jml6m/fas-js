@@ -1,0 +1,10 @@
+# Markdown allowlist policy — this is a public repo, so every *.md add/change
+# needs review (docs-policy.yml's exact allowlist is enforced separately in
+# CI by the "docs-policy" job; this line is what makes the review mandatory).
+#
+# Narrower than the CODEOWNERS pattern used in skeletor/populate-all-demo:
+# fas-js governs workflows, sealed src/, CLAUDE.md, and other critical paths via
+# .github/PROTECTED_FILES.json + the lock-files gate. AGENTS.md is intentionally
+# Open on that list (process docs change often); CODEOWNERS still requires review
+# for every markdown edit, including AGENTS.md.
+*.md                                @jml6m
