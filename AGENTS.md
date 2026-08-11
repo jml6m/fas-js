@@ -57,27 +57,28 @@ npm run health:dead  # knip (unused files fatal; unused exports warn)
 
 ## Architecture
 
-- Public API: `createFSA`, `simulateFSA`, `stepOnceFSA` from [`src/modules.ts`](src/modules.ts).
-- Regular core: `src/automata/`, `src/components/`, `src/engine/`, `src/languages/`, `src/utils/`.
+- Public API: `createFSA`, `simulateFSA`, `stepOnceFSA` from [`src/modules.ts`](src/modules.ts) (also exports type `TransitionInput`).
+- Regular core: `src/automata/`, `src/components/`, `src/engine/` (`DFASimulators`/`NFASimulators` + open `Simulators` index), `src/languages/`, `src/utils/` (utils not frozen until post-v2 design).
 - Demo: [`src/demo-bundle.ts`](src/demo-bundle.ts) + `demo/` (local `npm run serve:demo`).
-- **Do not** change the public API surface without a human major-version decision. Let [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) inform you on critical pieces of the solution.
+- **Do not** change the public API surface without a human major-version decision. See [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json).
 
 ---
 
 ## Protected files (`lock-files`)
 
-Canonical list: [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) (exact paths + a few globs). New files are Open by default.
+Canonical list: [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json). **Path-only:** locking a file does not lock its importers. New files are Open by default.
 
-- **Integration:** red `lock-files` on intentional Locked edits is expected → merge with admin/bot bypass.
-- **`master`:** red `lock-files` is a hard gate; only the admin may temporarily drop the required check on the release PR, merge, and re-enable.
-- Agent-instruction tripwires include `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `GEMINI.md`, `.geminiignore`, `.grok/**`, `.cursor/**`, `.gemini/**` (block silent reintroduction).
+- **Integration:** red `lock-files` on intentional Locked edits → merge with admin/bot bypass.
+- **`master`:** red `lock-files` is a hard gate; admin may temporarily drop the required check on the release PR only.
+- **Locked examples:** sealed automata/components, `interfaces/FSA.ts`, kind-specific engine impls, languages core, behavioral tests for those, guards, Category D workflows/build/LICENSE/`CLAUDE.md`.
+- **Open by design:** `src/modules.ts`, `src/engine/Simulators.ts` (dispatch index), `src/utils/**`, `src/globals/errors.ts`, `AGENTS.md`, demo, `package-lock.json`. Markdown *existence* is gated by [docs-policy](.github/docs-policy.yml), not by inventing lock-files tripwires for absent agent-tool paths.
 
 ---
 
 ## CI / publish (summary)
 
 - **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): `static-gates` once + Node matrix `test`.
-- **docs-lint**: lychee + markdownlint + agent file length.
+- **docs-lint**: lychee + markdownlint + agent file length + docs-policy allowlist.
 - **Publish**: tag **must equal** `origin/master` tip → OIDC → `npm` environment (manual approval). `git tag vX.Y.Z origin/master && git push origin vX.Y.Z`.
 
 ---
@@ -86,3 +87,4 @@ Canonical list: [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) (
 
 - In-repo paths in Markdown → clickable links. Prefer linking to this file over duplication.
 - Markdownlint owns `.md` formatting (Prettier does not). AGENTS/CLAUDE are length-capped, not format-linted.
+- **Markdown files are locked to an exact allowlist.** [`.github/docs-policy.yml`](.github/docs-policy.yml) lists every `.md` path allowed to exist; the `docs-policy` CI job fails a PR that adds an unlisted one. This is public-repo hardening against doc sprawl (agents documenting every decision in a new file) and against internal notes/patterns leaking out. Editing an already-allowed file is unrestricted (subject to `lock-files` where it applies). **Do not create a new top-level `.md` file** — put that content in the PR description or an issue. A genuinely new doc requires adding it to `docs-policy.yml`'s `allowed` list in the same PR (CODEOWNERS-gated to `@jml6m`).

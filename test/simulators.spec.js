@@ -355,3 +355,52 @@ describe("NFA Simulations", function() {
     });
   });
 });
+
+describe("Simulators logging + reject end-state paths", function () {
+  let dfa;
+  let nfa;
+
+  before(function () {
+    const q1 = new State("q1");
+    const q2 = new State("q2");
+    const alphabet = new Alphabet("01");
+    dfa = new DFA(
+      new Set([q1, q2]),
+      alphabet,
+      new Set([
+        new Transition(q1, q2, "1"),
+        new Transition(q1, q1, "0"),
+        new Transition(q2, q2, "1"),
+        new Transition(q2, q1, "0"),
+      ]),
+      q1,
+      new Set([q2])
+    );
+    nfa = new NFA(
+      new Set([q1, q2]),
+      alphabet,
+      new Set([
+        new NFATransition(q1, [q1], "0"),
+        new NFATransition(q1, [q1, q2], "1"),
+        new NFATransition(q2, [q2], "0"),
+        new NFATransition(q2, [q2], "1"),
+      ]),
+      q1,
+      new Set([q2])
+    );
+  });
+
+  it("exercises DFA/NFA logging branches without changing results", function () {
+    assert.isTrue(simulateFSA("1", dfa, true));
+    assert.isFalse(simulateFSA("0", dfa, true));
+    assert.equal(simulateFSA("1", dfa, true, true), "q2");
+    assert.isTrue(simulateFSA("1", nfa, true));
+    assert.isFalse(simulateFSA("0", nfa, true));
+    assert.isArray(simulateFSA("0", nfa, true, true));
+  });
+
+  it("rejects invalid word types under logging", function () {
+    expect(() => simulateFSA(null, dfa, true)).to.throw(TypeError);
+    expect(() => simulateFSA(null, nfa, true)).to.throw(TypeError);
+  });
+});
