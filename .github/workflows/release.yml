@@ -158,11 +158,14 @@ jobs:
       # Dead code and unused files must not ship; a warning on PRs, fatal here (#309).
       - run: npm run health:dead:strict
 
-      # prepublishOnly runs the build and the full `npm test` chain (typecheck, lint, build,
-      # check:security, tests with coverage), so this exercises every publish gate.
+      # The same commands prepublishOnly runs at publish time. Run directly, not through
+      # `npm publish --dry-run`, whose dry-run setting leaks into the guards' own `npm pack`.
+      - name: Build and full test chain
+        run: npm run build && npm test
+
       - name: Publish dry run
         if: steps.state.outputs.published != 'true'
-        run: npm publish --dry-run --access public
+        run: npm publish --dry-run --access public --ignore-scripts
 
       - name: Summary
         env:
