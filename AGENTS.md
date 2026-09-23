@@ -30,7 +30,7 @@ topic/<name> ──PR──▶ chore/vX.Y-* (integration) ──release PR──
 
 ### Issues & PRs
 
-Check open issues first. Agents put `Closes #N` / `Relates to #N` in the PR body to link PRs to Issues. Keep labels updated as well. Epics: children first, parent last, real numbers in the task list. Use [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
+Check open issues first. Every PR body has a line **starting with** `Relates to #N` (default; link only) or `Closes` / `Fixes` / `Resolves #N`, naming an issue that is open and in a milestone. The `issue-link` check enforces it; Dependabot is exempt, agent PRs are not. Keep labels updated as well. Epics: children first, parent last, real numbers in the task list. Use [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
 
 Open agent PRs as **`jml6m-bot`**. Respond to human review with a change or technical disagreement — no empty acks.
 
