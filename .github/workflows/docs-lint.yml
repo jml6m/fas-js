@@ -17,8 +17,40 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          # Full history so the relevance diff below compares against the PR's real base.
+          fetch-depth: 0
+
+      # Always run (see header), but only lint when something docs-lint reads changed.
+      # Skipped steps still let the job report SUCCESS.
+      - name: Check for relevant path changes
+        id: changed
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          diff_range="${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}"
+          if ! changed_files="$(git diff --name-only "$diff_range" --)"; then
+            echo "Failed to compute diff for $diff_range; defaulting to relevant=true"
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # md, the docs-lint configs, workflow files (lychee catches broken links after a
+          # workflow rename), the lockfile (markdownlint-cli2's version), and the agent-file
+          # checker with the non-.md file it rejects.
+          if echo "$changed_files" | grep -qE '\.md$|^\.lychee\.toml$|^\.markdownlint-cli2\.[a-z]+$|^\.github/workflows/.*\.ya?ml$|^package-lock\.json$|^scripts/check-agent-file-length\.mjs$|^\.cursorrules$'; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Lychee link check
+        if: steps.changed.outputs.relevant == 'true'
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           # Fragments via include_fragments = "full" in .lychee.toml — no CLI flag.
@@ -28,6 +60,7 @@ jobs:
           fail: true
 
       - name: Set up Node.js
+        if: steps.changed.outputs.relevant == 'true'
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 24
@@ -35,10 +68,13 @@ jobs:
 
       # Use the lockfile version of markdownlint-cli2 (not a stale global pin).
       - name: Install dependencies
+        if: steps.changed.outputs.relevant == 'true'
         run: npm ci
 
       - name: Run markdownlint
+        if: steps.changed.outputs.relevant == 'true'
         run: npx markdownlint-cli2 '**/*.md'
 
       - name: Agent-instruction file length
+        if: steps.changed.outputs.relevant == 'true'
         run: node scripts/check-agent-file-length.mjs
