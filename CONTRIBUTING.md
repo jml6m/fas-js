@@ -41,5 +41,5 @@ Markdown.
 
 ## Where the rules live
 
-[AGENTS.md](AGENTS.md) is the single source for repo conventions: the branch model, locked files,
-and build details. Security reports go through [SECURITY.md](SECURITY.md).
+[AGENTS.md](AGENTS.md) has the build commands, the architecture and the locked-files rule.
+Security reports go through [SECURITY.md](SECURITY.md).

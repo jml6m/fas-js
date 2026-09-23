@@ -1,14 +1,8 @@
 name: Release
 
-# Admin-only, one-click release of the master tip: tag vX.Y.0, publish to npm with provenance,
-# create the GitHub release, close the milestone. Start with dry_run checked; a real run is
-# refused until a dry run has passed on the same commit.
-#
-# Order matters: tags are immutable (v* ruleset), so nothing is written until every check has
-# passed and the npm environment is approved. Every step skips work already done, so "Re-run
-# failed jobs" resumes a release that stopped partway (e.g. a failed npm publish).
-#
-# npm trusted publishing is bound to this filename and the `npm` environment.
+# Releases the master tip: tag vX.Y.0, npm publish with provenance, GitHub release.
+# Nothing is written until every check passes; a real run needs a prior dry run on the same
+# commit. Steps skip work already done, so re-running failed jobs resumes a partial release.
 run-name: ${{ inputs.dry_run && 'Release dry run' || 'Release' }} from ${{ github.ref_name }}
 
 on:
@@ -47,10 +41,10 @@ jobs:
       tag_exists: ${{ steps.state.outputs.tag_exists }}
       published: ${{ steps.state.outputs.published }}
     steps:
-      - name: Only the admin releases
+      - name: Only the maintainer releases
         run: |
           if [ "$GITHUB_TRIGGERING_ACTOR" != "jml6m" ]; then
-            echo "::error::Releases are started by the repo admin (jml6m), not ${GITHUB_TRIGGERING_ACTOR}."
+            echo "::error::Only the maintainer can start a release, not ${GITHUB_TRIGGERING_ACTOR}."
             exit 1
           fi
 
@@ -187,7 +181,6 @@ jobs:
     needs: check
     if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
-    # Approval gate: nothing is written before the npm environment is approved.
     environment: npm
     permissions:
       contents: write

@@ -1,41 +1,8 @@
-# 🤖 Agent & AI Protocols
+# Agent guidance
 
-> **Single source of truth** for agent policy in this repo. Keep this file **under 9,000 characters** (enforced by [`scripts/check-agent-file-length.mjs`](scripts/check-agent-file-length.mjs)). Prefer links over restating detail.
-
----
-
-## Critical protocols
-
-### Credentials
-
-Never commit GitHub App IDs, installation IDs, client secrets, private keys, PATs, tokens, or Actions secret **values**. Refer to apps by slug (`jml6m-bot`). Workflows may use secret *names* only (`${{ secrets.APP_ID }}`). Local App material lives under `~/workspaces/.tooling/` (outside git).
-
-### Versioning & release (agents)
-
-- Releases are **major.minor** only: milestone `vX.Y` → `package.json` `X.Y.0` → tag `vX.Y.0` → npm → GitHub release. Patch versions are never released.
-- Bump `package.json` only in the cycle's version PR into the integration branch (`chore: bump version to X.Y.0`, linked to the `release`-labelled "Release vX.Y.0" issue). **Never** create/move `v*` tags, run `npm publish`, or start the Release workflow: the admin does.
-- **Do not** push/merge/force-push/delete `master`, or toggle required checks on the `main` ruleset (admin-only).
-- Topic work: `topic/*` → PR into current `chore/vX.Y-*`. Red `lock-files` on intentional Locked edits → `gh pr merge --admin` on integration (not auto-merge).
-- Hand off to the admin: release PR → `master`. After it merges, the admin runs Actions → **Release** (dry run first, then for real) and approves the **npm** environment. [`release.yml`](.github/workflows/release.yml) tags the `master` tip, publishes with provenance, creates the GitHub release and closes the milestone.
-
-### Branch model
-
-```
-topic/<name> ──PR──▶ chore/vX.Y-* (integration) ──release PR──▶ master ──Release workflow──▶ tag vX.Y.0 + npm + GitHub release
-```
-
-- **One** reserved-name integration branch per release (`chore/vX.Y-*` / `vX.Y-*` / `chore/vX-*` / `vX-*`). Everything else is **`topic/<name>`** (not a reserved pattern).
-- Topic work **never** targets `master` (except Dependabot `github_actions/*`). Enforced by [`release-base-guard`](.github/workflows/release-base-guard.yml).
-- Integration = temporary default for the cycle (0 approvals + required checks). `master` requires **1 approving review** + checks; no agent self-merge to `master`.
-- Tags are immutable (no retag: a mistake ships as the next minor). Live rulesets: Settings → Rules (`main`, `main-lock-files`, `next-version-prep-branch`, `v*`).
-
-### Issues & PRs
-
-Check open issues first. Every PR body has a line **starting with** `Relates to #N` (default; link only) or `Closes` / `Fixes` / `Resolves #N`, naming an issue that is open and in a milestone. The `issue-link` check enforces it; Dependabot is exempt, agent PRs are not. Keep labels updated as well. Epics: children first, parent last, real numbers in the task list. Use [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
-
-Open agent PRs as **`jml6m-bot`**. Respond to human review with a change or technical disagreement — no empty acks.
-
----
+Project-facing guidance for coding agents and reviewers. Contribution flow (issues, target branch,
+PR conventions) is in [CONTRIBUTING.md](CONTRIBUTING.md). Keep this file under 9,000 characters
+(enforced by [`scripts/check-agent-file-length.mjs`](scripts/check-agent-file-length.mjs)).
 
 ## Build & test
 
@@ -50,40 +17,27 @@ npm test             # typecheck + lint + build + check:security + c8 mocha
 npm run health:dead  # knip (unused files fatal; unused exports warn)
 ```
 
-- Coverage floor on `master` / integration: **90%** — policy in [`coverage-policy.md`](coverage-policy.md).
-- Guard scripts under `scripts/check-*.mjs` must have matching `test/check-*.spec.js` (`check:security`).
+- Coverage floor: **90%**. Policy in [`coverage-policy.md`](coverage-policy.md).
+- Guard scripts under `scripts/check-*.mjs` must have a matching `test/check-*.spec.js`
+  (`check:security`).
 - Single Mocha file: `cross-env NODE_OPTIONS=--import=tsx npx mocha "test/foo.spec.js"`.
-
----
+- Don't change `version` in `package.json`.
 
 ## Architecture
 
 - Public API: `createFSA`, `simulateFSA`, `stepOnceFSA` from [`src/modules.ts`](src/modules.ts).
 - Regular core: `src/automata/`, `src/components/`, `src/engine/`, `src/languages/`, `src/utils/`.
 - Demo: [`src/demo-bundle.ts`](src/demo-bundle.ts) + `demo/` (local `npm run serve:demo`).
-- **Do not** change the public API surface without a human major-version decision. Let [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) inform you on critical pieces of the solution.
+- **Do not** change the public API surface. That is a major-version decision for the maintainer.
 
----
+## Locked files
 
-## Protected files (`lock-files`)
-
-Canonical list: [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) (exact paths + a few globs). New files are Open by default.
-
-- **Integration:** red `lock-files` on intentional Locked edits is expected → merge with admin/bot bypass.
-- **`master`:** red `lock-files` is a hard gate; only the admin may temporarily drop the required check on the release PR, merge, and re-enable.
-- Agent-instruction tripwires include `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `GEMINI.md`, `.geminiignore`, `.grok/**`, `.cursor/**`, `.gemini/**` (block silent reintroduction).
-
----
-
-## CI / publish (summary)
-
-- **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): `static-gates` once + Node matrix `test`.
-- **docs-lint**: lychee + markdownlint + agent file length.
-- **Publish**: tag **must equal** `origin/master` tip → OIDC → `npm` environment (manual approval). `git tag vX.Y.Z origin/master && git push origin vX.Y.Z`.
-
----
+[`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) lists the critical pieces of the
+solution. The `lock-files` check flags edits to them; they need the maintainer's sign-off. New
+files are open by default.
 
 ## Docs conventions
 
-- In-repo paths in Markdown → clickable links. Prefer linking to this file over duplication.
-- Markdownlint owns `.md` formatting (Prettier does not). AGENTS/CLAUDE are length-capped, not format-linted.
+- In-repo paths in Markdown are clickable links. Link rather than duplicate.
+- Markdownlint owns `.md` formatting (Prettier does not). AGENTS/CLAUDE are length-capped, not
+  format-linted.
