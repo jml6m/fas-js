@@ -27,4 +27,4 @@
 - [ ] Tests added or updated for new/changed behavior
 - [ ] Test Coverage maintained (see [.c8rc.json](../.c8rc.json))
 - [ ] No version bump in [package.json](../package.json)
-- [ ] [README.md](../README.md) updated if needed — but any README change requires project-admin approval, requested on the PR or in the agent chat
+- [ ] [README.md](../README.md) updated if needed; README changes need the maintainer's approval on the PR
