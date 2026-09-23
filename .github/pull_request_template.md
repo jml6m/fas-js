@@ -4,7 +4,7 @@
 
 ## Related issues
 
-<!-- Closes #123 — use closing keywords so GitHub auto-links -->
+<!-- A line starting with `Relates to #123` (or Closes / Fixes / Resolves #123). The issue must be open and in a milestone; the issue-link check enforces it. -->
 
 ## Why
 
