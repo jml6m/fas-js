@@ -190,5 +190,9 @@ Interactive demos visualize FSAs as you simulate input strings.
 
 See [demo/README.md](demo/README.md) for version history, local development (`npm run serve:demo` on port 3200), automated tests, and deployment details.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 This library is distributed under the GPL 3.0 license found in the [LICENSE](https://github.com/jml6m/fas-js/blob/master/LICENSE) file.
