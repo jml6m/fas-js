@@ -1,0 +1,243 @@
+name: Release
+
+# Releases the master tip: tag vX.Y.0, npm publish with provenance, GitHub release.
+# Nothing is written until every check passes; a real run needs a prior dry run on the same
+# commit. Steps skip work already done, so re-running failed jobs resumes a partial release.
+run-name: ${{ inputs.dry_run && 'Release dry run' || 'Release' }} from ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: run every check, write nothing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      milestone: ${{ steps.milestone.outputs.number }}
+      tag_exists: ${{ steps.state.outputs.tag_exists }}
+      published: ${{ steps.state.outputs.published }}
+    steps:
+      - name: Only the maintainer releases
+        run: |
+          if [ "$GITHUB_TRIGGERING_ACTOR" != "jml6m" ]; then
+            echo "::error::Only the maintainer can start a release, not ${GITHUB_TRIGGERING_ACTOR}."
+            exit 1
+          fi
+
+      - name: Only from the default branch
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/${DEFAULT_BRANCH}" ]; then
+            echo "::error::Run this from ${DEFAULT_BRANCH}, not ${GITHUB_REF}."
+            exit 1
+          fi
+
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Read the version
+        id: version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if ! [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.0$ ]]; then
+            echo "::error::Releases are major.minor: package.json must be X.Y.0, found ${VERSION}."
+            exit 1
+          fi
+          {
+            echo "version=${VERSION}"
+            echo "tag=v${VERSION}"
+            echo "line=v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+          } >> "$GITHUB_OUTPUT"
+
+      # Fail-closed: a release is the current master tip, nothing else (#328).
+      - name: Release the tip of ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch --no-tags origin "$DEFAULT_BRANCH"
+          TIP="$(git rev-parse "origin/${DEFAULT_BRANCH}")"
+          if [ "$TIP" != "$GITHUB_SHA" ]; then
+            echo "::error::${DEFAULT_BRANCH} moved to ${TIP} after this run started at ${GITHUB_SHA}. Start a new run."
+            exit 1
+          fi
+
+      - name: Tag and npm state
+        id: state
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          NAME="$(node -p "require('./package.json').name")"
+          TAG_EXISTS=false
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            TAGGED="$(git rev-parse "${TAG}^{commit}")"
+            if [ "$TAGGED" != "$GITHUB_SHA" ]; then
+              echo "::error::${TAG} already exists on ${TAGGED}. Tags never move: bump package.json to the next minor."
+              exit 1
+            fi
+            TAG_EXISTS=true
+          fi
+          PUBLISHED=false
+          if [ "$(npm view "${NAME}@${VERSION}" version 2>/dev/null)" = "$VERSION" ]; then
+            PUBLISHED=true
+          fi
+          if [ "$PUBLISHED" = true ] && [ "$TAG_EXISTS" = false ]; then
+            echo "::error::${NAME}@${VERSION} is on npm but ${TAG} does not exist. Investigate before releasing."
+            exit 1
+          fi
+          echo "tag_exists=${TAG_EXISTS}" >> "$GITHUB_OUTPUT"
+          echo "published=${PUBLISHED}" >> "$GITHUB_OUTPUT"
+          echo "tag ${TAG} exists: ${TAG_EXISTS}; ${NAME}@${VERSION} on npm: ${PUBLISHED}"
+
+      # The vX.Y milestone must be done. Its `release`-labelled issue tracks the release itself
+      # and is closed by the finish job.
+      - name: Milestone is done
+        id: milestone
+        env:
+          LINE: ${{ steps.version.outputs.line }}
+        run: |
+          NUMBER="$(gh api "repos/${GITHUB_REPOSITORY}/milestones?state=all&per_page=100" \
+            --jq ".[] | select(.title == \"${LINE}\") | .number")"
+          if [ -z "$NUMBER" ]; then
+            echo "::notice::No ${LINE} milestone; nothing to close."
+            exit 0
+          fi
+          OPEN="$(gh api "repos/${GITHUB_REPOSITORY}/issues?milestone=${NUMBER}&state=open&per_page=100" \
+            --jq '[.[] | select(all(.labels[]; .name != "release")) | "#\(.number) \(.title)"] | .[]')"
+          if [ -n "$OPEN" ]; then
+            echo "::error::${LINE} still has open issues or PRs:"
+            echo "$OPEN"
+            exit 1
+          fi
+          echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: A dry run passed on this commit
+        if: ${{ !inputs.dry_run }}
+        run: |
+          PASSED="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow release.yml --limit 100 \
+            --json headSha,conclusion,displayTitle \
+            --jq "[.[] | select(.headSha == \"${GITHUB_SHA}\" and .conclusion == \"success\" and (.displayTitle | startswith(\"Release dry run\")))] | length")"
+          if [ "$PASSED" -eq 0 ]; then
+            echo "::error::No successful dry run on ${GITHUB_SHA}. Run this workflow with dry_run checked first."
+            exit 1
+          fi
+
+      # Recent npm for OIDC provenance (#207).
+      - run: npm install -g npm@^11.5.1
+      - run: npm ci
+      - run: node scripts/check-package-scripts.mjs
+
+      # Dead code and unused files must not ship; a warning on PRs, fatal here (#309).
+      - run: npm run health:dead:strict
+
+      # prepublishOnly runs the build and the full `npm test` chain (typecheck, lint, build,
+      # check:security, tests with coverage), so this exercises every publish gate.
+      - name: Publish dry run
+        if: steps.state.outputs.published != 'true'
+        run: npm publish --dry-run --access public
+
+      - name: Summary
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          MODE: ${{ inputs.dry_run && 'dry run, nothing written' || 'release' }}
+        run: |
+          {
+            echo "### ${TAG} (${MODE})"
+            echo "- commit: \`${GITHUB_SHA}\`"
+            echo "- tag exists: ${{ steps.state.outputs.tag_exists }}"
+            echo "- on npm: ${{ steps.state.outputs.published }}"
+            echo "- milestone: ${{ steps.milestone.outputs.number || 'none' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    needs: check
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Tag ${{ needs.check.outputs.tag }}
+        if: needs.check.outputs.tag_exists != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" "$GITHUB_SHA" -m "$TAG"
+          git push origin "refs/tags/${TAG}"
+
+      - run: npm install -g npm@^11.5.1
+        if: needs.check.outputs.published != 'true'
+      - run: npm ci
+        if: needs.check.outputs.published != 'true'
+
+      # prepublishOnly builds and runs the full test chain once more on this runner.
+      - name: Publish to npm
+        if: needs.check.outputs.published != 'true'
+        run: npm publish --provenance --access public
+
+  finish:
+    needs: [check, release]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.check.outputs.tag }}
+      MILESTONE: ${{ needs.check.outputs.milestone }}
+    steps:
+      - name: GitHub release
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists."
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --generate-notes
+          fi
+
+      - name: Close the release issue and the milestone
+        if: env.MILESTONE != ''
+        run: |
+          for n in $(gh api "repos/${GITHUB_REPOSITORY}/issues?milestone=${MILESTONE}&state=open&labels=release&per_page=100" --jq '.[].number'); do
+            gh issue close "$n" --repo "$GITHUB_REPOSITORY" --comment "Released as ${TAG}."
+          done
+          gh api -X PATCH "repos/${GITHUB_REPOSITORY}/milestones/${MILESTONE}" -f state=closed --jq '"Closed milestone \(.title)."'
