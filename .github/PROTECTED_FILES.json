@@ -46,7 +46,7 @@
     ".github/workflows/docs-lint.yml",
     ".github/workflows/pages.yml",
     ".github/workflows/lock-files.yml",
-    ".github/workflows/publish.yml",
+    ".github/workflows/release.yml",
     ".github/workflows/release-base-guard.yml",
     ".github/workflows/verify-release-version.yml",
     "tsup.config.ts",

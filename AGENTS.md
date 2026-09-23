@@ -12,21 +12,22 @@ Never commit GitHub App IDs, installation IDs, client secrets, private keys, PAT
 
 ### Versioning & release (agents)
 
-- **Do not** bump `package.json` `version`, create/move `v*` tags, or run `npm publish` (tag-triggered OIDC only).
+- Releases are **major.minor** only: milestone `vX.Y` → `package.json` `X.Y.0` → tag `vX.Y.0` → npm → GitHub release. Patch versions are never released.
+- Bump `package.json` only in the cycle's version PR into the integration branch (`chore: bump version to X.Y.0`, linked to the `release`-labelled "Release vX.Y.0" issue). **Never** create/move `v*` tags, run `npm publish`, or start the Release workflow: the admin does.
 - **Do not** push/merge/force-push/delete `master`, or toggle required checks on the `main` ruleset (admin-only).
 - Topic work: `topic/*` → PR into current `chore/vX.Y-*`. Red `lock-files` on intentional Locked edits → `gh pr merge --admin` on integration (not auto-merge).
-- Hand off integration for admin: release PR → `master`, tag **`origin/master` tip**, approve **npm** env.
+- Hand off to the admin: release PR → `master`. After it merges, the admin runs Actions → **Release** (dry run first, then for real) and approves the **npm** environment. [`release.yml`](.github/workflows/release.yml) tags the `master` tip, publishes with provenance, creates the GitHub release and closes the milestone.
 
 ### Branch model
 
 ```
-topic/<name> ──PR──▶ chore/vX.Y-* (integration) ──release PR──▶ master ──tag vX.Y.Z──▶ npm
+topic/<name> ──PR──▶ chore/vX.Y-* (integration) ──release PR──▶ master ──Release workflow──▶ tag vX.Y.0 + npm + GitHub release
 ```
 
 - **One** reserved-name integration branch per release (`chore/vX.Y-*` / `vX.Y-*` / `chore/vX-*` / `vX-*`). Everything else is **`topic/<name>`** (not a reserved pattern).
 - Topic work **never** targets `master` (except Dependabot `github_actions/*`). Enforced by [`release-base-guard`](.github/workflows/release-base-guard.yml).
 - Integration = temporary default for the cycle (0 approvals + required checks). `master` requires **1 approving review** + checks; no agent self-merge to `master`.
-- Tags are immutable (no retag — new patch only). Live rulesets: Settings → Rules (`main`, `main-lock-files`, `next-version-prep-branch`, `next-version-prep-branch-lock-files`, `v*`).
+- Tags are immutable (no retag: a mistake ships as the next minor). Live rulesets: Settings → Rules (`main`, `main-lock-files`, `next-version-prep-branch`, `v*`).
 
 ### Issues & PRs
 
