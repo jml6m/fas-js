@@ -1,7 +1,6 @@
 ---
 name: Feature Request
 about: Propose new library capabilities
-title: '[FEATURE] <short description>'
 labels: enhancement
 assignees: ''
 ---
