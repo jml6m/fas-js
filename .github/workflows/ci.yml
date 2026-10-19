@@ -31,6 +31,8 @@ jobs:
       - run: node scripts/check-package-scripts.mjs
       - run: npm run typecheck
       - run: npm run lint
+      - name: Circular and unresolvable imports
+        run: npm run health:circular
       - run: npm audit --audit-level=high
       - run: npm run build
       - run: node scripts/check-guard-tests.mjs
