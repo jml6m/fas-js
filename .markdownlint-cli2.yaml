@@ -18,6 +18,8 @@ config:
   MD056: true
   MD058: true
 
+gitignore: true
+
 ignores:
   - 'node_modules/**'
   - 'lib/**'
