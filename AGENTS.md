@@ -1,40 +1,8 @@
-# 🤖 Agent & AI Protocols
+# Agent guidance
 
-> **Single source of truth** for agent policy in this repo. Keep this file **under 9,000 characters** (enforced by [`scripts/check-agent-file-length.mjs`](scripts/check-agent-file-length.mjs)). Prefer links over restating detail.
-
----
-
-## Critical protocols
-
-### Credentials
-
-Never commit GitHub App IDs, installation IDs, client secrets, private keys, PATs, tokens, or Actions secret **values**. Refer to apps by slug (`jml6m-bot`). Workflows may use secret *names* only (`${{ secrets.APP_ID }}`). Local App material lives under `~/workspaces/.tooling/` (outside git).
-
-### Versioning & release (agents)
-
-- **Do not** bump `package.json` `version`, create/move `v*` tags, or run `npm publish` (tag-triggered OIDC only).
-- **Do not** push/merge/force-push/delete `master`, or toggle required checks on the `main` ruleset (admin-only).
-- Topic work: `topic/*` → PR into current `chore/vX.Y-*`. Red `lock-files` on intentional Locked edits → `gh pr merge --admin` on integration (not auto-merge).
-- Hand off integration for admin: release PR → `master`, tag **`origin/master` tip**, approve **npm** env.
-
-### Branch model
-
-```
-topic/<name> ──PR──▶ chore/vX.Y-* (integration) ──release PR──▶ master ──tag vX.Y.Z──▶ npm
-```
-
-- **One** reserved-name integration branch per release (`chore/vX.Y-*` / `vX.Y-*` / `chore/vX-*` / `vX-*`). Everything else is **`topic/<name>`** (not a reserved pattern).
-- Topic work **never** targets `master` (except Dependabot `github_actions/*`). Enforced by [`release-base-guard`](.github/workflows/release-base-guard.yml).
-- Integration = temporary default for the cycle (0 approvals + required checks). `master` requires **1 approving review** + checks; no agent self-merge to `master`.
-- Tags are immutable (no retag — new patch only). Live rulesets: Settings → Rules (`main`, `main-lock-files`, `next-version-prep-branch`, `next-version-prep-branch-lock-files`, `v*`).
-
-### Issues & PRs
-
-Check open issues first. Agents put `Closes #N` / `Relates to #N` in the PR body to link PRs to Issues. Keep labels updated as well. Epics: children first, parent last, real numbers in the task list. Use [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/).
-
-Open agent PRs as **`jml6m-bot`**. Respond to human review with a change or technical disagreement — no empty acks.
-
----
+Project-facing guidance for coding agents and reviewers. Contribution flow (issues, target branch,
+PR conventions) is in [CONTRIBUTING.md](CONTRIBUTING.md). Keep this file under 9,000 characters
+(enforced by [`scripts/check-agent-file-length.mjs`](scripts/check-agent-file-length.mjs)).
 
 ## Build & test
 
@@ -49,42 +17,31 @@ npm test             # typecheck + lint + build + check:security + c8 mocha
 npm run health:dead  # knip (unused files fatal; unused exports warn)
 ```
 
-- Coverage floor on `master` / integration: **90%** — policy in [`coverage-policy.md`](coverage-policy.md).
-- Guard scripts under `scripts/check-*.mjs` must have matching `test/check-*.spec.js` (`check:security`).
+- Coverage floor: **90%**. Policy in [`coverage-policy.md`](coverage-policy.md).
+- Guard scripts under `scripts/check-*.mjs` must have a matching `test/check-*.spec.js`
+  (`check:security`).
 - Single Mocha file: `cross-env NODE_OPTIONS=--import=tsx npx mocha "test/foo.spec.js"`.
-
----
+- Don't change `version` in `package.json`.
 
 ## Architecture
 
-- Public API: `createFSA`, `simulateFSA`, `stepOnceFSA` from [`src/modules.ts`](src/modules.ts) (also exports type `TransitionInput`).
-- Regular core: `src/automata/`, `src/components/`, `src/engine/` (`DFASimulators`/`NFASimulators` + open `Simulators` index), `src/languages/`, `src/utils/` (utils not frozen until post-v2 design).
+- Public API: `createFSA`, `simulateFSA`, `stepOnceFSA` from [`src/modules.ts`](src/modules.ts),
+  plus the type `TransitionInput`.
+- Regular core: `src/automata/`, `src/components/`, `src/engine/` (`Simulators.ts` indexes
+  `DFASimulators` and `NFASimulators`), `src/languages/`, `src/utils/`.
 - Demo: [`src/demo-bundle.ts`](src/demo-bundle.ts) + `demo/` (local `npm run serve:demo`).
-- **Do not** change the public API surface without a human major-version decision. See [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json).
+- **Do not** change the public API surface. That is a major-version decision for the maintainer.
 
----
+## Locked files
 
-## Protected files (`lock-files`)
-
-Canonical list: [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json). **Path-only:** locking a file does not lock its importers. New files are Open by default.
-
-- **Integration:** red `lock-files` on intentional Locked edits → merge with admin/bot bypass.
-- **`master`:** red `lock-files` is a hard gate; admin may temporarily drop the required check on the release PR only.
-- **Locked examples:** sealed automata/components, `interfaces/FSA.ts`, kind-specific engine impls, languages core, behavioral tests for those, guards, Category D workflows/build/LICENSE/`CLAUDE.md`.
-- **Open by design:** `src/modules.ts`, `src/engine/Simulators.ts` (dispatch index), `src/utils/**`, `src/globals/errors.ts`, `AGENTS.md`, demo, `package-lock.json`. Markdown *existence* is gated by [docs-policy](.github/docs-policy.yml), not by inventing lock-files tripwires for absent agent-tool paths.
-
----
-
-## CI / publish (summary)
-
-- **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): `static-gates` once + Node matrix `test`.
-- **docs-lint**: lychee + markdownlint + agent file length + docs-policy allowlist.
-- **Publish**: tag **must equal** `origin/master` tip → OIDC → `npm` environment (manual approval). `git tag vX.Y.Z origin/master && git push origin vX.Y.Z`.
-
----
+[`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) lists the critical pieces of the
+solution. The `lock-files` check flags edits to them; they need the maintainer's sign-off. Locking
+is path-only: it doesn't lock a file's importers. New files are open by default.
 
 ## Docs conventions
 
-- In-repo paths in Markdown → clickable links. Prefer linking to this file over duplication.
-- Markdownlint owns `.md` formatting (Prettier does not). AGENTS/CLAUDE are length-capped, not format-linted.
-- **Markdown files are locked to an exact allowlist.** [`.github/docs-policy.yml`](.github/docs-policy.yml) lists every `.md` path allowed to exist; the `docs-policy` CI job fails a PR that adds an unlisted one. This is public-repo hardening against doc sprawl (agents documenting every decision in a new file) and against internal notes/patterns leaking out. Editing an already-allowed file is unrestricted (subject to `lock-files` where it applies). **Do not create a new top-level `.md` file** — put that content in the PR description or an issue. A genuinely new doc requires adding it to `docs-policy.yml`'s `allowed` list in the same PR (CODEOWNERS-gated to `@jml6m`).
+- In-repo paths in Markdown are clickable links. Link rather than duplicate.
+- Markdownlint owns `.md` formatting (Prettier does not). AGENTS/CLAUDE are length-capped, not
+  format-linted.
+- Every `.md` file must be listed in [`.github/docs-policy.yml`](.github/docs-policy.yml); the
+  `docs-policy` check fails a PR that adds an unlisted one. Put one-off notes in the PR or issue.

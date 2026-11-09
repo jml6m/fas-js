@@ -1,0 +1,85 @@
+name: PR Issue Link
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: pr-issue-link-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  issue-link:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+
+            // Carve-outs return early (exit 0). The job must never be skipped with a
+            // job-level `if:` — a required context that never reports leaves the PR
+            // pending forever, which is what sank earlier attempts at this.
+            if (pr.user.login === 'dependabot[bot]') {
+              core.info('Dependabot PR — gate does not apply.');
+              return;
+            }
+
+            const refRegex = /^\s*(?:relates?\s+to|close[sd]?|fix(?:es|ed)?|resolve[sd]?)\s+#(\d+)\b/gim;
+            const refs = [...new Set([...(pr.body || '').matchAll(refRegex)].map((m) => Number(m[1])))];
+
+            const fail = async (lines) => {
+              const msg = lines.join('\n');
+              await core.summary.addRaw(`${msg}\n`).write();
+              core.setFailed(msg);
+            };
+
+            if (refs.length === 0) {
+              return fail([
+                'This PR does not link an issue.',
+                '',
+                'Add a line to the PR description starting with one of:',
+                '  Relates to #123   (default - does not auto-close)',
+                '  Closes #123 / Fixes #123 / Resolves #123',
+                '',
+                'The line must START with the keyword. "part of #123" in prose does not count.',
+              ]);
+            }
+
+            const problems = [];
+            let satisfied = 0;
+
+            for (const number of refs) {
+              let issue;
+              try {
+                issue = (await github.rest.issues.get({ ...context.repo, issue_number: number })).data;
+              } catch (error) {
+                problems.push(
+                  error.status === 404
+                    ? `#${number}: no such issue in this repo.`
+                    : `#${number}: lookup failed (${error.status}).`
+                );
+                continue;
+              }
+              if (issue.pull_request) {
+                problems.push(`#${number}: that is a pull request, not an issue.`);
+              } else if (issue.state !== 'open') {
+                problems.push(`#${number}: closed - link the issue this work is actually for.`);
+              } else if (!issue.milestone) {
+                problems.push(`#${number}: no milestone - slot it into a release before opening a PR for it.`);
+              } else {
+                core.info(`#${number} OK - open, milestone "${issue.milestone.title}".`);
+                satisfied++;
+              }
+            }
+
+            if (satisfied === 0) {
+              return fail(['No linked issue satisfies the gate.', '', ...problems.map((p) => `  ${p}`)]);
+            }
+            for (const p of problems) core.warning(p);
+            core.info(`${satisfied} linked issue(s) satisfied the gate.`);
