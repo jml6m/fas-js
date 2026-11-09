@@ -3,7 +3,6 @@
 
 # Build output / generated
 lib/
-coverage/
 dist/
 
 # Vendored demo bundles
