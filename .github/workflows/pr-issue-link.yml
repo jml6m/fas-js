@@ -6,8 +6,10 @@ on:
 
 permissions:
   contents: read
-  issues: read
-  pull-requests: read
+  # Writes are only for the milestone/comment follow-up below; the gate itself only reads.
+  # Setting a PR's milestone 403s with issues: write alone, so pull-requests needs write too.
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: pr-issue-link-${{ github.event.pull_request.number }}
@@ -52,7 +54,7 @@ jobs:
             }
 
             const problems = [];
-            let satisfied = 0;
+            const passed = [];
 
             for (const number of refs) {
               let issue;
@@ -74,12 +76,60 @@ jobs:
                 problems.push(`#${number}: no milestone - slot it into a release before opening a PR for it.`);
               } else {
                 core.info(`#${number} OK - open, milestone "${issue.milestone.title}".`);
-                satisfied++;
+                passed.push({ number, milestone: issue.milestone });
               }
             }
 
-            if (satisfied === 0) {
+            if (passed.length === 0) {
               return fail(['No linked issue satisfies the gate.', '', ...problems.map((p) => `  ${p}`)]);
             }
             for (const p of problems) core.warning(p);
-            core.info(`${satisfied} linked issue(s) satisfied the gate.`);
+            core.info(`${passed.length} linked issue(s) satisfied the gate.`);
+
+            // Give the PR its linked issues' milestone. Best effort: nothing below may change
+            // the check's result, so failures (e.g. a fork PR's read-only token) only warn.
+            if (pr.milestone) {
+              core.info(`PR already has milestone "${pr.milestone.title}" - leaving it.`);
+              return;
+            }
+            const milestones = new Map(passed.map((p) => [p.milestone.number, p.milestone]));
+            if (milestones.size === 1) {
+              const [milestone] = milestones.values();
+              try {
+                await github.rest.issues.update({ ...context.repo, issue_number: pr.number, milestone: milestone.number });
+                core.info(`Set PR milestone to "${milestone.title}".`);
+              } catch (error) {
+                core.warning(`Could not set PR milestone "${milestone.title}" (${error.status ?? error.message}).`);
+              }
+              return;
+            }
+
+            const marker = '<!-- issue-link-milestone -->';
+            core.warning('Linked issues are in different milestones - no PR milestone set.');
+            try {
+              const pages = github.paginate.iterator(github.rest.issues.listComments, {
+                ...context.repo,
+                issue_number: pr.number,
+                per_page: 100,
+              });
+              for await (const { data } of pages) {
+                if (data.some((c) => (c.body || '').includes(marker))) {
+                  core.info('Milestone comment already posted - leaving it.');
+                  return;
+                }
+              }
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: pr.number,
+                body: [
+                  marker,
+                  'The linked issues are in different milestones, so no milestone was set on this PR:',
+                  '',
+                  ...passed.map((p) => `- #${p.number}: ${p.milestone.title}`),
+                  '',
+                  'Set the PR milestone by hand.',
+                ].join('\n'),
+              });
+            } catch (error) {
+              core.warning(`Could not post the milestone comment (${error.status ?? error.message}).`);
+            }
