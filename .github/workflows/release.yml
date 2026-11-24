@@ -118,7 +118,7 @@ jobs:
           echo "tag ${TAG} exists: ${TAG_EXISTS}; ${NAME}@${VERSION} on npm: ${PUBLISHED}"
 
       # The vX.Y milestone must be done. Its `release`-labelled issue tracks the release itself
-      # and is closed by the finish job.
+      # and is closed by the finish job. An open pull request always blocks, whatever its labels.
       - name: Milestone is done
         id: milestone
         env:
@@ -131,7 +131,7 @@ jobs:
             exit 0
           fi
           OPEN="$(gh api "repos/${GITHUB_REPOSITORY}/issues?milestone=${NUMBER}&state=open&per_page=100" \
-            --jq '[.[] | select(all(.labels[]; .name != "release")) | "#\(.number) \(.title)"] | .[]')"
+            --jq '[.[] | select(.pull_request != null or all(.labels[]; .name != "release")) | "#\(.number) \(.title)"] | .[]')"
           if [ -n "$OPEN" ]; then
             echo "::error::${LINE} still has open issues or PRs:"
             echo "$OPEN"
@@ -240,7 +240,7 @@ jobs:
       - name: Close the release issue and the milestone
         if: env.MILESTONE != ''
         run: |
-          for n in $(gh api "repos/${GITHUB_REPOSITORY}/issues?milestone=${MILESTONE}&state=open&labels=release&per_page=100" --jq '.[].number'); do
+          for n in $(gh api "repos/${GITHUB_REPOSITORY}/issues?milestone=${MILESTONE}&state=open&labels=release&per_page=100" --jq '.[] | select(.pull_request == null) | .number'); do
             gh issue close "$n" --repo "$GITHUB_REPOSITORY" --comment "Released as ${TAG}."
           done
           gh api -X PATCH "repos/${GITHUB_REPOSITORY}/milestones/${MILESTONE}" -f state=closed --jq '"Closed milestone \(.title)."'
