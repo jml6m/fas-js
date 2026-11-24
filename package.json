@@ -1,6 +1,6 @@
 {
   "name": "fas-js",
-  "description": "Finate State Automata JS Solutions",
+  "description": "Finite State Automata JS Solutions",
   "version": "1.11.0",
   "type": "module",
   "main": "./lib/index.cjs",
