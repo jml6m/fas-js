@@ -1,7 +1,6 @@
 ---
 name: Bug report
 about: Report incorrect FSA behavior, build failure, or test regression
-title: '[BUG]'
 labels: bug
 assignees: ''
 ---
