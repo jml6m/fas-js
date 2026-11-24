@@ -1,2 +1,5 @@
 # Kept byte for byte as published to npm; a test checks its hash
 demo/v1/fas-js-1.3.1.bundle.js -text -diff
+
+# Expected-output files are compared byte for byte
+test/fixtures/** -text
