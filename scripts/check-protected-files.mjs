@@ -1,5 +1,8 @@
 /**
- * CI gate: fail when a PR touches paths listed in .github/PROTECTED_FILES.json.
+ * CI gate: fail when a pull request touches a path listed in .github/PROTECTED_FILES.json.
+ * The workflow runs it for pull requests into the default branch only. Nothing turns a failure
+ * green; the `lock-files-changed` label only records that a pull request went through the
+ * exception process, so it is reported here and rejected on a pull request that needs none.
  */
 import { execFileSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -12,6 +15,8 @@ const root = resolve(__dir, "..");
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
 const RESET = "\x1b[0m";
+
+export const EXCEPTION_LABEL = "lock-files-changed";
 
 export function globToRegExp(pattern) {
   const normalized = pattern.replace(/\\/g, "/");
@@ -56,6 +61,22 @@ export function resolveBaseSha() {
   return baseSha;
 }
 
+/** Label names on the pull request, from PR_LABELS (a JSON array). None for a local run. */
+export function resolveLabels() {
+  const raw = process.env.PR_LABELS ?? "";
+  if (raw.trim() === "") return [];
+  let labels;
+  try {
+    labels = JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`[lock-files] PR_LABELS is not valid JSON: ${err.message}`);
+  }
+  if (!Array.isArray(labels) || labels.some((label) => typeof label !== "string")) {
+    throw new Error("[lock-files] PR_LABELS must be a JSON array of label names");
+  }
+  return labels;
+}
+
 export function getChangedFiles(baseSha) {
   try {
     const output = execFileSync("git", ["diff", baseSha, "HEAD", "--name-only"], {
@@ -85,6 +106,7 @@ export function findViolations(changedFiles, patterns) {
 export function runCheck({
   loadPatternsFn = loadPatterns,
   resolveBaseShaFn = resolveBaseSha,
+  resolveLabelsFn = resolveLabels,
   getChangedFilesFn = getChangedFiles,
   findViolationsFn = findViolations,
   log = (msg) => console.log(msg),
@@ -92,11 +114,18 @@ export function runCheck({
   exit = (code) => process.exit(code),
 } = {}) {
   const baseSha = resolveBaseShaFn();
+  const labelled = resolveLabelsFn().includes(EXCEPTION_LABEL);
   const patterns = loadPatternsFn(baseSha);
   const changedFiles = getChangedFilesFn(baseSha);
   const violations = findViolationsFn(changedFiles, patterns);
 
   if (violations.length === 0) {
+    if (labelled) {
+      error(`${RED}[lock-files] LABEL${RESET}`);
+      error(`This pull request carries "${EXCEPTION_LABEL}" but changes no protected file. Remove the label.`);
+      exit(1);
+      return;
+    }
     log(`${GREEN}[lock-files] OK${RESET}`);
     exit(0);
     return;
@@ -108,7 +137,9 @@ export function runCheck({
   for (const file of violations) {
     error(`  - ${file}`);
   }
-  error("See AGENTS.md \"Protected Files\" for the override process.");
+  error(`"${EXCEPTION_LABEL}" label: ${labelled ? "present" : "absent"}`);
+  error("This check never passes for a protected file. The maintainer can accept the change");
+  error('through the exception process: see "Locked files" in AGENTS.md.');
   exit(1);
 }
 
