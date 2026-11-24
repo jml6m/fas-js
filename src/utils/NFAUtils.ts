@@ -1,6 +1,7 @@
 import { DFAUtils } from "./DFAUtils";
 import { type State, type Transition, type Alphabet } from "../components";
 import { ErrorCode } from "../globals/errors";
+import { type IndexedTransition, transitionIndex, transitionsFrom } from "./TransitionIndex";
 
 export class NFAUtils extends DFAUtils {
   // NFA inheritly allows for ε (empty string) transition if specified
@@ -10,20 +11,26 @@ export class NFAUtils extends DFAUtils {
 
   // Follow all ε transitions and add to `state` (origin states)
   static populateEpsilons(_tfunc: Set<Transition>, state: State[]): State[] {
-    let cont = true; // continue
-    while (cont) {
-      cont = false;
+    const index = transitionIndex(_tfunc);
+    const reached: Set<State> = new Set(state);
 
-      // Find all ε from origin set
-      const epsTransitions: Transition[] = Array.from(_tfunc).filter(obj => {
-        return state.includes(obj.origin) && obj.input === "";
-      });
+    // Only the states added in the previous round can lead somewhere new
+    let frontier: State[] = [...reached];
+    while (frontier.length > 0) {
+      // Find all ε from the frontier, in the order the transition set holds them
+      const epsTransitions: IndexedTransition[] = [];
+      for (const origin of frontier) {
+        for (const _t of transitionsFrom(index, origin, "")) epsTransitions.push(_t);
+      }
+      epsTransitions.sort((a, b) => a.order - b.order);
 
       // Add new states, break if no new states found
+      frontier = [];
       for (const _t of epsTransitions) {
-        if (!state.includes(_t.dest)) {
+        if (!reached.has(_t.dest)) {
+          reached.add(_t.dest);
           state.push(_t.dest);
-          cont = true;
+          frontier.push(_t.dest);
         }
       }
     }
@@ -38,10 +45,9 @@ export class NFAUtils extends DFAUtils {
     _alph: Alphabet
   ): Set<Transition> {
     const newTFunc: Set<Transition> = new Set(); // Will contain only necessary transitions
+    const added: Map<State, Map<string, Set<State>>> = new Map(); // origin -> input -> dests in newTFunc
 
     for (const _t of _tfunc) {
-      let skip = false;
-
       // Check for valid states
       if (!_states.has(_t.origin)) {
         console.error("Origin state was invalid: %o", JSON.stringify(_t.origin));
@@ -53,15 +59,22 @@ export class NFAUtils extends DFAUtils {
       }
 
       // Check for duplicate before adding
-      for (const _checkT of newTFunc) {
-        if (_checkT.origin === _t.origin && _checkT.dest === _t.dest && _checkT.input === _t.input) skip = true;
-      }
+      const skip = added.get(_t.origin)?.get(_t.input)?.has(_t.dest) === true;
 
       // Map transition to a path and remove on match
       if (!skip) {
         if (_paths.has(_t.origin)) {
           if (this.isValidInputChar(_t.input, _alph)) {
             newTFunc.add(_t);
+
+            let byInput = added.get(_t.origin);
+            if (!byInput) {
+              byInput = new Map();
+              added.set(_t.origin, byInput);
+            }
+            const dests = byInput.get(_t.input);
+            if (dests) dests.add(_t.dest);
+            else byInput.set(_t.input, new Set([_t.dest]));
           } else {
             throw new Error(ErrorCode.INVALID_INPUT_CHAR);
           }

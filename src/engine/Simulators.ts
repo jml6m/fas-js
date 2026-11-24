@@ -51,8 +51,9 @@ export const stepOnceFSA = (
       throw new Error(ErrorCode.INVALID_STATE_NAME);
   } else {
     prevState = [];
+    const names = new Set(qin);
     for (const state of fsa.getStates().values()) {
-      if (qin.includes(state.name)) prevState.push(state);
+      if (names.has(state.name)) prevState.push(state);
     }
     if (prevState.length !== qin.length) {
       throw new Error(ErrorCode.INVALID_STATE_NAME);
