@@ -9,8 +9,24 @@
 
 Easily create and simulate state machines using this JS library. Import into your own server side or browser based JS application.
 
-![FSA Example](img/fsa_example.png)
-<h6>Visualization of an FSA</h6>
+```mermaid
+flowchart LR
+    start(( )) --> s((s))
+    s -- a --> q1(((q1)))
+    s -- b --> r1(((r1)))
+    q1 -- a --> q1
+    q1 -- b --> q2((q2))
+    q2 -- a --> q1
+    q2 -- b --> q2
+    r1 -- b --> r1
+    r1 -- a --> r2((r2))
+    r2 -- a --> r2
+    r2 -- b --> r1
+```
+
+<h6>A DFA that accepts the strings over {a, b} that start and end with the same symbol. It starts in s, and the double circles q1 and r1 are its accept states.</h6>
+
+Try this machine and others in the [live demo](https://jml6m.github.io/fas-js/).
 
 ## Installation
 Add the latest version of `fas-js` to your package.json:
