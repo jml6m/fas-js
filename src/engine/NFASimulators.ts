@@ -14,13 +14,15 @@ export function simulateNFA(
   // Accept either string or string[] for w
   if (!Array.isArray(w)) {
     if (typeof w === "string") {
-      if (w === "") w = [""];
-      else w = [...w];
+      w = [...w];
     } else {
       if (logging) console.error("Input w was invalid type: %O", w);
       throw new TypeError();
     }
   }
+
+  // The empty word, as "" or as [], still starts from the ε-closure of the start state
+  if (w.length === 0) w = [""];
 
   if (logging) console.log("Input Processing Started");
   let currentState: State[] = [nfa.getStartState()];
