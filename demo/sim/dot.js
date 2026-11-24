@@ -51,7 +51,7 @@ export function readGraph(graph) {
     label: edge.label ?? "",
     id: `edge${index + 1}`,
   }));
-  return { nodes, edges, markers: points.length };
+  return { nodes, edges, markers: points.length, markerId: marker === null ? null : `node${marker + 1}` };
 }
 
 /**
@@ -72,7 +72,7 @@ export function definitionFromGraph(graph) {
   const single = [];
   for (const edge of edges) {
     if (edge.from === null) continue;
-    if (edge.label === "") throw new Problem(`The arrow from "${edge.from}" to "${edge.to}" has no label, so the symbols it reads are not known.`);
+    if (edge.label === "") throw new Problem(`The arrow from “${edge.from}” to “${edge.to}” has no label, so the symbols it reads are not known.`);
     for (const input of readLabel(edge.label)) single.push({ from: edge.from, to: edge.to, input });
   }
 
@@ -80,7 +80,7 @@ export function definitionFromGraph(graph) {
   // cannot be a destination
   const withComma = single.find((edge) => edge.to.includes(","));
   if (withComma) {
-    throw new Problem(`The state "${withComma.to}" has a comma in its name and an arrow leads to it. A comma separates the next states of a transition, so this machine cannot be rebuilt from the drawing.`);
+    throw new Problem(`The state “${withComma.to}” has a comma in its name and an arrow leads to it. A comma separates the next states of a transition, so this machine cannot be rebuilt from the drawing.`);
   }
 
   const states = nodes.map((node) => node.name);

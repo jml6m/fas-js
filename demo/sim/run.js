@@ -3,9 +3,9 @@
  * library's simulateFSA and stepOnceFSA; this module only splits the typed input into symbols
  * and works out, from the definition, which edges lead from one set of states to the next.
  */
-import { Problem } from "./machine.js";
+import { Problem, codeOf } from "./machine.js";
 
-const quoted = (value) => `"${value}"`;
+const quoted = (value) => `“${value}”`;
 const codePoints = (text) => [...text].length;
 
 /** True when every symbol of the alphabet is one Unicode code point. */
@@ -62,7 +62,7 @@ export function trace(fas, machine, symbols) {
       next = fas.stepOnceFSA(symbol, current, fsa);
     } catch (error) {
       // The library rejects a symbol that is not in the alphabet; anything else is not the reader's doing
-      const unknown = error instanceof Error && error.message === "E-009";
+      const unknown = codeOf(error) === "E-009";
       const problem = unknown ? unknownSymbol(symbol, definition.alphabet) : "This step could not be taken. Load the machine again.";
       return { steps, accepted: null, problem, at };
     }

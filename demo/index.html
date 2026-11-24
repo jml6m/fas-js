@@ -3,178 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FSA Simulator — fas-js</title>
+    <title>Finite Automaton Simulator — fas-js</title>
     <meta
       name="description"
-      content="Select a DFA or NFA example, simulate or step through inputs, and visualize the state machine graph."
+      content="Pick a DFA or an NFA, or paste your own, then run an input or step through it and watch the graph."
     />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app">
-      <header class="header">
-        <div class="header__text">
-          <p class="eyebrow">fas-js demo</p>
-          <h1>Finite State Automaton Simulator</h1>
-          <p class="subtitle">
-            Choose an example, simulate or step through input, and watch the graph
-            update. Pick <strong>Custom machine</strong> to edit JSON.
+    <div class="app" id="app" data-view="run">
+      <header class="top">
+        <div class="top__text">
+          <h1>Finite Automaton Simulator</h1>
+          <p class="top__note">
+            Runs <span id="lib-version">fas-js</span> in your browser.
+            <a href="v1/">Open the original 2019 simulator</a>
           </p>
         </div>
-        <div class="header__meta">
-          <span class="badge" id="fsa-type">—</span>
-          <span class="version" id="lib-version"></span>
-          <a
-            class="link"
-            href="https://github.com/jml6m/fas-js"
-            target="_blank"
-            rel="noopener noreferrer"
-            >GitHub</a
-          >
+        <div class="views" role="group" aria-label="Panel shown">
+          <button type="button" class="views__btn" id="view-machine" aria-pressed="false">Machine</button>
+          <button type="button" class="views__btn" id="view-run" aria-pressed="true">Run</button>
         </div>
       </header>
 
-      <section class="toolbar" aria-label="Example selection">
-        <label class="field field--toolbar" for="example-select">
-          <span class="field__label">Example machine</span>
-          <select id="example-select">
-            <option value="dfaEndsIn1">DFA — strings ending in 1</option>
-            <option value="dfaSameSymbolEnds">
-              DFA — starts and ends with same symbol (a/b)
-            </option>
-            <option value="nfaAccepts01or1">NFA — accepts 01 or 1</option>
-            <option value="nfaOneNearEnd">
-              NFA — 1 in 2nd or 3rd position from end
-            </option>
-            <option value="custom">Custom machine (JSON)</option>
-          </select>
-        </label>
-        <p id="build-status" class="build-status" role="status" aria-live="polite">
-          Choose an example to load a machine.
-        </p>
-      </section>
-
-      <main class="workspace">
-        <section
-          class="panel machine-panel"
-          id="machine-panel"
-          aria-labelledby="machine-heading"
-        >
+      <main class="panels">
+        <section class="panel panel--machine" aria-labelledby="machine-heading">
           <h2 id="machine-heading">Machine</h2>
-          <div class="graph-viewport" id="graph-viewport">
-            <div id="graph" class="graph" aria-label="FSA graph visualization">
-              <p class="graph-placeholder">Select an example to render its graph.</p>
-            </div>
-          </div>
 
-          <div
-            class="custom-panel is-hidden"
-            id="custom-panel"
-            aria-hidden="true"
-            hidden
-          >
-            <p class="hint hint--compact">
-              JSON fields: <code>states</code>, <code>alphabet</code>,
-              <code>transitions</code>, <code>start</code>, <code>accepts</code>.
-            Optional <code>defaultInput</code>. NFAs: comma-separated
-            <code>to</code>; use <code>""</code> for an empty (epsilon) transition.
-            </p>
-
-            <label class="field field--editor" for="fsa-definition">
-              <span class="field__label">Machine JSON</span>
-              <div class="definition-shell">
-                <textarea
-                  id="fsa-definition"
-                  spellcheck="false"
-                  disabled
-                ></textarea>
+          <div class="machine">
+            <div class="machine__pick">
+              <div class="field">
+                <label for="preset">Choose a machine</label>
+                <select id="preset" aria-describedby="about"></select>
+                <p class="about" id="about"></p>
               </div>
-            </label>
+            </div>
 
-            <div class="button-row">
-              <button id="build-btn" type="button" class="btn btn--primary" disabled>
-                Build FSA
-              </button>
-              <button id="copy-btn" type="button" class="btn btn--ghost" disabled>
-                Copy definition
-              </button>
+            <div class="field field--grow">
+              <label for="definition">Definition</label>
+              <p class="hint" id="definition-hint">
+                Edit this JSON or paste your own, then choose Load. The text may also be the DOT text that
+                <code>generateDigraph()</code> returns.
+              </p>
+              <textarea
+                id="definition"
+                spellcheck="false"
+                autocomplete="off"
+                autocapitalize="off"
+                aria-describedby="definition-hint load-error"
+              ></textarea>
+            </div>
+
+            <div class="machine__actions">
+              <div class="row row--buttons">
+                <button type="button" class="btn btn--primary" id="load">Load</button>
+                <button type="button" class="btn" id="copy-dot">Copy as DOT</button>
+              </div>
+              <p class="note" id="load-status" role="status" hidden></p>
+              <p class="error" id="load-error" role="alert" hidden></p>
             </div>
           </div>
         </section>
 
-        <section class="panel sim-panel" aria-labelledby="sim-heading">
-          <h2 id="sim-heading">Simulation</h2>
+        <section class="panel panel--run" aria-labelledby="run-heading">
+          <h2 id="run-heading">Run</h2>
 
-          <label class="field" for="input-string">
-            <span class="field__label">Input string</span>
-            <input
-              id="input-string"
-              type="text"
-              value="101"
-              placeholder="Symbols from the alphabet"
-              autocomplete="off"
-              spellcheck="false"
-            />
-          </label>
-
-          <div class="button-row">
-            <button id="simulate-btn" type="button" class="btn btn--primary">
-              Simulate
-            </button>
-            <button id="reset-btn" type="button" class="btn btn--ghost">
-              Reset input
-            </button>
-          </div>
-
-          <div class="mode-divider" role="separator" aria-hidden="true"></div>
-
-          <h3 class="section-title">Step-through</h3>
-          <p class="hint hint--compact">
-            Consume one symbol at a time. The graph highlights active states.
-          </p>
-
-          <div class="button-row">
-            <button id="step-btn" type="button" class="btn">Step</button>
-            <button id="step-reset-btn" type="button" class="btn btn--ghost">
-              Restart steps
-            </button>
-          </div>
-
-          <dl class="status-grid">
-            <div>
-              <dt>Current state</dt>
-              <dd id="current-state">—</dd>
+          <div class="run">
+            <div class="graph" id="graph" role="group" aria-label="Graph" tabindex="-1">
+              <p class="placeholder">The graph is drawn here.</p>
             </div>
-            <div>
-              <dt>Next symbol</dt>
-              <dd id="next-symbol">—</dd>
-            </div>
-            <div>
-              <dt>Position</dt>
-              <dd id="position">0 / 0</dd>
-            </div>
-          </dl>
 
-          <div id="result" class="result result--idle" role="status" aria-live="polite">
-            Load an example, then simulate or step through an input string.
+            <div class="run__controls">
+              <p class="note" id="summary" hidden></p>
+
+              <p class="status" id="status" role="status">
+                <span id="step-message"></span>
+                <strong class="verdict" id="result" aria-hidden="true"></strong>
+                <span class="visually-hidden" id="result-words"></span>
+              </p>
+
+              <div class="field">
+                <label for="input">Input <span class="label__rule" id="input-rule"></span></label>
+                <input
+                  id="input"
+                  type="text"
+                  autocomplete="off"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  aria-describedby="input-hint input-error"
+                />
+                <p class="hint" id="input-hint"></p>
+                <p class="error" id="input-error" role="alert" hidden></p>
+              </div>
+
+              <ol class="tape" id="tape" aria-label="Symbols of the input"></ol>
+
+              <div class="row row--buttons">
+                <button type="button" class="btn btn--primary" id="simulate">Simulate</button>
+                <button type="button" class="btn" id="step">Step</button>
+                <button type="button" class="btn" id="reset" disabled>Reset</button>
+                <label class="check"><input type="checkbox" id="show-steps" /> Show all steps</label>
+              </div>
+
+              <ol class="steps" id="steps" aria-label="All steps of this run" tabindex="0" hidden></ol>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer class="footer">
-        <p>
-          <a href="https://github.com/jml6m/fas-js">fas-js</a> ·
-          <a href="v1/">Original 2019 simulator</a>
-        </p>
+      <footer class="foot">
+        <a href="https://github.com/jml6m/fas-js">fas-js on GitHub</a>
+        <a href="vendor/NOTICE.txt">Third-party notices</a>
       </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@hpcc-js/wasm@2.16.2/dist/graphviz.umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3-graphviz@5.6.0/build/d3-graphviz.min.js"></script>
     <script src="./vendor/fas-js.bundle.js"></script>
     <script src="./vendor/build-info.js"></script>
-    <script src="./app.js"></script>
+    <script type="module" src="./main.js"></script>
   </body>
 </html>

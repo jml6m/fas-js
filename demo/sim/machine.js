@@ -15,7 +15,8 @@ export class Problem extends Error {
 }
 
 const isText = (value) => typeof value === "string";
-const quoted = (value) => `"${value}"`;
+// Names the reader chose go in curly quotes; the keys of the JSON keep the straight quotes they are typed with
+const quoted = (value) => `“${value}”`;
 const list = (values) => values.map(quoted).join(", ");
 
 // One symbol per Unicode code point, the way the library reads a string alphabet
@@ -42,7 +43,7 @@ export function readDefinition(text) {
 /** Checks the shape of a definition object and returns a clean copy. */
 export function checkDefinition(raw) {
   for (const key of ["states", "alphabet", "transitions", "start", "accepts"]) {
-    if (raw[key] === undefined || raw[key] === null) throw new Problem(`The definition has no ${quoted(key)}.`);
+    if (raw[key] === undefined || raw[key] === null) throw new Problem(`The definition has no "${key}".`);
   }
 
   const states = Array.isArray(raw.states) ? raw.states : [raw.states];
@@ -95,7 +96,8 @@ export function edgesOf(definition, type) {
   );
 }
 
-const codeOf = (error) => (error instanceof Error && /^E-\d{3}$/.test(error.message) ? error.message : null);
+/** The library's error code in an error it threw, or null. The message is read as text: the library may live in another frame, where `instanceof Error` is false. */
+export const codeOf = (error) => (typeof error?.message === "string" && /^E-\d{3}$/.test(error.message) ? error.message : null);
 
 // The first thing in the definition that explains each library error, in words
 function explainBuild(code, definition) {

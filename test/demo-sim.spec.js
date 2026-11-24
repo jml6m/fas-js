@@ -160,16 +160,16 @@ describe("Simulator logic", function () {
 
     it("says what is wrong in a sentence that names the culprit, never an error code", function () {
       const cases = [
-        [{ alphabet: ["a", "b", "a"] }, /symbol "a" more than once/],
-        [{ start: "q9" }, /start state "q9" is not in the list/],
-        [{ accepts: ["q2", "q9"] }, /accept state "q9" is not in the list/],
-        [{ transitions: [...dfa.transitions.slice(0, 3), { from: "q9", to: "q2", input: "b" }] }, /starts from "q9"/],
-        [{ transitions: [...dfa.transitions.slice(0, 3), { from: "q2", to: "q9", input: "b" }] }, /goes to "q9"/],
-        [{ transitions: dfa.transitions.slice(0, 3) }, /State "q2" has none for "b"/],
-        [{ transitions: [...dfa.transitions.slice(0, 3), { from: "q2", to: "q2", input: "z" }] }, /symbol "z", which is not in the alphabet/],
-        [{ transitions: [...dfa.transitions, { from: "q1", to: "q1", input: "a" }] }, /State "q1" has two transitions for the symbol "a"/],
-        [{ transitions: [{ from: "q1", to: "q9", input: "" }] }, /goes to "q9"/],
-        [{ transitions: [{ from: "q1", to: "q2", input: "z" }, { from: "q1", to: "q2", input: "" }] }, /symbol "z", which is not in the alphabet/],
+        [{ alphabet: ["a", "b", "a"] }, /symbol “a” more than once/],
+        [{ start: "q9" }, /start state “q9” is not in the list/],
+        [{ accepts: ["q2", "q9"] }, /accept state “q9” is not in the list/],
+        [{ transitions: [...dfa.transitions.slice(0, 3), { from: "q9", to: "q2", input: "b" }] }, /starts from “q9”/],
+        [{ transitions: [...dfa.transitions.slice(0, 3), { from: "q2", to: "q9", input: "b" }] }, /goes to “q9”/],
+        [{ transitions: dfa.transitions.slice(0, 3) }, /State “q2” has none for “b”/],
+        [{ transitions: [...dfa.transitions.slice(0, 3), { from: "q2", to: "q2", input: "z" }] }, /symbol “z”, which is not in the alphabet/],
+        [{ transitions: [...dfa.transitions, { from: "q1", to: "q1", input: "a" }] }, /State “q1” has two transitions for the symbol “a”/],
+        [{ transitions: [{ from: "q1", to: "q9", input: "" }] }, /goes to “q9”/],
+        [{ transitions: [{ from: "q1", to: "q2", input: "z" }, { from: "q1", to: "q2", input: "" }] }, /symbol “z”, which is not in the alphabet/],
       ];
       for (const [changes, expected] of cases) {
         assert.match(
@@ -244,10 +244,10 @@ describe("Simulator logic", function () {
       assert.isNull(run.accepted);
       assert.equal(run.at, 1);
       assert.equal(run.steps.length, 2);
-      assert.equal(run.problem, '"7" is not in this machine\'s alphabet ("0", "1").');
+      assert.equal(run.problem, "“7” is not in this machine's alphabet (“0”, “1”).");
 
       const multi = buildMachine(fas, checkDefinition({ states: ["a"], alphabet: ["up", "down"], transitions: [{ from: "a", to: "a,a", input: "up" }], start: "a", accepts: [] }));
-      assert.equal(trace(fas, multi, ["updown"]).problem, '"updown" is not in this machine\'s alphabet ("up", "down"). Separate symbols with spaces.');
+      assert.equal(trace(fas, multi, ["updown"]).problem, "“updown” is not in this machine's alphabet (“up”, “down”). Separate symbols with spaces.");
     });
 
     it("gives simulateFSA's verdict, and stepping reaches the same verdict, on 400 generated machines", function () {
