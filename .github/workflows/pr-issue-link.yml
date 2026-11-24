@@ -88,8 +88,17 @@ jobs:
 
             // Give the PR its linked issues' milestone. Best effort: nothing below may change
             // the check's result, so failures (e.g. a fork PR's read-only token) only warn.
-            if (pr.milestone) {
-              core.info(`PR already has milestone "${pr.milestone.title}" - leaving it.`);
+            // The event payload is a snapshot from when the event fired, and a re-run of this job
+            // gets the same one. Read the PR again so a milestone set since then is never replaced.
+            let current;
+            try {
+              ({ data: current } = await github.rest.pulls.get({ ...context.repo, pull_number: pr.number }));
+            } catch (error) {
+              core.warning(`Could not re-read the PR (${error.status ?? error.message}) - leaving its milestone alone.`);
+              return;
+            }
+            if (current.milestone) {
+              core.info(`PR already has milestone "${current.milestone.title}" - leaving it.`);
               return;
             }
             const milestones = new Map(passed.map((p) => [p.milestone.number, p.milestone]));
