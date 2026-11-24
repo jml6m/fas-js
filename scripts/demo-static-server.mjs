@@ -19,7 +19,7 @@ function isWithinRoot(root, filePath) {
  * Resolve a URL path under demoRoot to a file on disk.
  * Rejects `..` segments and absolute paths so user input never escapes the root
  * (CodeQL js/path-injection). Supports directory paths with or without a trailing
- * slash (e.g. /v1.5 → index.html).
+ * slash (e.g. /v1 → index.html).
  */
 export function resolveDemoFilePath(demoRoot, urlPath) {
   const root = path.resolve(demoRoot);

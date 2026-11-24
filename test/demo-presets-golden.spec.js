@@ -1,5 +1,5 @@
 /**
- * Golden simulate table for demo/v1.5 prebuilt machines.
+ * Golden simulate table for the demo's prebuilt machines.
  * Parses EXAMPLES from app.js so preset JSON cannot drift from the UI silently.
  */
 import { readFileSync } from "node:fs";
@@ -11,11 +11,11 @@ import { assert } from "chai";
 import { createFSA, simulateFSA, stepOnceFSA } from "../src/modules";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const appJs = readFileSync(join(__dirname, "..", "demo", "v1.5", "app.js"), "utf8");
+const appJs = readFileSync(join(__dirname, "..", "demo", "app.js"), "utf8");
 
 function extractExamples(source) {
   const match = source.match(/const EXAMPLES = (\{[\s\S]*?\n  \});/);
-  assert.isOk(match, "EXAMPLES object should be parseable from demo/v1.5/app.js");
+  assert.isOk(match, "EXAMPLES object should be parseable from demo/app.js");
   // eslint-disable-next-line no-eval
   return eval("(" + match[1] + ")");
 }
