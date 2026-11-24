@@ -67,11 +67,12 @@ const states = ["q1", "q2"];
 const states2 = ["q1", "q2", "q3", "q4"];
 ```
 
-<b>Σ</b> cannot be empty, and can be passed in as one string (each character will be interpreted as a separate symbol) or a string array. Cannot contain duplicate symbols. For NFAs, you do not need to specify the empty string, it is implicitly added.
+<b>Σ</b> cannot be empty, and can be passed in as one string or a string array. A string is read one Unicode code point at a time: each code point becomes one symbol, so `"01"` is two symbols and an emoji is one. Use an array when a symbol needs more than one code point, such as `"up"` or a letter with a combining accent. Cannot contain duplicate symbols. For NFAs, you do not need to specify the empty string, it is implicitly added.
 
 ```javascript
-const alphabet = "01"; // ["0", "1"]
-const alph_array = ["0", "1", "up", "down", "*"];
+const alphabet = "01"; // two symbols: ["0", "1"]
+const emojiAlphabet = "🙂"; // one symbol: ["🙂"]
+const alph_array = ["0", "1", "up", "down", "*"]; // "up" and "down" are each one symbol
 ```
 
 <b>δ</b> is an array of objects that define the transitions between states. This object differs for DFAs and NFAs, and createFSA() will determine which to create based on the structure of this input.
@@ -136,7 +137,7 @@ There are two simulation options available:<br />
 
 <span style="font-size:18px"><a name="simulateFSA" href="#simulateFSA">#</a> <b>simulateFSA</b>(<i>w</i>: string | string[], <i>fsa</i>: FSA, <i>logging</i>: boolean = false, <i>returnEndState</i>: boolean = false) [<>](https://github.com/jml6m/fas-js/blob/master/src/engine/Simulators.ts "Source")</span>
 
-Runs the entire input `w` through the `fsa`. `w` must only contain symbols from the alphabet defined in `fsa`. By default, the function returns a boolean signifying whether `w` was accepted by the `fsa`. If `returnEndState` is set to true, the function will instead return the final state (string) or the final array of states (string[]), depending on whether `fsa` is a DFA or NFA.
+Runs the entire input `w` through the `fsa`. `w` must only contain symbols from the alphabet defined in `fsa`. A string `w` is split the same way as the alphabet: one Unicode code point per symbol (`"01"` is two symbols, an emoji is one). When a symbol spans more than one code point, pass `w` as an array so each element is one symbol (see the example below). By default, the function returns a boolean signifying whether `w` was accepted by the `fsa`. If `returnEndState` is set to true, the function will instead return the final state (string) or the final array of states (string[]), depending on whether `fsa` is a DFA or NFA.
 
 <span style="font-size:18px"><a name="stepOnceFSA" href="#stepOnceFSA">#</a> <b>stepOnceFSA</b>(w: string, qin: string | string[], fsa: FSA, logging: boolean = false) [<>](https://github.com/jml6m/fas-js/blob/master/src/engine/Simulators.ts "Source")</span>
 
@@ -157,11 +158,21 @@ simulateFSA("011", dfa, false, true); // returnEndState enabled, returns "q2"
 stepOnceFSA("0", "q1", dfa); // returns "q1"
 stepOnceFSA("1", "q1", dfa); // returns "q2"
 
+// Multi-character symbols are array elements, for both the alphabet and the input
+const directions = createFSA(states, ["down", "up"], [
+    { from: "q1", to: "q2", input: "down" },
+    { from: "q2", to: "q1", input: "up" },
+    { from: "q1", to: "q1", input: "up" },
+    { from: "q2", to: "q2", input: "down" }
+], "q1", ["q2"]);
+simulateFSA(["down", "up"], directions); // returns false
+simulateFSA(["down"], directions); // returns true
+
 // NFA Simulations
 simulateFSA("0", nfa); // returns false
 simulateFSA("01", nfa); // returns true
 simulateFSA("0100", nfa); // returns false
-simulateFSA("011", nfa, false, true); // returnEndState enabled, returns ["q1", "q2", "q3", "q4"]
+simulateFSA("011", nfa, false, true); // returnEndState enabled, returns ["q3", "q4"]
 
 stepOnceFSA("1", "q1", nfa); // returns ["q1", "q2", "q3"]
 stepOnceFSA("0", ["q1","q2","q3"], nfa); // returns ["q1", "q3"]
@@ -174,6 +185,18 @@ for (const symbol of w) {
 }
 // Now, check for acceptance
 if(accepts.indexOf(inputState) !== -1)
+    console.log("Accepted!");
+else
+    console.log("Rejected!");
+
+// Step through an input string w on NFA
+// An NFA begins in the ε-closure of its start state, so the first step consumes no symbol
+let activeStates = stepOnceFSA("", start, nfa); // ε-closure of q1 -> ["q1"]
+for (const symbol of "011") {
+    activeStates = stepOnceFSA(symbol, activeStates, nfa);
+}
+// Any active state may be an accept state, so check them all
+if(activeStates.some(state => accepts2.indexOf(state) !== -1))
     console.log("Accepted!");
 else
     console.log("Rejected!");
