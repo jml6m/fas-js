@@ -11,7 +11,7 @@ export type AlphabetSymbol = string;
 
 /**
  * Word over an alphabet — mirrors `simulateFSA`'s `w` parameter:
- * - `string`: each JS string element (code unit / BMP char) is one symbol
+ * - `string`: each Unicode code point is one symbol
  * - `readonly string[]`: explicit symbol sequence (required for multi-char symbols)
  */
 export type Word = string | readonly string[];

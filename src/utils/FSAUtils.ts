@@ -149,8 +149,9 @@ export const createFSA = (
     throw new TypeError(String(states));
   }
 
-  // Convert remaining inputs
-  const _alphabet = new Alphabet(alphabet);
+  // Convert remaining inputs. The automaton keeps its own copy of an alphabet array: an NFA adds
+  // the empty string to its alphabet, and that must not reach the caller's array.
+  const _alphabet = new Alphabet(Array.isArray(alphabet) ? [...alphabet] : alphabet);
   if (typeof start !== "string") throw new TypeError(String(start));
   const _start: State = getOrDefault(_states, start, null as unknown as State);
 
