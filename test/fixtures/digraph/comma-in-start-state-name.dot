@@ -1,0 +1,11 @@
+digraph fsa {
+          "a,b"
+	z [shape = doublecircle];
+          rankdir=LR;
+          node [shape = point ]; qi;
+          node [shape = circle];
+          qi -> "a,b";
+          "a,b" -> z [ label = "0" ];
+	z -> z [ label = "0" ];
+      }
+      

@@ -1,0 +1,23 @@
+digraph fsa {
+          "node"
+	"edge"
+	"graph" [shape = doublecircle];
+	"digraph"
+	"subgraph"
+	"strict"
+	"Node"
+	"EDGE" [shape = doublecircle];
+          rankdir=LR;
+          node [shape = point ]; qi;
+          node [shape = circle];
+          qi -> "node";
+          "node" -> "edge" [ label = "0" ];
+	"edge" -> "graph" [ label = "0" ];
+	"graph" -> "digraph" [ label = "0" ];
+	"digraph" -> "subgraph" [ label = "0" ];
+	"subgraph" -> "strict" [ label = "0" ];
+	"strict" -> "Node" [ label = "0" ];
+	"Node" -> "EDGE" [ label = "0" ];
+	"EDGE" -> "node" [ label = "0" ];
+      }
+      

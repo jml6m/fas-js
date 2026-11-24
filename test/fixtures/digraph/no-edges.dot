@@ -1,0 +1,9 @@
+digraph fsa {
+          s [shape = doublecircle];
+          rankdir=LR;
+          node [shape = point ]; qi;
+          node [shape = circle];
+          qi -> s;
+          
+      }
+      

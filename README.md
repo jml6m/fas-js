@@ -131,6 +131,8 @@ const nfa = createFSA(states2, alphabet, nfa_tfunc, start, accepts2);
 
 <span style="font-size:18px"><b>generateDigraph</b>(): string</span> - returns digraph according to [DOT](https://www.graphviz.org/doc/info/lang.html) language to be used for visualization.
 
+The graph shows the states that can be reached from the start state. A point marks the start state, accept states are double circles, and each edge is labelled with its symbols, sorted and separated by commas, with `ε` for an empty transition. A state name is quoted when DOT requires it. In a quoted name or a label, `"` and `\` are written `\"` and `\\`. Inside a label, a comma, a backslash or a literal `ε` in a symbol has a backslash before it. Calling it does not change the automaton.
+
 ## Simulation
 There are two simulation options available:<br />
 

@@ -1,0 +1,15 @@
+digraph fsa {
+          p
+	q
+	r [shape = doublecircle];
+          rankdir=LR;
+          node [shape = point ]; qi;
+          node [shape = circle];
+          qi -> p;
+          p -> q [ label = "\",\\,,\\\\,\\ε,a\\,b,ε" ];
+	q -> r [ label = "0,up" ];
+	q -> q [ label = "0" ];
+	r -> p [ label = "ε" ];
+	r -> r [ label = "\\\\,\\ε" ];
+      }
+      

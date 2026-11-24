@@ -1,0 +1,35 @@
+digraph fsa {
+          "q 1"
+	"1a"
+	"a\"b" [shape = doublecircle];
+	"a\\b"
+	"a\\" [shape = doublecircle];
+	"a:b"
+	"a-b"
+	"<b>"
+	"\""
+	"\\\""
+	" " [shape = doublecircle];
+	"1.2.3"
+	"a.b"
+	"-"
+          rankdir=LR;
+          node [shape = point ]; qi;
+          node [shape = circle];
+          qi -> "q 1";
+          "q 1" -> "1a" [ label = "0" ];
+	"1a" -> "a\"b" [ label = "0" ];
+	"a\"b" -> "a\\b" [ label = "0" ];
+	"a\\b" -> "a\\" [ label = "0" ];
+	"a\\" -> "a:b" [ label = "0" ];
+	"a:b" -> "a-b" [ label = "0" ];
+	"a-b" -> "<b>" [ label = "0" ];
+	"<b>" -> "\"" [ label = "0" ];
+	"\"" -> "\\\"" [ label = "0" ];
+	"\\\"" -> " " [ label = "0" ];
+	" " -> "1.2.3" [ label = "0" ];
+	"1.2.3" -> "a.b" [ label = "0" ];
+	"a.b" -> "-" [ label = "0" ];
+	"-" -> "q 1" [ label = "0" ];
+      }
+      
