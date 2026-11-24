@@ -37,6 +37,27 @@ export function withoutSourceMapComment(source) {
   return source.replace(/\n\/\/# sourceMappingURL=\S+\s*$/, "\n");
 }
 
+const graphvizNotice = graphvizVersion => [
+  `graphviz.js: @hpcc-js/wasm-graphviz ${graphvizVersion}, a WebAssembly build of Graphviz.`,
+  "  Apache License 2.0; the full text is in graphviz.LICENSE.txt.",
+  "  https://github.com/hpcc-systems/hpcc-js-wasm",
+  "  Graphviz itself is under the Eclipse Public License. https://graphviz.org/license/",
+];
+
+/** The notice beside the current simulator's vendor files. */
+export function currentNoticeText({ libraryVersion, graphvizVersion }) {
+  return [
+    "Files in this folder",
+    "",
+    `fas-js.bundle.js: fas-js ${libraryVersion}, the browser bundle the package publishes to npm.`,
+    "  GPL-3.0-or-later. https://github.com/jml6m/fas-js",
+    "",
+    ...graphvizNotice(graphvizVersion),
+    "",
+  ].join("\n");
+}
+
+/** The notice beside the original simulator's vendor files. */
 export function noticeText({ libraryVersion, graphvizVersion }) {
   return [
     "Third-party and earlier-release files in this folder",
@@ -45,10 +66,7 @@ export function noticeText({ libraryVersion, graphvizVersion }) {
     "  as published to npm. GPL-3.0-or-later. https://github.com/jml6m/fas-js",
     "  It contains parts of core-js (MIT). https://github.com/zloirock/core-js",
     "",
-    `graphviz.js: @hpcc-js/wasm-graphviz ${graphvizVersion}, a WebAssembly build of Graphviz.`,
-    "  Apache License 2.0; the full text is in graphviz.LICENSE.txt.",
-    "  https://github.com/hpcc-systems/hpcc-js-wasm",
-    "  Graphviz itself is under the Eclipse Public License. https://graphviz.org/license/",
+    ...graphvizNotice(graphvizVersion),
     "",
   ].join("\n");
 }
@@ -69,19 +87,25 @@ export function buildDemo({ rootDir = defaultRoot, log = () => {} } = {}) {
   const installed = relative => requireFile(at(relative), 'Run "npm ci" so it exists.');
 
   // The current simulator runs the browser bundle that is published to npm.
-  write("demo/vendor/fas-js.bundle.js", fs.readFileSync(built("lib/bundle.js")));
-  write("demo/vendor/build-info.js", buildInfoSource(readJson(at("package.json")).version));
+  const bundle = fs.readFileSync(built("lib/bundle.js"));
+  const currentVersion = readJson(at("package.json")).version;
 
-  // The original simulator runs the release it was written for and draws with Graphviz.
-  const libraryVersion = ORIGINAL_VERSION;
+  // Both simulators draw with the same Graphviz build, each from its own vendor folder.
   const graphvizVersion = readJson(installed(`${GRAPHVIZ}/package.json`)).version;
-  write("demo/v1/vendor/build-info.js", buildInfoSource(libraryVersion));
-  write(
-    "demo/v1/vendor/graphviz.js",
-    withoutSourceMapComment(fs.readFileSync(installed(`${GRAPHVIZ}/dist/index.js`), "utf8"))
-  );
-  write("demo/v1/vendor/graphviz.LICENSE.txt", fs.readFileSync(installed(`${GRAPHVIZ}/LICENSE`)));
-  write("demo/v1/vendor/NOTICE.txt", noticeText({ libraryVersion, graphvizVersion }));
+  const graphviz = withoutSourceMapComment(fs.readFileSync(installed(`${GRAPHVIZ}/dist/index.js`), "utf8"));
+  const graphvizLicence = fs.readFileSync(installed(`${GRAPHVIZ}/LICENSE`));
+
+  write("demo/vendor/fas-js.bundle.js", bundle);
+  write("demo/vendor/build-info.js", buildInfoSource(currentVersion));
+  write("demo/vendor/graphviz.js", graphviz);
+  write("demo/vendor/graphviz.LICENSE.txt", graphvizLicence);
+  write("demo/vendor/NOTICE.txt", currentNoticeText({ libraryVersion: currentVersion, graphvizVersion }));
+
+  // The original simulator runs the release it was written for.
+  write("demo/v1/vendor/build-info.js", buildInfoSource(ORIGINAL_VERSION));
+  write("demo/v1/vendor/graphviz.js", graphviz);
+  write("demo/v1/vendor/graphviz.LICENSE.txt", graphvizLicence);
+  write("demo/v1/vendor/NOTICE.txt", noticeText({ libraryVersion: ORIGINAL_VERSION, graphvizVersion }));
 
   log(`[build-demo] wrote ${written.length} files:\n${written.map(file => `  ${file}`).join("\n")}`);
   return written;
