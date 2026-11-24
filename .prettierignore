@@ -8,6 +8,7 @@ dist/
 
 # Vendored demo bundles
 demo/**/vendor/
+demo/v1/fas-js-1.3.1.bundle.js
 
 # Lockfile
 package-lock.json

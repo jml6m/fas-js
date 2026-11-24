@@ -30,7 +30,10 @@ npm run health:circular  # dependency-cruiser: import cycles and unresolvable im
   plus the type `TransitionInput`.
 - Regular core: `src/automata/`, `src/components/`, `src/engine/` (`Simulators.ts` indexes
   `DFASimulators` and `NFASimulators`), `src/languages/`, `src/utils/`.
-- Demo: [`src/demo-bundle.ts`](src/demo-bundle.ts) + `demo/` (local `npm run serve:demo`).
+- Demo: `demo/` is a static site. The root page runs the published bundle; `demo/v1/` is the
+  original 2019 simulator on fas-js 1.3.1. `npm run build` fills the `vendor/` folders through
+  [`scripts/build-demo.mjs`](scripts/build-demo.mjs); serve the site locally with
+  `npm run serve:demo`. See [`demo/README.md`](demo/README.md).
 - **Do not** change the public API surface. That is a major-version decision for the maintainer.
 
 ## Locked files

@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsup",
     "prebuild": "node scripts/prebuild.mjs",
-    "postbuild": "node scripts/postbuild.mjs",
+    "postbuild": "node scripts/postbuild.mjs && node scripts/build-demo.mjs",
     "clean": "node scripts/prebuild.mjs",
     "prepublishOnly": "npm run build && npm test",
     "typecheck": "tsc --noEmit",

@@ -8,6 +8,7 @@ const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".json": "application/json",
   ".svg": "image/svg+xml",
+  ".txt": "text/plain; charset=utf-8",
 };
 
 function isWithinRoot(root, filePath) {
@@ -16,13 +17,10 @@ function isWithinRoot(root, filePath) {
 }
 
 /**
- * Resolve a URL path under demoRoot to a file on disk.
- * Rejects `..` segments and absolute paths so user input never escapes the root
- * (CodeQL js/path-injection). Supports directory paths with or without a trailing
- * slash (e.g. /v1.5 → index.html).
+ * The folder and file names in a URL path, or null when the path must be refused.
+ * Rejects `..` segments so user input never escapes the root (CodeQL js/path-injection).
  */
-export function resolveDemoFilePath(demoRoot, urlPath) {
-  const root = path.resolve(demoRoot);
+function pathSegments(urlPath) {
   const raw = (urlPath ?? "/").split("?")[0];
 
   let decoded;
@@ -45,6 +43,44 @@ export function resolveDemoFilePath(demoRoot, urlPath) {
     return null;
   }
 
+  return { segments, endsWithSlash: decoded.endsWith("/") };
+}
+
+/**
+ * Where to send a request for a folder that lacks its trailing slash (`/v1` → `/v1/`), or null.
+ * The published site redirects the same way; without it the page's relative links would resolve
+ * one level up. The location is rebuilt from the path segments, so it always stays on this server.
+ */
+export function folderRedirect(demoRoot, urlPath) {
+  const parsed = pathSegments(urlPath);
+  if (!parsed || parsed.endsWithSlash || parsed.segments.length === 0) {
+    return null;
+  }
+
+  const root = path.resolve(demoRoot);
+  let folder = root;
+  for (const seg of parsed.segments) {
+    folder = path.join(folder, seg);
+  }
+  if (!isWithinRoot(root, folder) || !fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) {
+    return null;
+  }
+
+  return "/" + parsed.segments.map(encodeURIComponent).join("/") + "/";
+}
+
+/**
+ * Resolve a URL path under demoRoot to a file on disk, or null when the path must be refused.
+ * A folder resolves to its index.html.
+ */
+export function resolveDemoFilePath(demoRoot, urlPath) {
+  const root = path.resolve(demoRoot);
+  const parsed = pathSegments(urlPath);
+  if (!parsed) {
+    return null;
+  }
+  const { segments, endsWithSlash } = parsed;
+
   let filePath = root;
   for (const seg of segments) {
     filePath = path.join(filePath, seg);
@@ -63,7 +99,7 @@ export function resolveDemoFilePath(demoRoot, urlPath) {
       if (fs.existsSync(indexCandidate)) {
         filePath = indexCandidate;
       }
-    } else if (decoded.endsWith("/")) {
+    } else if (endsWithSlash) {
       filePath = path.join(filePath, "index.html");
     }
   }
@@ -85,6 +121,13 @@ export function startDemoStaticServer(demoRoot, options = {}) {
   const requestedPort = options.port ?? 0;
 
   const server = http.createServer((req, res) => {
+    const redirect = folderRedirect(root, req.url ?? "/");
+    if (redirect) {
+      res.writeHead(301, { Location: redirect });
+      res.end();
+      return;
+    }
+
     const filePath = resolveDemoFilePath(root, req.url ?? "/");
     if (!filePath) {
       res.writeHead(403);

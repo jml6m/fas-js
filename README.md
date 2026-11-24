@@ -184,15 +184,9 @@ else
 
 ## Demo
 
-Interactive demos visualize FSAs as you simulate input strings.
+Try the library in the browser: **[fas-js demo](https://jml6m.github.io/fas-js/)**. Pick a prebuilt DFA or NFA, or paste your own definition, then simulate an input string or step through it and watch the graph.
 
-| Version | URL | Notes |
-|---------|-----|-------|
-| **v1.5+** | [GitHub Pages demo](https://jml6m.github.io/fas-js/v1.5/) | DFA/NFA simulator — prebuilt examples, simulate/step, graph (`demo/v1.5/`) |
-| **v1.1** | [Redirect](https://jml6m.github.io/fas-js/v1.1/) | Preserved URL → v1.5 |
-| **v1** (legacy) | [ObservableHQ](https://observablehq.com/@jml6m/state-machine-simulator) | Original notebook |
-
-See [demo/README.md](demo/README.md) for version history, local development (`npm run serve:demo` on port 3200), automated tests, and deployment details.
+See [demo/README.md](demo/README.md) for local development (`npm run serve:demo` on port 3200), automated tests, and deployment details.
 
 ## Contributing
 

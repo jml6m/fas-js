@@ -662,7 +662,18 @@
     });
   }
 
+  // vendor/build-info.js is written when the site is built, from package.json.
+  function showLibraryVersion() {
+    const versionEl = document.getElementById("lib-version");
+    const build = window.fasJsDemoBuild;
+    if (versionEl && build && build.version) {
+      versionEl.textContent = "fas-js " + build.version;
+    }
+  }
+
   function init() {
+    showLibraryVersion();
+
     if (typeof fasJs === "undefined") {
       setBuildStatus(
         "fas-js bundle missing. Run npm run build to copy vendor/fas-js.bundle.js.",

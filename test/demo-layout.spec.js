@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { assert } from "chai";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DEMO = join(__dirname, "..", "demo", "v1.5");
+const DEMO = join(__dirname, "..", "demo");
 const html = readFileSync(join(DEMO, "index.html"), "utf8");
 const css = readFileSync(join(DEMO, "styles.css"), "utf8");
 const appJs = readFileSync(join(DEMO, "app.js"), "utf8");
