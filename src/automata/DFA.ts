@@ -1,9 +1,10 @@
 import { type FSA } from "../interfaces/FSA";
 import { type State, type Alphabet, type Transition } from "../components";
 import { ErrorCode } from "../globals/errors";
-import { checkStateDuplicates, getOrDefault, isSubsetOf } from "../globals/globals";
+import { checkStateDuplicates, isSubsetOf } from "../globals/globals";
 import { DFAUtils } from "../utils/DFAUtils";
 import { NFAUtils } from "../utils/NFAUtils";
+import { toDot } from "./Digraph";
 
 export class DFA implements FSA {
   // Primary FSA attributes
@@ -15,7 +16,6 @@ export class DFA implements FSA {
 
   // Intermediary attributes used in constructor
   #paths: Map<State, Set<string>>; // States mapped to each member of Σ, will be empty after constructor returns
-  #links: Map<string, Set<string>> = new Map(); // State names mapped to their dest state names
   #utils: typeof DFAUtils;
 
   constructor(
@@ -71,52 +71,6 @@ export class DFA implements FSA {
   }
 
   generateDigraph(): string {
-    // Prep outputs
-    const acceptArr: string[] = [];
-    for (const state of this.#accepts) acceptArr.push(state.name);
-
-    // Duplicate origin/dest combinations should share a line
-    const pairs: Map<string, string> = new Map();
-    (Object.values([...this.#tfunc]) as Transition[]).map(function (t: Transition) {
-      const key: string = t.origin.name + t.dest.name;
-      let _input: string = t.input;
-      if (_input === "") _input = "ε";
-      if (!pairs.has(key)) {
-        pairs.set(key, t.origin.name + " -> " + t.dest.name + ' [ label = "' + _input + '" ];');
-      } else {
-        /*
-         * To edit an existing line, split out the input(s), convert to number, sort them ascending, and add the new one
-         */
-        let _line: string = getOrDefault(pairs, key, "");
-        const _oldinput: string = _line.split('"')[1];
-        const _toAdd: string[] = _oldinput.split(",");
-        _toAdd.push(_input);
-        _toAdd.sort();
-        _line = _line.replace('"' + _oldinput + '"', '"' + _toAdd.toString() + '"');
-        pairs.set(key, _line);
-      }
-    });
-
-    // return template literal
-    return `digraph fsa {
-          ${(Object.values(
-            this.#utils.determineStateOrder(this.#links, this.#tfunc, this.#states, this.#start, this.#accepts)
-          ) as string[])
-            .map(function (str: string) {
-              if (acceptArr.indexOf(str) !== -1) return str + " [shape = doublecircle];";
-              else return str;
-            })
-            .join("\n\t")}
-          rankdir=LR;
-          node [shape = point ]; qi;
-          node [shape = circle];
-          qi -> ${this.#start.name};
-          ${(Object.values([...pairs]) as [string, string][])
-            .map(function ([, val]) {
-              return val;
-            })
-            .join("\n\t")}
-      }
-      `;
+    return toDot(this.#states, this.#tfunc, this.#start, this.#accepts);
   }
 }

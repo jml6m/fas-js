@@ -5,6 +5,7 @@ import { State, Transition, Alphabet, NFATransition } from "../components";
 import { DFA, NFA } from "../automata";
 import { type TransitionInput } from "./DFAUtils";
 import { NFAUtils } from "./NFAUtils";
+import { transitionIndex, transitionsFrom } from "./TransitionIndex";
 
 export type { TransitionInput };
 
@@ -20,16 +21,13 @@ export const FSAUtils = (() => {
     if (dfa.getAlphabet().sigma.indexOf(input) === -1) throw new Error(ErrorCode.INVALID_INPUT_CHAR);
     if (!dfa.getStates().has(state)) throw new Error(ErrorCode.INPUT_STATE_NOT_FOUND);
 
-    const path = Array.from(dfa.getTFunc()).find(obj => {
-      return obj.origin === state && obj.input === input;
-    });
+    const path = transitionsFrom(transitionIndex(dfa.getTFunc()), state, input)[0];
 
     if (path) return path.dest;
     else throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
   }
 
   function receiveInputNFA(nfa: InstanceType<typeof NFA>, input: string, state: State[]): Set<State> {
-    let path: Transition[] = [];
     if (nfa.getAlphabet().sigma.indexOf(input) === -1) throw new Error(ErrorCode.INVALID_INPUT_CHAR);
 
     // Empty transitions
@@ -39,23 +37,14 @@ export const FSAUtils = (() => {
     if (input === "") return new Set<State>(state);
 
     // Looking at all origin states, based on input char, determine set of destination states
-    for (const _s of state) {
-      const _addToPath: Transition[] = Array.from(nfa.getTFunc()).filter(obj => {
-        return obj.origin === _s && obj.input === input;
-      });
-
-      path = path.concat(_addToPath);
-    }
-
+    const index = transitionIndex(nfa.getTFunc());
     const resultArr: State[] = [];
-    if (path.length > 1) {
-      for (const _s of path) resultArr.push(_s.dest);
-    } else if (path.length === 1) {
-      resultArr.push(path[0].dest);
-    } else {
-      // No valid transition found, returning empty set
-      return new Set<State>();
+    for (const _s of state) {
+      for (const path of transitionsFrom(index, _s, input)) resultArr.push(path.dest);
     }
+
+    // No valid transition found, returning empty set
+    if (resultArr.length === 0) return new Set<State>();
 
     // Empty transitions on result set
     const retSet: Set<State> = new Set<State>(populateEpsilons(nfa.getTFunc(), resultArr));
@@ -160,8 +149,9 @@ export const createFSA = (
     throw new TypeError(String(states));
   }
 
-  // Convert remaining inputs
-  const _alphabet = new Alphabet(alphabet);
+  // Convert remaining inputs. The automaton keeps its own copy of an alphabet array: an NFA adds
+  // the empty string to its alphabet, and that must not reach the caller's array.
+  const _alphabet = new Alphabet(Array.isArray(alphabet) ? [...alphabet] : alphabet);
   if (typeof start !== "string") throw new TypeError(String(start));
   const _start: State = getOrDefault(_states, start, null as unknown as State);
 

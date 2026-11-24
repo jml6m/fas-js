@@ -17,3 +17,8 @@ quote_type = single
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
+
+# Expected-output files are compared byte for byte, trailing spaces and missing final newline included
+[test/fixtures/**]
+insert_final_newline = false
+trim_trailing_whitespace = false

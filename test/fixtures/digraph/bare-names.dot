@@ -1,0 +1,29 @@
+digraph fsa {
+          q0
+	_x
+	é [shape = doublecircle];
+	状態
+	🙂
+	1
+	-1.5 [shape = doublecircle];
+	.5
+	7.
+	Q_9
+	ε
+          rankdir=LR;
+          node [shape = point ]; qi;
+          node [shape = circle];
+          qi -> q0;
+          q0 -> _x [ label = "0" ];
+	_x -> é [ label = "0" ];
+	é -> 状態 [ label = "0" ];
+	状態 -> 🙂 [ label = "0" ];
+	🙂 -> 1 [ label = "0" ];
+	1 -> -1.5 [ label = "0" ];
+	-1.5 -> .5 [ label = "0" ];
+	.5 -> 7. [ label = "0" ];
+	7. -> Q_9 [ label = "0" ];
+	Q_9 -> ε [ label = "0" ];
+	ε -> q0 [ label = "0" ];
+      }
+      

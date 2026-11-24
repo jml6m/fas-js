@@ -68,69 +68,6 @@ export class DFAUtils {
     return _paths;
   }
 
-  // Determine digraph order based on start state, then following the chain
-  static determineStateOrder(
-    _links: Map<string, Set<string>>,
-    _tfunc: Set<Transition>,
-    _states: Set<State>,
-    _start: State,
-    _accepts: Set<State>
-  ): string[] {
-    const statesOrder: string[] = []; // Ordered state names for digraph
-
-    // Map origin state names to dest state names
-    _links = new Map();
-    for (const tr of _tfunc) {
-      const linkStateVals: Set<string> = getOrDefault(_links, tr.origin.name, new Set());
-      if (_links.has(tr.origin.name)) linkStateVals.add(tr.dest.name);
-      else _links.set(tr.origin.name, new Set([tr.dest.name]));
-    }
-
-    // Populate state order
-    this.parseLinks(statesOrder, _start.name, _links);
-
-    // Check for dead states and reduce FSA if necessary
-    const stateArr: string[] = [];
-    (Object.values([..._states]) as State[]).map((state: State) => stateArr.push(state.name));
-    const deadStates = stateArr.filter(x => !statesOrder.includes(x));
-    if (deadStates.length > 0) {
-      console.warn("Dead states detected, removing them and associated transitions: %O", deadStates);
-      this.removeDeadStates(deadStates, _states, _accepts, _tfunc);
-    }
-
-    return statesOrder;
-  }
-
-  // Reduce FSA by removing dead states and associated transitions
-  static removeDeadStates(
-    deadStates: string[],
-    _states: Set<State>,
-    _accepts: Set<State>,
-    _tfunc: Set<Transition>
-  ) {
-    // Q
-    for (const state of _states) {
-      if (deadStates.indexOf(state.name) !== -1) _states.delete(state);
-    }
-    // F
-    for (const state of _accepts) {
-      if (deadStates.indexOf(state.name) !== -1) _accepts.delete(state);
-    }
-    // δ
-    for (const tr of _tfunc) {
-      if (deadStates.indexOf(tr.origin.name) !== -1 || deadStates.indexOf(tr.dest.name) !== -1) _tfunc.delete(tr);
-    }
-  }
-
-  // Recursively parse graph while adding to an array in order, beginning with q0
-  static parseLinks(arr: string[], name: string, _links: Map<string, Set<string>>) {
-    arr.push(name);
-    const nameVal = getOrDefault(_links, name, new Set<string>());
-    for (const st of nameVal) {
-      if (arr.indexOf(st) === -1) this.parseLinks(arr, st, _links);
-    }
-  }
-
   // DFA does not allow empty symbol
   static isValidInputChar(input: string, _alph: Alphabet): boolean {
     if (input === "") return false;

@@ -1,0 +1,19 @@
+digraph fsa {
+          a
+	bc
+	ab
+	c [shape = doublecircle];
+          rankdir=LR;
+          node [shape = point ]; qi;
+          node [shape = circle];
+          qi -> a;
+          a -> bc [ label = "x" ];
+	a -> a [ label = "y" ];
+	ab -> c [ label = "x" ];
+	ab -> ab [ label = "y" ];
+	bc -> ab [ label = "x" ];
+	bc -> bc [ label = "y" ];
+	c -> c [ label = "x" ];
+	c -> a [ label = "y" ];
+      }
+      

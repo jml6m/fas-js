@@ -1,8 +1,13 @@
 import { type State } from "../components/State";
 
-// Count number of instances for each string in an array - returns key/val pairs
-export const count = (names: string[]): Record<string, number> =>
-  names.reduce((a, b) => Object.assign(a, { [b]: (a[b] || 0) + 1 }), {} as Record<string, number>);
+// Count number of instances for each string in an array - returns key/val pairs.
+// Counted in a Map so that names every object already has (constructor, __proto__) count from zero.
+// Keys are the names as strings, as they would be on an object, so 1 and "1" are the same name.
+export const count = (names: string[]): Record<string, number> => {
+  const counts = new Map<string, number>();
+  for (const name of names) counts.set(String(name), (counts.get(String(name)) ?? 0) + 1);
+  return Object.fromEntries(counts);
+};
 
 // Returns keys with value > 1
 export const duplicates = (dict: Record<string, number>): string[] =>
