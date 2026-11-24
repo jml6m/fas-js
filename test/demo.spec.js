@@ -1,6 +1,6 @@
 /**
  * Demo fidelity — build artifacts, static HTTP smoke, and browser UI workflows.
- * Runs on every branch via npm test (after build copies vendor bundle).
+ * Runs on every branch via npm test (the build fills the demo's vendor folder first).
  */
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -16,14 +16,16 @@ import { assertPublicApiSurface } from "./helpers/publicApiContract.js";
 const __dir = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dir, "..");
 const demoRoot = resolve(root, "demo");
-const v15Root = resolve(demoRoot, "v1.5");
-const vendorBundle = resolve(v15Root, "vendor/fas-js.bundle.js");
+const vendorBundle = resolve(demoRoot, "vendor/fas-js.bundle.js");
+const buildInfo = resolve(demoRoot, "vendor/build-info.js");
+const packageVersion = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")).version;
 
-const REQUIRED_V15_ASSETS = [
+const REQUIRED_ASSETS = [
   "index.html",
   "app.js",
   "styles.css",
   "vendor/fas-js.bundle.js",
+  "vendor/build-info.js",
 ];
 
 const REQUIRED_DOM_IDS = [
@@ -38,12 +40,13 @@ const REQUIRED_DOM_IDS = [
   "custom-panel",
   "machine-panel",
   "graph-viewport",
+  "lib-version",
 ];
 
 function loadDemoBundleApi() {
   const code = readFileSync(vendorBundle, "utf8");
   const sandbox = { fasJs: undefined, console };
-  runInNewContext(code, sandbox, { filename: "demo/v1.5/vendor/fas-js.bundle.js" });
+  runInNewContext(code, sandbox, { filename: "demo/vendor/fas-js.bundle.js" });
   assert.isObject(sandbox.fasJs);
   return sandbox.fasJs;
 }
@@ -123,18 +126,18 @@ function installBrowserStubs(window) {
 }
 
 function loadDemoAppDom() {
-  const html = readFileSync(resolve(v15Root, "index.html"), "utf8");
+  const html = readFileSync(resolve(demoRoot, "index.html"), "utf8");
   const dom = new JSDOM(html, {
-    url: "http://127.0.0.1/v1.5/",
+    url: "http://127.0.0.1/",
     runScripts: "outside-only",
   });
   const { window } = dom;
 
-  const bundleCode = readFileSync(vendorBundle, "utf8");
-  runInNewContext(bundleCode, window, { filename: "fas-js.bundle.js" });
+  runInNewContext(readFileSync(vendorBundle, "utf8"), window, { filename: "fas-js.bundle.js" });
+  runInNewContext(readFileSync(buildInfo, "utf8"), window, { filename: "build-info.js" });
   installBrowserStubs(window);
 
-  const appCode = readFileSync(resolve(v15Root, "app.js"), "utf8");
+  const appCode = readFileSync(resolve(demoRoot, "app.js"), "utf8");
   window.eval(appCode);
 
   return window;
@@ -148,35 +151,49 @@ function click(window, id) {
 
 describe("demo fidelity", function() {
   describe("build artifacts", function() {
-    it("copies v1.5 vendor bundle after npm run build", function() {
+    it("runs the bundle that is published to npm", function() {
       assert.isTrue(existsSync(vendorBundle), "run npm run build first");
-      const stats = readFileSync(vendorBundle);
-      assert.isAbove(stats.length, 1000);
+      const published = readFileSync(resolve(root, "lib/bundle.js"));
+      assert.isAbove(published.length, 1000);
+      assert.isTrue(published.equals(readFileSync(vendorBundle)), "demo/vendor copy differs from lib/bundle.js");
     });
 
     it("demo bundle exposes public FSA API only", function() {
       exerciseDemoBundle(loadDemoBundleApi());
     });
 
-    it("v1.5 ships required static assets", function() {
-      for (const asset of REQUIRED_V15_ASSETS) {
-        assert.isTrue(existsSync(resolve(v15Root, asset)), asset);
+    it("build info carries the version from package.json", function() {
+      const sandbox = {};
+      runInNewContext(readFileSync(buildInfo, "utf8"), sandbox, { filename: "build-info.js" });
+      assert.equal(sandbox.fasJsDemoBuild.version, packageVersion);
+    });
+
+    it("ships required static assets", function() {
+      for (const asset of REQUIRED_ASSETS) {
+        assert.isTrue(existsSync(resolve(demoRoot, asset)), asset);
       }
     });
 
     it("index.html references assets that exist on disk", function() {
-      const html = readFileSync(resolve(v15Root, "index.html"), "utf8");
+      const html = readFileSync(resolve(demoRoot, "index.html"), "utf8");
       assert.include(html, "vendor/fas-js.bundle.js");
+      assert.include(html, "vendor/build-info.js");
       assert.include(html, "app.js");
       assert.include(html, "styles.css");
       assert.include(html, "Finite State Automaton Simulator");
     });
 
-    it("v1.1 redirect preserves old URL and points at v1.5", function() {
-      const html = readFileSync(resolve(demoRoot, "v1.1/index.html"), "utf8");
-      assert.include(html, "../v1.5/");
-      assert.include(html, "DFA/NFA simulator");
-      assert.notInclude(html, "id=\"build-btn\"");
+    it("has no versioned demo folders", function() {
+      for (const folder of ["v1.1", "v1.5"]) {
+        assert.isFalse(existsSync(resolve(demoRoot, folder)), folder);
+      }
+    });
+
+    it("carries no hand-written demo version", function() {
+      for (const file of ["index.html", "app.js", "styles.css", "README.md"]) {
+        const text = readFileSync(resolve(demoRoot, file), "utf8");
+        assert.notMatch(text, /\bv1\.(?:1|5|6)\b/, file);
+      }
     });
   });
 
@@ -201,25 +218,24 @@ describe("demo fidelity", function() {
       return body;
     }
 
-    it("serves v1.5 with or without trailing slash", async function() {
-      await expectOk("/v1.5/", "Finite State Automaton Simulator");
-      await expectOk("/v1.5", "Finite State Automaton Simulator");
-      await expectOk("/v1.5/index.html", "Finite State Automaton Simulator");
+    it("serves the simulator at the site root", async function() {
+      await expectOk("/", "Finite State Automaton Simulator");
+      await expectOk("/index.html", "Finite State Automaton Simulator");
     });
 
-    it("serves v1.5 app, styles, and vendor bundle", async function() {
-      await expectOk("/v1.5/app.js", "EXAMPLES");
-      await expectOk("/v1.5/styles.css", ".workspace");
-      const bundle = await expectOk("/v1.5/vendor/fas-js.bundle.js");
+    it("serves the app, styles, and vendor files", async function() {
+      await expectOk("/app.js", "EXAMPLES");
+      await expectOk("/styles.css", ".workspace");
+      const bundle = await expectOk("/vendor/fas-js.bundle.js");
       assert.include(bundle, "fasJs");
+      await expectOk("/vendor/build-info.js", packageVersion);
     });
 
-    it("serves demo root redirect to v1.5", async function() {
-      await expectOk("/", "v1.5/");
-    });
-
-    it("serves v1.1 redirect page", async function() {
-      await expectOk("/v1.1/", "../v1.5/");
+    it("returns 404 for the former versioned paths", async function() {
+      for (const pathname of ["/v1.1/", "/v1.5/", "/v1.5/index.html"]) {
+        const response = await fetch(`${server.baseUrl}${pathname}`);
+        assert.equal(response.status, 404, pathname);
+      }
     });
 
     it("returns 404 for missing demo paths", async function() {
@@ -234,6 +250,14 @@ describe("demo fidelity", function() {
       for (const id of REQUIRED_DOM_IDS) {
         assert.isNotNull(window.document.getElementById(id), id);
       }
+    });
+
+    it("shows the library version it was built from", function() {
+      const window = loadDemoAppDom();
+      assert.equal(
+        window.document.getElementById("lib-version").textContent,
+        `fas-js ${packageVersion}`
+      );
     });
 
     it("auto-builds the default FSA example on load", function() {
