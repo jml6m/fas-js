@@ -8,7 +8,7 @@ import { runInNewContext } from "node:vm";
 
 import { assert } from "chai";
 
-import { buildDemo, buildInfoSource, noticeText, withoutSourceMapComment } from "../scripts/build-demo.mjs";
+import { buildDemo, buildInfoSource, currentNoticeText, noticeText, withoutSourceMapComment } from "../scripts/build-demo.mjs";
 
 describe("demo build script", function() {
   let dir;
@@ -44,7 +44,7 @@ describe("demo build script", function() {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("gives the current simulator the published bundle and the package version", function() {
+  it("gives the current simulator the published bundle, the package version and the Graphviz build", function() {
     putEverything();
 
     const written = buildDemo({ rootDir: dir });
@@ -52,6 +52,11 @@ describe("demo build script", function() {
     assert.includeMembers(written, ["demo/vendor/fas-js.bundle.js", "demo/vendor/build-info.js"]);
     assert.equal(get("demo/vendor/fas-js.bundle.js"), "var fasJs = {};\n");
     assert.equal(version("demo/vendor/build-info.js"), "9.8.0");
+    assert.equal(get("demo/vendor/graphviz.js"), "export const Graphviz = {};\n");
+    assert.equal(get("demo/vendor/graphviz.LICENSE.txt"), "Apache License\n");
+    assert.include(get("demo/vendor/NOTICE.txt"), "fas-js 9.8.0");
+    assert.include(get("demo/vendor/NOTICE.txt"), "@hpcc-js/wasm-graphviz 1.30.0");
+    assert.notInclude(get("demo/vendor/NOTICE.txt"), "1.3.1");
   });
 
   it("gives the original simulator its release's version and the Graphviz build", function() {
@@ -62,6 +67,9 @@ describe("demo build script", function() {
     assert.deepEqual(written, [
       "demo/vendor/fas-js.bundle.js",
       "demo/vendor/build-info.js",
+      "demo/vendor/graphviz.js",
+      "demo/vendor/graphviz.LICENSE.txt",
+      "demo/vendor/NOTICE.txt",
       "demo/v1/vendor/build-info.js",
       "demo/v1/vendor/graphviz.js",
       "demo/v1/vendor/graphviz.LICENSE.txt",
@@ -97,7 +105,7 @@ describe("demo build script", function() {
     const lines = [];
     buildDemo({ rootDir: dir, log: line => lines.push(line) });
     assert.lengthOf(lines, 1);
-    assert.include(lines[0], "wrote 6 files");
+    assert.include(lines[0], "wrote 9 files");
     assert.include(lines[0], "demo/v1/vendor/graphviz.js");
   });
 
@@ -116,10 +124,16 @@ describe("demo build script", function() {
     assert.equal(withoutSourceMapComment(inside), inside);
   });
 
-  it("names both packages and their licences in the notice", function() {
-    const notice = noticeText({ libraryVersion: "1.3.1", graphvizVersion: "1.30.0" });
-    assert.include(notice, "GPL-3.0-or-later");
-    assert.include(notice, "Apache License 2.0");
-    assert.include(notice, "Eclipse Public License");
+  it("names both packages and their licences in each notice", function() {
+    for (const notice of [
+      noticeText({ libraryVersion: "1.3.1", graphvizVersion: "1.30.0" }),
+      currentNoticeText({ libraryVersion: "9.8.0", graphvizVersion: "1.30.0" }),
+    ]) {
+      assert.include(notice, "GPL-3.0-or-later");
+      assert.include(notice, "Apache License 2.0");
+      assert.include(notice, "Eclipse Public License");
+      assert.include(notice, "@hpcc-js/wasm-graphviz 1.30.0");
+    }
+    assert.include(currentNoticeText({ libraryVersion: "9.8.0", graphvizVersion: "1.30.0" }), "fas-js.bundle.js: fas-js 9.8.0");
   });
 });
