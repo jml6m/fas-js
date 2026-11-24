@@ -1,8 +1,24 @@
 name: Lock Files
 
+# The lock: files listed in .github/PROTECTED_FILES.json cannot change on the default branch.
+# This check fails every pull request into it that touches one, and no label or approval turns
+# it green. Pull requests into other branches are not checked; a protected file changed there
+# surfaces when the release pull request reaches the default branch.
+#
+# The one way through is the exception process, run by the maintainer: accept the change, add
+# the `lock-files-changed` label, turn the lock off, merge that pull request and nothing else,
+# and turn the lock back on.
+#
+# The lock must be turned back on BEFORE the next release. The Release workflow checks it, in a
+# dry run too, and fails while the lock is off.
+
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    # edited: the base branch may have changed to the default branch.
+    # labeled, unlabeled: the report says whether `lock-files-changed` is present.
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+    branches:
+      - master
 
 permissions:
   contents: read
@@ -24,4 +40,5 @@ jobs:
       - name: Check protected files
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: node scripts/check-protected-files.mjs
