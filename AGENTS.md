@@ -29,9 +29,10 @@ npm run health:dead  # knip (unused files fatal; unused exports warn)
   plus the type `TransitionInput`.
 - Regular core: `src/automata/`, `src/components/`, `src/engine/` (`Simulators.ts` indexes
   `DFASimulators` and `NFASimulators`), `src/languages/`, `src/utils/`.
-- Demo: `demo/` is a static site that runs the published bundle. `npm run build` fills its
-  `vendor/` folders through [`scripts/build-demo.mjs`](scripts/build-demo.mjs); serve it locally
-  with `npm run serve:demo`. See [`demo/README.md`](demo/README.md).
+- Demo: `demo/` is a static site. The root page runs the published bundle; `demo/v1/` is the
+  original 2019 simulator on fas-js 1.3.1. `npm run build` fills the `vendor/` folders through
+  [`scripts/build-demo.mjs`](scripts/build-demo.mjs); serve the site locally with
+  `npm run serve:demo`. See [`demo/README.md`](demo/README.md).
 - **Do not** change the public API surface. That is a major-version decision for the maintainer.
 
 ## Locked files
