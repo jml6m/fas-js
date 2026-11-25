@@ -5,8 +5,8 @@
 # pull request opened by Dependabot would target the default branch, which only takes release
 # pull requests, so it could never merge.
 #
-# Major upgrades of eslint, @eslint/js, typescript, typescript-eslint, jsdom, mocha, chai and
-# cross-env are held: each needs its own issue.
+# Major upgrades of eslint, @eslint/js, typescript, typescript-eslint, mocha, chai and cross-env
+# are held: each needs its own issue.
 version: 2
 
 updates:
