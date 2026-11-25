@@ -39,24 +39,17 @@ Open <http://127.0.0.1:3200/> (override the port with `DEMO_PORT=8080`). The ori
 
 Use `npm run serve:demo` — not `npx serve`.
 
-## Automated demo tests
+## Checking the demo
 
-`npm test` includes the demo specs on every branch:
+The demo has no automated test suite. Check it by hand in a browser when it changes and before a release:
 
-| File | What it checks |
-|------|----------------|
-| `test/demo.spec.js` | Vendor files, HTTP smoke, jsdom UI workflows |
-| `test/demo-layout.spec.js` | HTML/CSS layout contracts (no browser) |
-| `test/demo-highlight.spec.js` | DOT highlight targets nodes only |
-| `test/demo-presets-golden.spec.js` | Golden accept/reject table for the prebuilt examples |
-| `test/demo-v1.spec.js` | The original simulator: vendor files, no outside requests, and the same verdicts as fas-js 1.3.1 called directly |
-| `test/build-demo.spec.js` | What the demo build script writes |
+- Both pages load from `npm run serve:demo` with no failed request and no request to another site.
+- Every ready-made machine runs and steps, and accepts and rejects what its description says.
+- A broken definition shows a message instead of a result.
+- The page fits one screen without scrollbars, in the light and the dark theme.
+- The original simulator at `/v1/` runs its examples.
 
-Run the main demo spec only:
-
-```bash
-npm run test:demo
-```
+[`test/build-demo.spec.js`](../test/build-demo.spec.js) still tests the build script that fills the `vendor/` folders, because it runs in every `npm run build`.
 
 ## Deployment
 
