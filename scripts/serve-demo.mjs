@@ -9,8 +9,7 @@ const { port, baseUrl, close } = await startDemoStaticServer(demoRoot, {
   port: preferredPort,
 });
 
-console.log(`Demo static server running at ${baseUrl}/v1.5/`);
-console.log(`Also: ${baseUrl}/ (redirects to v1.5)`);
+console.log(`Demo static server running at ${baseUrl}/`);
 console.log("Use npm run serve:demo — not npx serve.");
 console.log("Press Ctrl+C to stop.");
 

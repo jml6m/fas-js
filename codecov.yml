@@ -15,7 +15,6 @@ comment: false
 ignore:
   - "src/interfaces/**"
   - "src/**/index.ts"
-  - "src/demo-bundle.ts"
 
 component_management:
   individual_components:

@@ -29,7 +29,9 @@ npm run health:dead  # knip (unused files fatal; unused exports warn)
   plus the type `TransitionInput`.
 - Regular core: `src/automata/`, `src/components/`, `src/engine/` (`Simulators.ts` indexes
   `DFASimulators` and `NFASimulators`), `src/languages/`, `src/utils/`.
-- Demo: [`src/demo-bundle.ts`](src/demo-bundle.ts) + `demo/` (local `npm run serve:demo`).
+- Demo: `demo/` is a static site that runs the published bundle. `npm run build` fills its
+  `vendor/` folders through [`scripts/build-demo.mjs`](scripts/build-demo.mjs); serve it locally
+  with `npm run serve:demo`. See [`demo/README.md`](demo/README.md).
 - **Do not** change the public API surface. That is a major-version decision for the maintainer.
 
 ## Locked files
