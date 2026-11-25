@@ -15,7 +15,6 @@ npm run docs:agent-length  # AGENTS/CLAUDE char cap
 npm run build        # tsup → lib/
 npm test             # typecheck + lint + build + check:security + c8 mocha
 npm run health:dead  # knip (unused files fatal; unused exports warn)
-npm run health:circular  # dependency-cruiser: import cycles and unresolvable imports in src/
 ```
 
 - Coverage floor: **90%**. Policy in [`coverage-policy.md`](coverage-policy.md).

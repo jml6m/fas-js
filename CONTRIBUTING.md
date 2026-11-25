@@ -29,8 +29,8 @@ npm run docs:lint   # markdownlint, if you touched Markdown
 ```
 
 `npm test` is not only the unit tests: it fails on type errors, lint, a broken build, the guard
-scripts, or coverage under 90%. CI runs the same steps, plus `npm audit`, an import-cycle check
-(`npm run health:circular`) and a link check on Markdown.
+scripts, or coverage under 90%. CI runs the same steps, plus `npm audit` and a link check on
+Markdown.
 
 ## PR conventions
 
