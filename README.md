@@ -154,6 +154,8 @@ There are two simulation options available:<br />
 
 Runs the entire input `w` through the `fsa`. `w` must only contain symbols from the alphabet defined in `fsa`. By default, the function returns a boolean signifying whether `w` was accepted by the `fsa`. If `returnEndState` is set to true, the function will instead return the final state (string) or the final array of states (string[]), depending on whether `fsa` is a DFA or NFA.
 
+When `returnEndState` is set, a DFA returns the state it ended in. An NFA that accepts `w` returns only the accept states it ended in; an NFA that rejects `w` returns every state it ended in, which may be an empty array. To get every active state at any point, step through the input with `stepOnceFSA`.
+
 <span style="font-size:18px"><a name="stepOnceFSA" href="#stepOnceFSA">#</a> <b>stepOnceFSA</b>(w: string, qin: string | string[], fsa: FSA, logging: boolean = false) [<>](https://github.com/jml6m/fas-js/blob/HEAD/src/engine/Simulators.ts "Source")</span>
 
 Returns the destination state(s), based on input symbol `w` and input state `qin`, as defined by δ of `fsa`. `w` must match a symbol from the alphabet defined in `fsa` (can also be the empty string). `qin` must be a state in Q. Use this function if you'd like to iterate through an input string step-by-step.
