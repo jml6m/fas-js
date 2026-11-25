@@ -3,7 +3,6 @@ import { type State, type Alphabet, type Transition } from "../components";
 import { ErrorCode } from "../globals/errors";
 import { checkStateDuplicates, getOrDefault, isSubsetOf } from "../globals/globals";
 import { DFAUtils } from "../utils/DFAUtils";
-import { NFAUtils } from "../utils/NFAUtils";
 
 export class DFA implements FSA {
   // Primary FSA attributes
@@ -26,7 +25,7 @@ export class DFA implements FSA {
     accepts: Set<State> | Record<string, never>
   ) {
     // initialize utils
-    this.#utils = this.getType() === "NFA" ? NFAUtils : DFAUtils;
+    this.#utils = this.utils();
 
     // states validations
     if (checkStateDuplicates(states)) throw new Error(ErrorCode.DUPLICATE_STATE_NAMES);
@@ -66,6 +65,11 @@ export class DFA implements FSA {
   getAcceptStates(): Set<State> {
     return this.#accepts;
   }
+  // The rules this kind of automaton is built with. A subclass returns its own.
+  protected utils(): typeof DFAUtils {
+    return DFAUtils;
+  }
+
   getType(): string {
     return "DFA";
   }
