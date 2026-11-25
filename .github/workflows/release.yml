@@ -3,6 +3,7 @@ name: Release
 # Releases the master tip: tag vX.Y.0, npm publish with provenance, GitHub release.
 # Nothing is written until every check passes; a real run needs a prior dry run on the same
 # commit. Steps skip work already done, so re-running failed jobs resumes a partial release.
+# The protected-files lock must be on: turn it back on BEFORE starting a run, dry run included.
 run-name: ${{ inputs.dry_run && 'Release dry run' || 'Release' }} from ${{ github.ref_name }}
 
 on:
@@ -45,6 +46,18 @@ jobs:
         run: |
           if [ "$GITHUB_TRIGGERING_ACTOR" != "jml6m" ]; then
             echo "::error::Only the maintainer can start a release, not ${GITHUB_TRIGGERING_ACTOR}."
+            exit 1
+          fi
+
+      # Protected files (.github/PROTECTED_FILES.json) are locked on the default branch by the
+      # required `lock-files` check. The lock is turned off only to merge a pull request that
+      # went through the exception process, and it must be turned back on BEFORE a release.
+      - name: The lock is on
+        run: |
+          LOCKED="$(gh api "repos/${GITHUB_REPOSITORY}/rules/branches/${DEFAULT_BRANCH}?per_page=100" \
+            --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context] | any(. == "lock-files")')"
+          if [ "$LOCKED" != "true" ]; then
+            echo "::error::The lock is off: lock-files is not a required check on ${DEFAULT_BRANCH}. Turn the lock back on, then start a new run."
             exit 1
           fi
 

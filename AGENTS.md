@@ -35,8 +35,16 @@ npm run health:dead  # knip (unused files fatal; unused exports warn)
 ## Locked files
 
 [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) lists the critical pieces of the
-solution. The `lock-files` check flags edits to them; they need the maintainer's sign-off. Locking
-is path-only: it doesn't lock a file's importers. New files are open by default.
+solution. They are locked on the default branch: the `lock-files` check fails every pull request
+into it that touches one, and no label or approval turns it green. Pull requests into other
+branches are not checked, so a protected file changed on the integration branch surfaces at the
+release pull request. Locking is path-only: it doesn't lock a file's importers. New files are open
+by default.
+
+The one way through is the exception process, run by the maintainer: accept the change, add the
+`lock-files-changed` label, turn the lock off, merge that pull request and nothing else, and turn
+the lock back on. The Release workflow fails while the lock is off. The label is only for pull
+requests into the default branch. `LICENSE` is on the list and is never expected to change.
 
 ## Docs conventions
 
