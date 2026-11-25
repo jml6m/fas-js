@@ -194,10 +194,7 @@
 
   /* ---- the machine and its drawing ---- */
 
-  // The page imports the copy in its vendor folder. The tests have no browser to import it
-  // into, so they hand over a loader of their own.
   function loadGraphviz() {
-    if (typeof window.fasV1LoadGraphviz === "function") return window.fasV1LoadGraphviz();
     return import("./vendor/graphviz.js").then(module => module.Graphviz.load());
   }
 
