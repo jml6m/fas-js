@@ -1,6 +1,5 @@
 import { ErrorCode } from "../globals/errors";
-import { type State, type Alphabet, Transition } from "../components";
-import { DFA } from "../automata";
+import { type State, type Alphabet, type Transition } from "../components";
 import { getOrDefault } from "../globals/globals";
 
 export class DFAUtils {
@@ -144,22 +143,3 @@ export interface TransitionInput {
   to: string;
   input: string;
 }
-
-// Global export method for creating DFA
-export const createDFA = (
-  states: Map<string, State>,
-  alphabet: Alphabet,
-  transitions: TransitionInput[],
-  start: State,
-  accepts: Set<State>
-): InstanceType<typeof DFA> => {
-  // Convert transition array to Set<Transition>
-  const _tfunc: Set<Transition> = new Set();
-  for (const tr of transitions) {
-    if (!tr.from || !tr.to || !tr.input) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
-    const fromVal: State = getOrDefault(states, tr.from, null as unknown as State);
-    const toVal: State = getOrDefault(states, tr.to, null as unknown as State);
-    _tfunc.add(new Transition(fromVal, toVal, tr.input));
-  }
-  return new DFA(new Set(states.values()), alphabet, _tfunc, start, accepts);
-};
