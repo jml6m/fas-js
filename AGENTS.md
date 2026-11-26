@@ -42,7 +42,7 @@ release pull request. Locking is path-only: it doesn't lock a file's importers. 
 by default.
 
 The one way through is the exception process, run by the maintainer: accept the change, add the
-`lock-files-changed` label, turn the lock off, merge that pull request and nothing else, and turn
+`locked-files-changed` label, turn the lock off, merge that pull request and nothing else, and turn
 the lock back on. The Release workflow fails while the lock is off. The label is only for pull
 requests into the default branch. `LICENSE` is on the list and is never expected to change.
 

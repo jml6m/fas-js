@@ -1,7 +1,7 @@
 /**
  * CI gate: fail when a pull request touches a path listed in .github/PROTECTED_FILES.json.
  * The workflow runs it for pull requests into the default branch only. Nothing turns a failure
- * green; the `lock-files-changed` label only records that a pull request went through the
+ * green; the `locked-files-changed` label only records that a pull request went through the
  * exception process, so it is reported here and rejected on a pull request that needs none.
  */
 import { execFileSync } from "node:child_process";
@@ -16,7 +16,7 @@ const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
 const RESET = "\x1b[0m";
 
-export const EXCEPTION_LABEL = "lock-files-changed";
+export const EXCEPTION_LABEL = "locked-files-changed";
 
 export function globToRegExp(pattern) {
   const normalized = pattern.replace(/\\/g, "/");
