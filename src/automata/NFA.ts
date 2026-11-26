@@ -21,11 +21,7 @@ export class NFA extends DFA {
       });
     }
 
-    super(states, alphabet, expandedTfunc, start, accepts);
-  }
-
-  protected utils(): typeof NFAUtils {
-    return NFAUtils;
+    super(states, alphabet, expandedTfunc, start, accepts, NFAUtils);
   }
 
   getType(): string {

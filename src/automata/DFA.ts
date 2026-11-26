@@ -22,10 +22,11 @@ export class DFA implements FSA {
     alphabet: Alphabet,
     tfunc: Set<Transition>,
     start: State,
-    accepts: Set<State> | Record<string, never>
+    accepts: Set<State> | Record<string, never>,
+    utils: typeof DFAUtils = DFAUtils // a subclass passes its own
   ) {
     // initialize utils
-    this.#utils = this.utils();
+    this.#utils = utils;
 
     // states validations
     if (checkStateDuplicates(states)) throw new Error(ErrorCode.DUPLICATE_STATE_NAMES);
@@ -65,11 +66,6 @@ export class DFA implements FSA {
   getAcceptStates(): Set<State> {
     return this.#accepts;
   }
-  // The rules this kind of automaton is built with. A subclass returns its own.
-  protected utils(): typeof DFAUtils {
-    return DFAUtils;
-  }
-
   getType(): string {
     return "DFA";
   }
