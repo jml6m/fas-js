@@ -1,43 +1,24 @@
-# Dependabot — monthly multi-ecosystem baseline
-# https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configuring-multi-ecosystem-updates
+# Dependabot: security updates only.
+#
+# Version updates are taken once per release, in one pull request into the release integration
+# branch, so every upgrade is reviewed and tested with the release it ships in. A version-update
+# pull request opened by Dependabot would target the default branch, which only takes release
+# pull requests, so it could never merge.
+#
+# Major upgrades of eslint, @eslint/js, typescript, typescript-eslint, mocha, chai and cross-env
+# are held: each needs its own issue.
 version: 2
-
-multi-ecosystem-groups:
-  all-dependencies:
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
 
 updates:
   - package-ecosystem: "npm"
     directory: "/"
-    patterns:
-      - "*"
-    multi-ecosystem-group: "all-dependencies"
-    versioning-strategy: "increase"
-    # Majors need deliberate review on a published library — Dependabot keeps minors/patches.
-    ignore:
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@eslint/js"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "typescript-eslint"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "jsdom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "mocha"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "chai"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "cross-env"
-        update-types: ["version-update:semver-major"]
+    schedule:
+      interval: "monthly"
+    # 0 turns version updates off. Security updates are not affected by this limit.
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "github-actions"
     directory: "/"
-    patterns:
-      - "*"
-    multi-ecosystem-group: "all-dependencies"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 0

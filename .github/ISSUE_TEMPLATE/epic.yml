@@ -1,6 +1,5 @@
 name: Epic (Parent Issue)
 description: Track a larger initiative that spans multiple sub-issues.
-title: "[Epic]: "
 labels: ["epic"]
 body:
   - type: markdown
