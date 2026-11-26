@@ -1,16 +1,16 @@
 import { ErrorCode } from "../globals/errors";
 import { instanceOf, getOrDefault } from "../globals/globals";
 import { type FSA } from "../interfaces/FSA";
-import { State, type Transition, Alphabet } from "../components";
-import { type DFA, NFA } from "../automata";
-import { DFAUtils, createDFA, type TransitionInput } from "./DFAUtils";
-import { NFAUtils, createNFA } from "./NFAUtils";
+import { State, Transition, Alphabet, NFATransition } from "../components";
+import { DFA, NFA } from "../automata";
+import { type TransitionInput } from "./DFAUtils";
+import { NFAUtils } from "./NFAUtils";
 
 export type { TransitionInput };
 
 /*
- * This class will take an input FSA constructor function
- * to determine which util methods need to be called
+ * Steps an FSA on one input symbol. It is constructed with the FSA's constructor
+ * function, and receiveInput picks the DFA or NFA rules from the FSA it is given.
  */
 export const FSAUtils = (() => {
   /*
@@ -90,37 +90,55 @@ export const FSAUtils = (() => {
         return receiveInputDFA(fsa as InstanceType<typeof DFA>, input, state);
       }
     }
-
-    validateTFunc(
-      _states: Set<State>,
-      _paths: Map<State, Set<string>>,
-      _tfunc: Set<Transition>,
-      _alph: Alphabet
-    ): Set<Transition> {
-      if (this._type === NFA) {
-        return NFAUtils.validateTFunc(_states, _paths, _tfunc, _alph);
-      } else {
-        return DFAUtils.validateTFunc(_states, _paths, _tfunc, _alph);
-      }
-    }
-
-    createPaths(_states: Set<State>, _alph: Alphabet): Map<State, Set<string>> {
-      return DFAUtils.createPaths(_states, _alph);
-    }
-
-    determineStateOrder(
-      _links: Map<string, Set<string>>,
-      _tfunc: Set<Transition>,
-      _states: Set<State>,
-      _start: State,
-      _accepts: Set<State>
-    ): string[] {
-      return DFAUtils.determineStateOrder(_links, _tfunc, _states, _start, _accepts);
-    }
   }
 
   return FSAUtils;
 })();
+
+// Creates a DFA from the inputs createFSA has converted
+const createDFA = (
+  states: Map<string, State>,
+  alphabet: Alphabet,
+  transitions: TransitionInput[],
+  start: State,
+  accepts: Set<State>
+): InstanceType<typeof DFA> => {
+  // Convert transition array to Set<Transition>
+  const _tfunc: Set<Transition> = new Set();
+  for (const tr of transitions) {
+    if (!tr.from || !tr.to || !tr.input) throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+    const fromVal: State = getOrDefault(states, tr.from, null as unknown as State);
+    const toVal: State = getOrDefault(states, tr.to, null as unknown as State);
+    _tfunc.add(new Transition(fromVal, toVal, tr.input));
+  }
+  return new DFA(new Set(states.values()), alphabet, _tfunc, start, accepts);
+};
+
+// Creates an NFA from the inputs createFSA has converted
+const createNFA = (
+  states: Map<string, State>,
+  alphabet: Alphabet,
+  transitions: TransitionInput[],
+  start: State,
+  accepts: Set<State>
+): InstanceType<typeof NFA> => {
+  // Convert transition array to Set<NFATransition>
+  const _tfunc: Set<NFATransition> = new Set();
+  for (const tr of transitions) {
+    if (!tr.from || !tr.to || (!tr.input && tr.input !== ""))
+      throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
+    const fromVal: State = getOrDefault(states, tr.from, null as unknown as State);
+    const toVal: string[] = tr.to.split(",");
+
+    const destStates: State[] = [];
+    toVal.forEach(_dest => {
+      destStates.push(getOrDefault(states, _dest, null as unknown as State));
+    });
+
+    _tfunc.add(new NFATransition(fromVal, destStates, tr.input));
+  }
+  return new NFA(new Set(states.values()), alphabet, _tfunc, start, accepts);
+};
 
 // Global export method for creating FSA
 export const createFSA = (
