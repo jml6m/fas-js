@@ -6,8 +6,8 @@
  *    changes a protected file. It records that the pull request went through the exception
  *    process ("Locked files" in AGENTS.md). Whether a protected file may change is decided by
  *    scripts/check-protected-files.mjs, not here.
- * 2. A pull request into the default branch comes from a release branch of this repository, or
- *    from Dependabot's GitHub Actions updates.
+ * 2. A pull request into the default branch comes from a release branch of this repository.
+ *    Everything else, Dependabot's updates included, reaches it through a release.
  */
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,16 +23,10 @@ export const EXCEPTION_LABEL = "locked-files-changed";
 
 // chore/vX.Y-name, chore/vX-name, vX.Y-name or vX-name
 const RELEASE_BRANCH = /^(?:chore\/)?v\d+(?:\.\d+)?-[^/]+$/;
-const DEPENDABOT_ACTIONS_BRANCH = /^dependabot\/github[_-]actions\/.+$/;
 
 /** The one definition of a release branch name. */
 export function isReleaseBranch(name) {
   return typeof name === "string" && RELEASE_BRANCH.test(name);
-}
-
-/** A branch of Dependabot's GitHub Actions updates. The version check for release pull requests uses it too. */
-export function isDependabotActionsBranch(name) {
-  return typeof name === "string" && DEPENDABOT_ACTIONS_BRANCH.test(name);
 }
 
 /** Label names on the pull request, from PR_LABELS (a JSON array). None for a local run. */
@@ -102,15 +96,11 @@ export function findProblems({
     }
   }
 
-  if (intoDefault) {
-    const releaseBranch = fromThisRepository && isReleaseBranch(headRef);
-    const dependabotActions = fromThisRepository && isDependabotActionsBranch(headRef);
-    if (!releaseBranch && !dependabotActions) {
-      problems.push(
-        `Pull requests into ${defaultBranch} come from a release branch of this repository (chore/vX.Y-name or vX.Y-name). ` +
-          `This one comes from ${fromThisRepository ? headRef : `${headRef} in another repository`}: target the current release integration branch instead.`
-      );
-    }
+  if (intoDefault && !(fromThisRepository && isReleaseBranch(headRef))) {
+    problems.push(
+      `Pull requests into ${defaultBranch} come from a release branch of this repository (chore/vX.Y-name or vX.Y-name). ` +
+        `This one comes from ${fromThisRepository ? headRef : `${headRef} in another repository`}: target the current release integration branch instead.`
+    );
   }
 
   return problems;

@@ -10,7 +10,6 @@ import { assert } from "chai";
 import {
   EXCEPTION_LABEL,
   findProblems,
-  isDependabotActionsBranch,
   isReleaseBranch,
   resolveBranches,
   resolveLabels,
@@ -76,21 +75,6 @@ describe("isReleaseBranch", function () {
   });
 });
 
-// --- isDependabotActionsBranch -----------------------------------------------
-
-describe("isDependabotActionsBranch", function () {
-  it("accepts the branches of Dependabot's GitHub Actions updates, in both spellings", function () {
-    assert.isTrue(isDependabotActionsBranch("dependabot/github_actions/actions/checkout-7.0.1"));
-    assert.isTrue(isDependabotActionsBranch("dependabot/github-actions/all-1a2b3c"));
-  });
-
-  it("rejects Dependabot's other updates and everything else", function () {
-    for (const name of ["dependabot/npm_and_yarn/mocha-12.0.3", "dependabot/github_actions/", "chore/v1.12-release", "", undefined]) {
-      assert.isFalse(isDependabotActionsBranch(name), String(name));
-    }
-  });
-});
-
 // --- findProblems: the label ------------------------------------------------
 
 describe("findProblems (pr-hygiene): the exception label", function () {
@@ -142,11 +126,6 @@ describe("findProblems (pr-hygiene): where a pull request into the default branc
     assert.isEmpty(findProblems(intoDefault({ headRef: "chore/v9.9-release" })));
   });
 
-  it("accepts Dependabot's GitHub Actions updates", function () {
-    assert.isEmpty(findProblems(intoDefault({ headRef: "dependabot/github_actions/actions/checkout-7.0.1" })));
-    assert.isEmpty(findProblems(intoDefault({ headRef: "dependabot/github-actions/all-1a2b3c" })));
-  });
-
   it("rejects a topic branch", function () {
     const problems = findProblems(intoDefault({ headRef: TOPIC }));
     assert.lengthOf(problems, 1);
@@ -154,18 +133,15 @@ describe("findProblems (pr-hygiene): where a pull request into the default branc
     assert.include(problems[0], TOPIC);
   });
 
-  it("rejects Dependabot's other updates", function () {
+  it("rejects Dependabot's updates, GitHub Actions ones included", function () {
     assert.lengthOf(findProblems(intoDefault({ headRef: "dependabot/npm_and_yarn/mocha-12.0.3" })), 1);
+    assert.lengthOf(findProblems(intoDefault({ headRef: "dependabot/github_actions/actions/checkout-7.0.1" })), 1);
   });
 
   it("rejects a branch of another repository, even one named like a release branch", function () {
     const problems = findProblems(intoDefault({ headRef: "chore/v9.9-release", fromThisRepository: false }));
     assert.lengthOf(problems, 1);
     assert.include(problems[0], "in another repository");
-    assert.lengthOf(
-      findProblems(intoDefault({ headRef: "dependabot/github_actions/x-1", fromThisRepository: false })),
-      1
-    );
   });
 
   it("does not restrict where a pull request into another branch comes from", function () {

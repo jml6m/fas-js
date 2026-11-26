@@ -6,7 +6,8 @@ name: PR Hygiene
 # 1. The `locked-files-changed` label is only for a pull request into the default branch that
 #    changes a protected file (see "Locked files" in AGENTS.md).
 # 2. A pull request into the default branch comes from a release branch of this repository
-#    (see CONTRIBUTING.md), or from Dependabot's GitHub Actions updates.
+#    (see CONTRIBUTING.md). Everything else, Dependabot's updates included, reaches the default
+#    branch through a release.
 #
 # Whether a protected file may change is `lock-files`, not this check.
 
