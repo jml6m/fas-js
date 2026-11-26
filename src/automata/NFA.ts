@@ -1,5 +1,6 @@
 import { DFA } from "./DFA";
 import { type State, type Alphabet, type NFATransition, Transition } from "../components";
+import { NFAUtils } from "../utils/NFAUtils";
 
 export class NFA extends DFA {
   constructor(
@@ -20,7 +21,7 @@ export class NFA extends DFA {
       });
     }
 
-    super(states, alphabet, expandedTfunc, start, accepts);
+    super(states, alphabet, expandedTfunc, start, accepts, NFAUtils);
   }
 
   getType(): string {
