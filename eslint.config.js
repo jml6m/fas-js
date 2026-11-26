@@ -1,10 +1,12 @@
 import eslint from "@eslint/js";
-import { defineConfig } from "eslint/config";
+import { defineConfig, includeIgnoreFile } from "eslint/config";
+import { fileURLToPath } from "node:url";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
+  includeIgnoreFile(fileURLToPath(new URL(".gitignore", import.meta.url)), { gitignoreResolution: true }),
   {
-    ignores: ["lib/**", "coverage/**", "demo/**/vendor/**", "dist/**"],
+    ignores: ["demo/**/vendor/**", "dist/**"],
   },
   eslint.configs.recommended,
   tseslint.configs.recommended,

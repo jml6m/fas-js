@@ -1,9 +1,6 @@
 import { DFAUtils } from "./DFAUtils";
-import { NFA } from "../automata";
-import { type State, type Transition, type Alphabet, NFATransition } from "../components";
+import { type State, type Transition, type Alphabet } from "../components";
 import { ErrorCode } from "../globals/errors";
-import { getOrDefault } from "../globals/globals";
-import type { TransitionInput } from "./DFAUtils";
 
 export class NFAUtils extends DFAUtils {
   // NFA inheritly allows for ε (empty string) transition if specified
@@ -75,28 +72,3 @@ export class NFAUtils extends DFAUtils {
     return newTFunc;
   }
 }
-
-export const createNFA = (
-  states: Map<string, State>,
-  alphabet: Alphabet,
-  transitions: TransitionInput[],
-  start: State,
-  accepts: Set<State>
-): InstanceType<typeof NFA> => {
-  // Convert transition array to Set<NFATransition>
-  const _tfunc: Set<NFATransition> = new Set();
-  for (const tr of transitions) {
-    if (!tr.from || !tr.to || (!tr.input && tr.input !== ""))
-      throw new Error(ErrorCode.INVALID_TRANSITION_OBJECT);
-    const fromVal: State = getOrDefault(states, tr.from, null as unknown as State);
-    const toVal: string[] = tr.to.split(",");
-
-    const destStates: State[] = [];
-    toVal.forEach(_dest => {
-      destStates.push(getOrDefault(states, _dest, null as unknown as State));
-    });
-
-    _tfunc.add(new NFATransition(fromVal, destStates, tr.input));
-  }
-  return new NFA(new Set(states.values()), alphabet, _tfunc, start, accepts);
-};

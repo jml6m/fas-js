@@ -2,7 +2,7 @@ import { type FSA } from "../interfaces/FSA";
 import { type State, type Alphabet, type Transition } from "../components";
 import { ErrorCode } from "../globals/errors";
 import { checkStateDuplicates, getOrDefault, isSubsetOf } from "../globals/globals";
-import { FSAUtils } from "../utils";
+import { DFAUtils } from "../utils/DFAUtils";
 
 export class DFA implements FSA {
   // Primary FSA attributes
@@ -15,17 +15,18 @@ export class DFA implements FSA {
   // Intermediary attributes used in constructor
   #paths: Map<State, Set<string>>; // States mapped to each member of Σ, will be empty after constructor returns
   #links: Map<string, Set<string>> = new Map(); // State names mapped to their dest state names
-  #utils: InstanceType<typeof FSAUtils>;
+  #utils: typeof DFAUtils;
 
   constructor(
     states: Set<State>,
     alphabet: Alphabet,
     tfunc: Set<Transition>,
     start: State,
-    accepts: Set<State> | Record<string, never>
+    accepts: Set<State> | Record<string, never>,
+    utils: typeof DFAUtils = DFAUtils // a subclass passes its own
   ) {
     // initialize utils
-    this.#utils = new FSAUtils(this.constructor as typeof DFA);
+    this.#utils = utils;
 
     // states validations
     if (checkStateDuplicates(states)) throw new Error(ErrorCode.DUPLICATE_STATE_NAMES);
