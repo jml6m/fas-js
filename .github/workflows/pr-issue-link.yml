@@ -22,7 +22,13 @@ jobs:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const pr = context.payload.pull_request;
+            // The event payload is a snapshot from when the event fired, and a re-run of this job
+            // gets the same one. Read the PR as it is now, so re-running an older run judges the
+            // current description. A failed read fails the check.
+            const { data: pr } = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: context.payload.pull_request.number,
+            });
 
             // Carve-outs return early (exit 0). The job must never be skipped with a
             // job-level `if:` — a required context that never reports leaves the PR
@@ -88,17 +94,9 @@ jobs:
 
             // Give the PR its linked issues' milestone. Best effort: nothing below may change
             // the check's result, so failures (e.g. a fork PR's read-only token) only warn.
-            // The event payload is a snapshot from when the event fired, and a re-run of this job
-            // gets the same one. Read the PR again so a milestone set since then is never replaced.
-            let current;
-            try {
-              ({ data: current } = await github.rest.pulls.get({ ...context.repo, pull_number: pr.number }));
-            } catch (error) {
-              core.warning(`Could not re-read the PR (${error.status ?? error.message}) - leaving its milestone alone.`);
-              return;
-            }
-            if (current.milestone) {
-              core.info(`PR already has milestone "${current.milestone.title}" - leaving it.`);
+            // `pr` was read when this run started, so a milestone set by hand is never replaced.
+            if (pr.milestone) {
+              core.info(`PR already has milestone "${pr.milestone.title}" - leaving it.`);
               return;
             }
             const milestones = new Map(passed.map((p) => [p.milestone.number, p.milestone]));

@@ -39,7 +39,7 @@ jobs:
       - name: Dead-code check (warn)
         run: npm run health:dead || echo "::warning::knip reported dead code or unused files (see log); this is non-blocking on PRs but blocks publish."
 
-  # Required: test (22), test (24)
+  # One leg per supported Node version; tests-passed below is the check to require.
   test:
     runs-on: ubuntu-latest
     env:
