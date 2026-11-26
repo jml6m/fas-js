@@ -7,8 +7,8 @@ name: Lock Files
 #
 # The one way through is the exception process, run by the maintainer: accept the change, add
 # the `locked-files-changed` label, turn the lock off, merge that pull request and nothing else,
-# and turn the lock back on. The label is only for pull requests into the default branch:
-# `pr-hygiene` fails any other pull request that carries it.
+# and turn the lock back on. This check does not read the label: `pr-hygiene` checks that it is
+# only on a pull request that needs it.
 #
 # The lock must be turned back on BEFORE the next release. The Release workflow checks it, in a
 # dry run too, and fails while the lock is off.
@@ -16,8 +16,7 @@ name: Lock Files
 on:
   pull_request:
     # edited: the base branch may have changed to the default branch.
-    # labeled, unlabeled: the report says whether `locked-files-changed` is present.
-    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+    types: [opened, synchronize, reopened, edited]
     branches:
       - master
 
@@ -41,5 +40,4 @@ jobs:
       - name: Check protected files
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: node scripts/check-protected-files.mjs

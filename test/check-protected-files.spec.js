@@ -8,13 +8,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { assert } from "chai";
 import {
-  EXCEPTION_LABEL,
   globToRegExp,
   findViolations,
   getChangedFiles,
   loadPatterns,
   resolveBaseSha,
-  resolveLabels,
   runCheck,
 } from "../scripts/check-protected-files.mjs";
 
@@ -223,40 +221,6 @@ describe("getChangedFiles", function () {
   });
 });
 
-// --- resolveLabels ----------------------------------------------------------
-
-describe("resolveLabels", function () {
-  afterEach(function () {
-    delete process.env.PR_LABELS;
-  });
-
-  it("returns no labels when PR_LABELS is absent (a local run)", function () {
-    assert.deepEqual(resolveLabels(), []);
-  });
-
-  it("returns no labels when PR_LABELS is empty", function () {
-    process.env.PR_LABELS = "  ";
-    assert.deepEqual(resolveLabels(), []);
-  });
-
-  it("parses a JSON array of label names", function () {
-    process.env.PR_LABELS = JSON.stringify(["release", EXCEPTION_LABEL]);
-    assert.deepEqual(resolveLabels(), ["release", EXCEPTION_LABEL]);
-  });
-
-  it("throws when PR_LABELS is not valid JSON (fail closed)", function () {
-    process.env.PR_LABELS = "[release";
-    assert.throws(() => resolveLabels(), /PR_LABELS is not valid JSON/);
-  });
-
-  it("throws when PR_LABELS is not an array of strings", function () {
-    process.env.PR_LABELS = JSON.stringify({ name: EXCEPTION_LABEL });
-    assert.throws(() => resolveLabels(), /must be a JSON array of label names/);
-    process.env.PR_LABELS = JSON.stringify([{ name: EXCEPTION_LABEL }]);
-    assert.throws(() => resolveLabels(), /must be a JSON array of label names/);
-  });
-});
-
 // --- runCheck (main orchestration) -----------------------------------------
 
 describe("runCheck", function () {
@@ -341,95 +305,6 @@ describe("runCheck", function () {
 
     assert.isTrue(cap.errors.some((e) => e.includes("package.json")));
     assert.isTrue(cap.errors.some((e) => e.includes("src/modules.ts")));
-  });
-
-  it("still fails a protected change when the exception label is present, and says so", function () {
-    const cap = makeCapture();
-    runCheck({
-      loadPatternsFn: () => [globToRegExp("package.json")],
-      resolveBaseShaFn: () => FAKE_SHA,
-      resolveLabelsFn: () => ["release", EXCEPTION_LABEL],
-      getChangedFilesFn: () => ["package.json"],
-      findViolationsFn: () => ["package.json"],
-      log: cap.log,
-      error: cap.error,
-      exit: cap.exit,
-    });
-
-    assert.equal(cap.exitCode, 1);
-    assert.isTrue(cap.errors.some((e) => e.includes("[lock-files] VIOLATION")));
-    assert.isTrue(cap.errors.some((e) => e.includes(`"${EXCEPTION_LABEL}" label: present`)));
-    assert.isEmpty(cap.logs);
-  });
-
-  it("reports the exception label as absent on a protected change without it", function () {
-    const cap = makeCapture();
-    runCheck({
-      loadPatternsFn: () => [globToRegExp("package.json")],
-      resolveBaseShaFn: () => FAKE_SHA,
-      resolveLabelsFn: () => ["release"],
-      getChangedFilesFn: () => ["package.json"],
-      findViolationsFn: () => ["package.json"],
-      log: cap.log,
-      error: cap.error,
-      exit: cap.exit,
-    });
-
-    assert.equal(cap.exitCode, 1);
-    assert.isTrue(cap.errors.some((e) => e.includes(`"${EXCEPTION_LABEL}" label: absent`)));
-  });
-
-  it("fails when the exception label is on a pull request that changes no protected file", function () {
-    const cap = makeCapture();
-    runCheck({
-      loadPatternsFn: () => [globToRegExp("package.json")],
-      resolveBaseShaFn: () => FAKE_SHA,
-      resolveLabelsFn: () => [EXCEPTION_LABEL],
-      getChangedFilesFn: () => ["src/foo.ts"],
-      findViolationsFn: () => [],
-      log: cap.log,
-      error: cap.error,
-      exit: cap.exit,
-    });
-
-    assert.equal(cap.exitCode, 1);
-    assert.isTrue(cap.errors.some((e) => e.includes("[lock-files] LABEL")));
-    assert.isTrue(cap.errors.some((e) => e.includes("changes no protected file")));
-    assert.isEmpty(cap.logs);
-  });
-
-  it("reads the labels from PR_LABELS when none are injected", function () {
-    const cap = makeCapture();
-    process.env.PR_LABELS = JSON.stringify([EXCEPTION_LABEL]);
-    try {
-      runCheck({
-        loadPatternsFn: () => [],
-        resolveBaseShaFn: () => FAKE_SHA,
-        getChangedFilesFn: () => [],
-        findViolationsFn: () => [],
-        log: cap.log,
-        error: cap.error,
-        exit: cap.exit,
-      });
-    } finally {
-      delete process.env.PR_LABELS;
-    }
-    assert.equal(cap.exitCode, 1);
-    assert.isTrue(cap.errors.some((e) => e.includes("[lock-files] LABEL")));
-  });
-
-  it("propagates errors thrown by resolveLabels (fail closed)", function () {
-    assert.throws(
-      () =>
-        runCheck({
-          resolveBaseShaFn: () => FAKE_SHA,
-          resolveLabelsFn: () => {
-            throw new Error("bad labels");
-          },
-          exit: () => {},
-        }),
-      /bad labels/
-    );
   });
 
   it("propagates errors thrown by loadPatterns", function () {

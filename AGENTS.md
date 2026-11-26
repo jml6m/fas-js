@@ -43,9 +43,9 @@ by default.
 
 The one way through is the exception process, run by the maintainer: accept the change, add the
 `locked-files-changed` label, turn the lock off, merge that pull request and nothing else, and turn
-the lock back on. The Release workflow fails while the lock is off. The label is only for pull
-requests into the default branch: the `pr-hygiene` check fails any other pull request that carries
-it. `LICENSE` is on the list and is never expected to change.
+the lock back on. The Release workflow fails while the lock is off. The label is only for a pull
+request into the default branch that changes a protected file: the `pr-hygiene` check fails any
+other pull request that carries it. `LICENSE` is on the list and is never expected to change.
 
 ## Docs conventions
 

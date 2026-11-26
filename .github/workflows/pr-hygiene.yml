@@ -1,22 +1,24 @@
 name: PR Hygiene
 
-# Rules about a pull request itself (its labels and target branch), not about the files it
-# changes. Runs for every pull request, whatever branch it targets.
+# Rules about a pull request itself, its labels and its branches. Runs for every pull request,
+# whatever branch it targets, so do NOT add a branch or path filter here.
 #
-# Today there is one rule: the `locked-files-changed` label is only for pull requests into the
-# default branch (see "Locked files" in AGENTS.md). What the label means on those is checked by
-# `lock-files`, which runs for pull requests into the default branch only.
+# 1. The `locked-files-changed` label is only for a pull request into the default branch that
+#    changes a protected file (see "Locked files" in AGENTS.md).
+# 2. A pull request into the default branch comes from a release branch of this repository
+#    (see CONTRIBUTING.md), or from Dependabot's GitHub Actions updates.
 #
-# Do NOT add a branch or path filter here: this check has to report on every pull request.
+# Whether a protected file may change is `lock-files`, not this check.
 
 on:
   pull_request:
     # edited: the base branch may have changed.
-    # labeled, unlabeled: the labels are what is checked.
+    # labeled, unlabeled: the labels are checked.
     types: [opened, reopened, synchronize, edited, labeled, unlabeled]
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: pr-hygiene-${{ github.event.pull_request.number }}
@@ -27,12 +29,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Fetch base commit
+        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 24
-      - name: Check the pull request's labels against its target branch
+      - name: Check the pull request's labels and branches
         env:
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
-          BASE_REF: ${{ github.base_ref }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: node scripts/check-pr-hygiene.mjs
+        run: |
+          # Labels and target branch as they are now, not as they were when the event fired:
+          # re-running an older run must not judge an older state of the pull request.
+          PR="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")"
+          PR_LABELS="$(jq -c '[.labels[].name]' <<<"$PR")" \
+          BASE_REF="$(jq -r '.base.ref' <<<"$PR")" \
+            node scripts/check-pr-hygiene.mjs

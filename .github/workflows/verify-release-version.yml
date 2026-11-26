@@ -1,10 +1,9 @@
 name: Verify Release Version
 
-# Fail-closed release gate. A release PR (integration/release branch → master) must
-# INCREASE the published version vs `master`. This prevents shipping a stale or
-# unchanged version — the v1.7.0 failure where a reverted bump shipped master as 1.6.0.
-# Non-release PRs (e.g. Dependabot GitHub Actions bumps) don't change the package
-# version and are skipped (pass).
+# Fail-closed release gate. A PR into `master` must INCREASE the published version vs
+# `master`. This prevents shipping a stale or unchanged version — the v1.7.0 failure where
+# a reverted bump shipped master as 1.6.0. Dependabot's GitHub Actions bumps, the only
+# other PRs `master` takes (see `pr-hygiene`), change no version and are skipped (pass).
 
 on:
   pull_request:
@@ -27,13 +26,12 @@ jobs:
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          # Only release branches carry a version bump; skip everything else.
-          case "$HEAD_REF" in
-            chore/v* | v*) ;;
-            *)
-              echo "Head '$HEAD_REF' is not a release branch — no version bump expected. Skipping."
-              exit 0 ;;
-          esac
+          # Dependabot's GitHub Actions bumps carry no version bump. Which branches those are
+          # is defined once, in scripts/check-pr-hygiene.mjs.
+          if node --input-type=module -e 'import { isDependabotActionsBranch } from "./scripts/check-pr-hygiene.mjs"; process.exit(isDependabotActionsBranch(process.env.HEAD_REF) ? 0 : 1);'; then
+            echo "Head '$HEAD_REF' is a Dependabot GitHub Actions bump — no version bump expected. Skipping."
+            exit 0
+          fi
 
           git fetch --no-tags --depth=1 origin master
           HEAD_VER="$(node -p "require('./package.json').version")"
