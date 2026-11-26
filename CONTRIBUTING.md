@@ -39,6 +39,14 @@ Markdown.
 - Keep a PR to one change. PRs are squash-merged.
 - Don't bump the version in `package.json`. That happens in the release.
 
+## Protected files
+
+The files listed in [`.github/PROTECTED_FILES.json`](.github/PROTECTED_FILES.json) are locked on
+the default branch. Change one only when the issue you are working on calls for it, and say so in
+the PR description: the maintainer decides whether to accept it when the release is merged.
+`LICENSE` is on the list and is never expected to change. The process is under "Locked files" in
+[AGENTS.md](AGENTS.md).
+
 ## Where the rules live
 
 [AGENTS.md](AGENTS.md) has the build commands, the architecture and the locked-files rule.

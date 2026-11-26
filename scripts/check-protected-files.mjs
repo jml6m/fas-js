@@ -1,5 +1,8 @@
 /**
- * CI gate: fail when a PR touches paths listed in .github/PROTECTED_FILES.json.
+ * CI gate: fail when a pull request touches a path listed in .github/PROTECTED_FILES.json.
+ * The workflow runs it for pull requests into the default branch only, and nothing turns a
+ * failure green. The label that records the exception process is not read here: where it may
+ * be used is checked by scripts/check-pr-hygiene.mjs.
  */
 import { execFileSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -56,10 +59,12 @@ export function resolveBaseSha() {
   return baseSha;
 }
 
-export function getChangedFiles(baseSha) {
+export function getChangedFiles(baseSha, cwd = root) {
   try {
-    const output = execFileSync("git", ["diff", baseSha, "HEAD", "--name-only"], {
-      cwd: root,
+    // --no-renames: a moved file is listed under its old path too. With rename detection, git
+    // prints only the new path, and moving a protected file would go unnoticed.
+    const output = execFileSync("git", ["diff", baseSha, "HEAD", "--name-only", "--no-renames"], {
+      cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     }).trim();
@@ -108,7 +113,8 @@ export function runCheck({
   for (const file of violations) {
     error(`  - ${file}`);
   }
-  error("See AGENTS.md \"Protected Files\" for the override process.");
+  error("This check never passes for a protected file. The maintainer can accept the change");
+  error('through the exception process: see "Locked files" in AGENTS.md.');
   exit(1);
 }
 

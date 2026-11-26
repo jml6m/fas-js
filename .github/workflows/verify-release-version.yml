@@ -1,14 +1,14 @@
 name: Verify Release Version
 
-# Fail-closed release gate. A release PR (integration/release branch → master) must
-# INCREASE the published version vs `master`. This prevents shipping a stale or
-# unchanged version — the v1.7.0 failure where a reverted bump shipped master as 1.6.0.
-# Non-release PRs (e.g. Dependabot GitHub Actions bumps) don't change the package
-# version and are skipped (pass).
+# Fail-closed release gate. A PR into `master` must INCREASE the published version vs
+# `master`. This prevents shipping a stale or unchanged version — the v1.7.0 failure where
+# a reverted bump shipped master as 1.6.0. No PR is skipped: `master` only takes release
+# PRs (see `pr-hygiene`).
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    # edited: the base branch may have changed to master.
+    types: [opened, synchronize, reopened, edited]
     branches: [master]
 
 permissions:
@@ -24,17 +24,7 @@ jobs:
           node-version: 24
           cache: npm
       - name: Release PR must increase the version vs master
-        env:
-          HEAD_REF: ${{ github.head_ref }}
         run: |
-          # Only release branches carry a version bump; skip everything else.
-          case "$HEAD_REF" in
-            chore/v* | v*) ;;
-            *)
-              echo "Head '$HEAD_REF' is not a release branch — no version bump expected. Skipping."
-              exit 0 ;;
-          esac
-
           git fetch --no-tags --depth=1 origin master
           HEAD_VER="$(node -p "require('./package.json').version")"
           BASE_VER="$(git show FETCH_HEAD:package.json | node -p "JSON.parse(require('node:fs').readFileSync(0,'utf8')).version")"
