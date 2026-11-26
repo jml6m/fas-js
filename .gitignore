@@ -8,6 +8,8 @@ coverage/
 
 # Local-only Claude Code files
 .claude/worktrees/
+.claude/checkpoints/
+.claude/scheduled_tasks.*
 .claude/settings.local.json
 .claude/agent-memory-local/
 CLAUDE.local.md
