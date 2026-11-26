@@ -22,13 +22,4 @@ export default defineConfig([
     clean: false,
     outDir: "lib",
   },
-  {
-    entry: { "demo-bundle": "src/demo-bundle.ts" },
-    format: ["iife"],
-    globalName: "fasJs",
-    minify: true,
-    sourcemap: false,
-    clean: false,
-    outDir: "lib",
-  },
 ]);

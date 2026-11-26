@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsup",
     "prebuild": "node scripts/prebuild.mjs",
-    "postbuild": "node scripts/postbuild.mjs",
+    "postbuild": "node scripts/postbuild.mjs && node scripts/build-demo.mjs",
     "clean": "node scripts/prebuild.mjs",
     "prepublishOnly": "npm run build && npm test",
     "typecheck": "tsc --noEmit",
@@ -34,8 +34,6 @@
     "free-port": "node scripts/free-port.mjs",
     "preserve:demo": "node scripts/free-port.mjs",
     "serve:demo": "node scripts/serve-demo.mjs",
-    "test:demo": "npm run build && cross-env NODE_OPTIONS=--import=tsx mocha \"test/demo.spec.js\"",
-    "test:presets": "cross-env NODE_OPTIONS=--import=tsx mocha \"test/demo-presets-golden.spec.js\"",
     "test:languages": "cross-env NODE_OPTIONS=--import=tsx mocha \"test/languages.spec.js\"",
     "test": "npm run typecheck && npm run lint && npm run build && npm run check:security && cross-env NODE_OPTIONS=--import=tsx c8 mocha \"test/**/*.spec.js\"",
     "audit:ci": "npm audit --audit-level=high",
@@ -52,6 +50,7 @@
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@hpcc-js/wasm-graphviz": "1.30.0",
     "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",
     "@types/node": "^26.0.1",
@@ -59,7 +58,6 @@
     "chai": "^4.5.0",
     "cross-env": "^7.0.3",
     "eslint": "^10.15.0",
-    "jsdom": "^26.1.0",
     "knip": "^5.88.1",
     "markdownlint-cli2": "^0.24.0",
     "mocha": "^11.7.1",

@@ -113,6 +113,12 @@ code {
   white-space: nowrap;
 }
 
+.version {
+  color: var(--muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
 .link {
   color: var(--primary);
   text-decoration: none;

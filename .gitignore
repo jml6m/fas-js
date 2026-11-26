@@ -1,6 +1,6 @@
 lib/*
 !lib/.gitkeep
-demo/**/vendor/fas-js.bundle.js
+demo/**/vendor/
 node_modules/
 coverage/
 # GitHub App private key (.pem) — never commit; provide via the APP_PRIVATE_KEY repo secret
