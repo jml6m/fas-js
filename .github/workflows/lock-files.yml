@@ -7,7 +7,8 @@ name: Lock Files
 #
 # The one way through is the exception process, run by the maintainer: accept the change, add
 # the `locked-files-changed` label, turn the lock off, merge that pull request and nothing else,
-# and turn the lock back on.
+# and turn the lock back on. The label is only for pull requests into the default branch:
+# `pr-hygiene` fails any other pull request that carries it.
 #
 # The lock must be turned back on BEFORE the next release. The Release workflow checks it, in a
 # dry run too, and fails while the lock is off.

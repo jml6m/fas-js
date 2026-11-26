@@ -1,0 +1,38 @@
+name: PR Hygiene
+
+# Rules about a pull request itself (its labels and target branch), not about the files it
+# changes. Runs for every pull request, whatever branch it targets.
+#
+# Today there is one rule: the `locked-files-changed` label is only for pull requests into the
+# default branch (see "Locked files" in AGENTS.md). What the label means on those is checked by
+# `lock-files`, which runs for pull requests into the default branch only.
+#
+# Do NOT add a branch or path filter here: this check has to report on every pull request.
+
+on:
+  pull_request:
+    # edited: the base branch may have changed.
+    # labeled, unlabeled: the labels are what is checked.
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-hygiene-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+      - name: Check the pull request's labels against its target branch
+        env:
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          BASE_REF: ${{ github.base_ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: node scripts/check-pr-hygiene.mjs

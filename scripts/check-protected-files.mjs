@@ -3,6 +3,7 @@
  * The workflow runs it for pull requests into the default branch only. Nothing turns a failure
  * green; the `locked-files-changed` label only records that a pull request went through the
  * exception process, so it is reported here and rejected on a pull request that needs none.
+ * On pull requests into other branches the label is rejected by scripts/check-pr-hygiene.mjs.
  */
 import { execFileSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -69,18 +70,20 @@ export function resolveLabels() {
   try {
     labels = JSON.parse(raw);
   } catch (err) {
-    throw new Error(`[lock-files] PR_LABELS is not valid JSON: ${err.message}`);
+    throw new Error(`PR_LABELS is not valid JSON: ${err.message}`);
   }
   if (!Array.isArray(labels) || labels.some((label) => typeof label !== "string")) {
-    throw new Error("[lock-files] PR_LABELS must be a JSON array of label names");
+    throw new Error("PR_LABELS must be a JSON array of label names");
   }
   return labels;
 }
 
-export function getChangedFiles(baseSha) {
+export function getChangedFiles(baseSha, cwd = root) {
   try {
-    const output = execFileSync("git", ["diff", baseSha, "HEAD", "--name-only"], {
-      cwd: root,
+    // --no-renames: a moved file is listed under its old path too. With rename detection, git
+    // prints only the new path, and moving a protected file would go unnoticed.
+    const output = execFileSync("git", ["diff", baseSha, "HEAD", "--name-only", "--no-renames"], {
+      cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     }).trim();

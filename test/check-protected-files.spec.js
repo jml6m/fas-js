@@ -3,11 +3,15 @@
  * Some tests invoke real git commands; the check logic is otherwise exercised via injected functions.
  */
 import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { assert } from "chai";
 import {
   EXCEPTION_LABEL,
   globToRegExp,
   findViolations,
+  getChangedFiles,
   loadPatterns,
   resolveBaseSha,
   resolveLabels,
@@ -157,6 +161,65 @@ describe("resolveBaseSha", function () {
   it("throws when the SHA is shorter than 40 hex chars", function () {
     process.env.BASE_SHA = "a".repeat(39);
     assert.throws(() => resolveBaseSha(), /Invalid base SHA/);
+  });
+});
+
+// --- getChangedFiles ---------------------------------------------------------
+
+describe("getChangedFiles", function () {
+  let repo;
+  let baseSha;
+
+  const git = (...args) =>
+    execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.invalid", ...args], {
+      cwd: repo,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+
+  beforeEach(function () {
+    repo = mkdtempSync(join(tmpdir(), "lock-files-"));
+    git("init", "--quiet", "--initial-branch=main");
+    mkdirSync(join(repo, "src"));
+    const body = Array.from({ length: 40 }, (_, i) => `export const line${i} = ${i};`).join("\n");
+    writeFileSync(join(repo, "src", "locked.ts"), `${body}\n`);
+    writeFileSync(join(repo, "README.md"), "readme\n");
+    git("add", ".");
+    git("commit", "--quiet", "-m", "base");
+    baseSha = git("rev-parse", "HEAD");
+  });
+
+  afterEach(function () {
+    rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("returns no files when nothing changed", function () {
+    assert.deepEqual(getChangedFiles(baseSha, repo), []);
+  });
+
+  it("lists an edited file and a deleted file", function () {
+    writeFileSync(join(repo, "README.md"), "changed\n");
+    git("rm", "--quiet", "src/locked.ts");
+    git("commit", "--quiet", "-am", "edit and delete");
+    assert.sameMembers(getChangedFiles(baseSha, repo), ["README.md", "src/locked.ts"]);
+  });
+
+  it("lists a moved file under its old path as well as its new one", function () {
+    git("mv", "src/locked.ts", "src/moved.ts");
+    git("commit", "--quiet", "-m", "move");
+    assert.sameMembers(getChangedFiles(baseSha, repo), ["src/locked.ts", "src/moved.ts"]);
+  });
+
+  it("lists the old path when a file is moved and edited in one commit", function () {
+    git("mv", "src/locked.ts", "src/moved.ts");
+    writeFileSync(join(repo, "src", "moved.ts"), "export const extra = true;\n", { flag: "a" });
+    git("commit", "--quiet", "-am", "move and edit");
+    const violations = findViolations(getChangedFiles(baseSha, repo), [globToRegExp("src/locked.ts")]);
+    assert.deepEqual(violations, ["src/locked.ts"]);
+  });
+
+  it("throws when the base commit does not exist (fail closed)", function () {
+    assert.throws(() => getChangedFiles(FAKE_SHA, repo), /git diff failed/);
   });
 });
 
