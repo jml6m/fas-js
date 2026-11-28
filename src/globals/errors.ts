@@ -1,4 +1,4 @@
-export const ErrorCode: Readonly<Record<string, string>> = Object.freeze({
+export const ErrorCode = Object.freeze({
   DUPLICATE_ALPHABET_VALS: "E-001",
   DUPLICATE_STATE_NAMES: "E-002",
   INVALID_STATE_NAME: "E-003",
@@ -12,4 +12,4 @@ export const ErrorCode: Readonly<Record<string, string>> = Object.freeze({
   INVALID_TRANSITION_OBJECT: "E-011",
   DUPLICATE_TRANSITION_OBJECT: "E-012",
   INVALID_STATE_ARRAY: "E-013"
-});
+} as const);

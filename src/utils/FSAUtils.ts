@@ -6,8 +6,6 @@ import { type DFA, NFA } from "../automata";
 import { DFAUtils, createDFA, type TransitionInput } from "./DFAUtils";
 import { NFAUtils, createNFA } from "./NFAUtils";
 
-export type { TransitionInput };
-
 /*
  * This class will take an input FSA constructor function
  * to determine which util methods need to be called
